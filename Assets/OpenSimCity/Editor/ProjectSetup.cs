@@ -83,6 +83,7 @@ namespace OpenSimCity.Editor
             ValidateUrp(issues);
             ValidateInputSystem(issues);
             ValidateScenesAndBuildSettings(issues);
+            ValidateLightingAndQualityDefaults(issues);
             return issues;
         }
 
@@ -193,6 +194,63 @@ namespace OpenSimCity.Editor
                     "Active Input Handling is set to the legacy Input Manager only. " +
                     "Set it to 'Input System Package (New)' or 'Both' in " +
                     "Project Settings > Player > Active Input Handling (requires an editor restart).");
+            }
+        }
+
+        // 커밋된 baseline 값. 어느 플랫폼에서 Editor를 열어도 이 값에서 벗어나면 안 된다.
+        // Quality 레벨 순서: Very Low, Low, Medium, High, Very High, Ultra.
+        private static readonly int[] ExpectedAntiAliasingByQualityLevel = { 0, 0, 0, 0, 2, 2 };
+
+        private static void ValidateLightingAndQualityDefaults(ICollection<string> issues)
+        {
+            var graphicsSettings = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/GraphicsSettings.asset")
+                .FirstOrDefault();
+            if (graphicsSettings == null)
+            {
+                issues.Add("Could not read GraphicsSettings.asset to verify lighting defaults.");
+            }
+            else
+            {
+                var colorTemperatureProperty =
+                    new SerializedObject(graphicsSettings).FindProperty("m_LightsUseColorTemperature");
+                if (colorTemperatureProperty != null && colorTemperatureProperty.boolValue)
+                {
+                    issues.Add(
+                        "Graphics Settings 'Lights Use Linear Intensity/Color Temperature' was toggled on, " +
+                        "diverging from the committed baseline (off). Some Editor sessions flip this on their " +
+                        "own when opening scenes; revert it in Project Settings > Graphics before committing.");
+                }
+            }
+
+            var qualitySettings = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/QualitySettings.asset")
+                .FirstOrDefault();
+            if (qualitySettings == null)
+            {
+                issues.Add("Could not read QualitySettings.asset to verify anti-aliasing defaults.");
+                return;
+            }
+
+            var levels = new SerializedObject(qualitySettings).FindProperty("m_QualitySettings");
+            if (levels == null || levels.arraySize != ExpectedAntiAliasingByQualityLevel.Length)
+            {
+                issues.Add(
+                    $"QualitySettings has {(levels == null ? "an unreadable" : levels.arraySize.ToString())} " +
+                    $"quality level(s) but {ExpectedAntiAliasingByQualityLevel.Length} were expected.");
+                return;
+            }
+
+            for (var i = 0; i < ExpectedAntiAliasingByQualityLevel.Length; i++)
+            {
+                var level = levels.GetArrayElementAtIndex(i);
+                var levelName = level.FindPropertyRelative("name")?.stringValue ?? $"index {i}";
+                var antiAliasing = level.FindPropertyRelative("antiAliasing");
+                if (antiAliasing != null && antiAliasing.intValue != ExpectedAntiAliasingByQualityLevel[i])
+                {
+                    issues.Add(
+                        $"Quality level '{levelName}' has antiAliasing={antiAliasing.intValue} but the committed " +
+                        $"baseline is {ExpectedAntiAliasingByQualityLevel[i]}. Some Editor sessions reset MSAA " +
+                        "support per platform; revert it in Project Settings > Quality before committing.");
+                }
             }
         }
 
