@@ -111,7 +111,9 @@ OpenSimCity/
 │  │  │  │  ├─ Economy/
 │  │  │  │  ├─ Utilities/
 │  │  │  │  ├─ Traffic/
+│  │  │  │  ├─ Transit/
 │  │  │  │  ├─ Services/
+│  │  │  │  ├─ Districts/
 │  │  │  │  ├─ Development/
 │  │  │  │  └─ Statistics/
 │  │  │  ├─ Application/
@@ -149,6 +151,8 @@ OpenSimCity/
 │  │  │     ├─ Roads/
 │  │  │     ├─ Utilities/
 │  │  │     ├─ Services/
+│  │  │     ├─ Transit/
+│  │  │     ├─ Policies/
 │  │  │     └─ Economy/
 │  │  ├─ Scenes/
 │  │  │  ├─ Bootstrap.unity
@@ -200,9 +204,11 @@ OpenSimCity/
 에디터에서 작성하는 변경이 적은 데이터다.
 
 - `BuildingDefinition`: 용도, 밀도, 크기, 수용 인구/일자리, 수요량, Prefab key
-- `RoadDefinition`: 차선, 속도, 용량, 건설비, 유지비
+- `RoadDefinition`: 방향 지원, 집계 차선/용량, 속도, 건설비, 유지비, 소음 입력
 - `UtilityDefinition`: 생산량, 반경/연결 규칙, 유지비
 - `ServiceDefinition`: 수용량, 효과, 범위, 예산 민감도
+- `TransitDefinition`: 정류장 접근 규칙, 차량 집계 용량, 기본 운행비와 대기 비용
+- `PolicyDefinition`: 적용 가능한 입력 factor, 비용, 적용 기간과 표시 key
 
 정의는 문자열 이름이 아니라 안정적인 ID로 런타임 상태와 연결한다.
 
@@ -212,6 +218,8 @@ OpenSimCity/
 
 - `WorldState`: 맵 크기, 시드, 셀/청크
 - `RoadNetworkState`: 노드, 간선, 용량, 교통량, 버전
+- `TransitState`: stable 정류장·노선 ID, 정렬된 정류장 순서, 예산, 집계 승객·용량
+- `DistrictState`: stable 지구 ID, 셀 membership, 이름, 활성 정책과 적용 기간
 - `BuildingState`: definition ID, 위치, 점유율, 상태, 공급 여부
 - `ExternalConnectionState`: 도시 밖과 연결되는 도로·철도·항만·유틸리티 게이트웨이
 - `PopulationState`: 건물 또는 코호트 단위 인구·노동자·학생
@@ -231,6 +239,8 @@ UI와 렌더링에 필요한 최소 데이터만 내보낸다.
 - 변경된 셀/청크
 - 생성·변경·철거된 건물
 - 도로별 혼잡도
+- 노선별 승객·용량·자동차 대체 통행과 상위 차단 reason
+- 지구별 인구·고용·통행·서비스·오염·재정과 정책 적용 기간
 - RCI, 재정, 인구 통계
 - 도시 시장 압력과 개발 가능한 필지 수를 구분한 개발 상태
 - 결정적으로 정렬된 상위 차단 reason, factor, 적용 기간
@@ -244,10 +254,14 @@ UI와 렌더링에 필요한 최소 데이터만 내보낸다.
 
 ```text
 PlaceRoadCommand
+UpgradeRoadCommand
 ZoneAreaCommand
 BulldozeCommand
 PlaceUtilityCommand
 SetTaxRateCommand
+CreateTransitLineCommand
+PaintDistrictCommand
+SetDistrictPolicyCommand
 ```
 
 명령 처리 결과는 성공/실패와 비용, 영향을 받은 영역을 반환한다. 성공한 변경은 도메인 이벤트와 Dirty Flag를 발생시킨다.
@@ -258,6 +272,8 @@ SetTaxRateCommand
 
 ```text
 RoadNetworkChanged
+TransitLineChanged
+DistrictChanged
 ZoneChanged
 BuildingConstructed
 BuildingAbandoned

@@ -1,4 +1,4 @@
-# [P7-05] 특성화 UI·비교 밸런스·P7 경험 게이트
+# [P7-05] 특성화 UI·비교 밸런스·특성화 경험 게이트
 
 - Phase: `P7`
 - Primary: `Windows`
@@ -17,7 +17,7 @@ P7-04의 특성화 상태와 query를 플레이어용 UI에 연결하고, 일반
 - 일반 RCI 도시와 특성화 도시 고정 fixture
 - 수익·노동·오염·교통·서비스 pressure 비교 기준
 - 문제→원인→수정→회복 PlayMode/smoke
-- P7 capability/experience gate 증거
+- 특성화 capability/experience evidence
 
 ## Mac steps
 
@@ -61,7 +61,7 @@ P7-04의 특성화 상태와 query를 플레이어용 UI에 연결하고, 일반
 - [ ] 특성화 progress·병목·수익·외부효과를 공개 UI에서 같은 기간 기준으로 확인한다.
 - [ ] 일반 도시와 특성화 도시가 서로 다른 실행 가능한 운영 방식을 제공한다.
 - [ ] 한 가지 병목의 문제→원인→수정→회복 시나리오가 양쪽에서 재현된다.
-- [ ] P7 capability/experience gate 증거와 알려진 밸런스 문제가 기록된다.
+- [ ] 특성화 capability/experience evidence와 알려진 밸런스 문제가 기록된다.
 - [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
 
 ## Out of scope
