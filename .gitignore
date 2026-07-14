@@ -9,6 +9,10 @@ UserSettings/
 MemoryCaptures/
 Recordings/
 
+# Editor-session artifacts: local package/render-debugger state, not shared config
+ProjectSettings/PackageManagerSettings.asset
+ProjectSettings/URPProjectSettings.asset
+
 # IDE generated
 .vs/
 .idea/

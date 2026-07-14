@@ -44,10 +44,10 @@ Bootstrap, CityPrototype, Benchmark Scene과 필수 프로젝트 설정을 수�
 
 ## Done when
 
-- [ ] 세 Scene과 build settings를 메뉴로 재현할 수 있다.
-- [ ] 생성·검증 실패가 Console에 구체적인 원인으로 표시된다.
-- [ ] Windows 생성 결과가 Mac에서 동일하게 열린다.
-- [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+- [x] 네 Scene(Bootstrap, MainMenu, CityPrototype, Benchmark)과 build settings를 메뉴로 재현할 수 있다.
+- [x] 생성·검증 실패가 Console에 구체적인 원인으로 표시된다.
+- [x] Windows 생성 결과가 Mac에서 동일하게 열린다.
+- [x] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
 
 ## Out of scope
 

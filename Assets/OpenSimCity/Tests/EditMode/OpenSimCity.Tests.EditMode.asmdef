@@ -4,7 +4,8 @@
   "references": [
     "OpenSimCity.Core",
     "OpenSimCity.Simulation",
-    "OpenSimCity.Application"
+    "OpenSimCity.Application",
+    "OpenSimCity.Editor"
   ],
   "includePlatforms": [
     "Editor"
