@@ -1,3 +1,9 @@
+# CI and tooling scripts (must stay LF for Linux runners / shells)
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+*.ps1 text eol=lf
+
 # Unity YAML and project text
 *.cs text eol=lf
 *.shader text eol=lf

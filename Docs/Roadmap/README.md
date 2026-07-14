@@ -26,7 +26,7 @@ GitHub 실행 현황은 [Workflow Kanban](https://github.com/users/hrxlou/projec
 
 | Phase | Gate | 이슈 |
 |---|---|---|
-| P0 기반 | 양쪽에서 같은 프로젝트와 테스트가 재현됨 | [P0-01](P0-foundation/P0-01-cross-platform-baseline.md), [P0-02](P0-foundation/P0-02-reproducible-project-scenes.md), [P0-03](P0-foundation/P0-03-cross-platform-test-handoff.md) |
+| P0 기반 | 양쪽에서 같은 프로젝트와 테스트가 재현됨 | [P0-01](P0-foundation/P0-01-cross-platform-baseline.md), [P0-02](P0-foundation/P0-02-reproducible-project-scenes.md), [P0-03](P0-foundation/P0-03-cross-platform-test-handoff.md), [P0-04](P0-foundation/P0-04-windows-ci-cd-baseline.md) |
 | P1 그리드 상호작용 | 64x64 모든 셀을 정확히 선택하며 순수 로직 테스트 가능 | [P1-01](P1-grid/P1-01-core-coordinates-determinism.md), [P1-02](P1-grid/P1-02-world-state-grid.md), [P1-03](P1-grid/P1-03-clock-command-queue.md), [P1-04](P1-grid/P1-04-isometric-camera-input.md), [P1-05](P1-grid/P1-05-selection-debug-grid.md) |
 | P2 도로·구역·필지 | 도로 접면과 외부 연결이 개발 가능성을 결정함 | [P2-01](P2-roads-zones/P2-01-road-state-commands.md), [P2-02](P2-roads-zones/P2-02-road-graph-external-connection.md), [P2-03](P2-roads-zones/P2-03-zoning-commands.md), [P2-04](P2-roads-zones/P2-04-parcels-development-eligibility.md), [P2-05](P2-roads-zones/P2-05-placement-overlays-cross-platform.md) |
 | P3 첫 MVP | 도로·전력·수요 기반 성장과 월간 경제가 30분 동작 | [P3-01](P3-mvp/P3-01-building-definitions-state.md), [P3-02](P3-mvp/P3-02-power-network.md), [P3-03](P3-mvp/P3-03-population-employment-migration.md), [P3-04](P3-mvp/P3-04-market-rci-demand.md), [P3-05](P3-mvp/P3-05-growth-development.md), [P3-06](P3-mvp/P3-06-municipal-economy-hud.md), [P3-07](P3-mvp/P3-07-placeholder-art-deterministic-soak.md) |
