@@ -43,14 +43,14 @@ iOS 빌드가 필요할 때만 전체 Xcode와 Unity의 iOS Build Support를 추
 
 ### Mac 확인 사항
 
-- [ ] `git config --global user.name`과 `user.email` 설정
-- [ ] GitHub SSH 또는 HTTPS 인증 완료
+- [x] `git config --global user.name`과 `user.email` 설정
+- [x] GitHub HTTPS 인증 완료
 - [x] Unity Hub 설치 (`3.19.5`)
 - [x] Unity Editor 설치 (`6000.5.3f1`, arm64)
 - [x] Unity 외부 스크립트 편집기 연결 준비
 - [x] Blender 설치 (`5.1.2`)
-- [ ] Blender에서 Metal GPU 사용 가능 여부 확인
-- [ ] 16GB 메모리를 고려해 Unity·Blender·브라우저 동시 실행 최소화
+- [x] Blender에서 Metal GPU 사용 확인 (`CYCLES_DEVICE_TYPE=METAL`)
+- 권장 운영: 16GB 메모리를 고려해 Unity·Blender·브라우저 동시 실행을 최소화한다.
 
 ## 3. Windows PC 설정
 
