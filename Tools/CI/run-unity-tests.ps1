@@ -63,6 +63,10 @@ function Wait-ForUnityLockRelease {
         Start-Sleep -Seconds 1
         $elapsed += 1
     }
+
+    if (Test-Path $lockPath) {
+        Write-Error "Unity 프로젝트 lock이 ${TimeoutSeconds}초 안에 해제되지 않았다: $lockPath"
+    }
 }
 
 # Unity가 결과 XML을 만들지 못하고 batchmode를 중단할 때 로그에 남기는 신호들.
@@ -72,7 +76,8 @@ $FatalErrorSignatures = @(
     'Multiple Unity instances cannot open the same project',
     'It looks like another Unity instance is running',
     'No valid Unity Editor license found',
-    'Failed to activate/update license'
+    'Failed to activate/update license',
+    'Scripts have compiler errors'
 )
 
 function Find-UnityFatalError {
@@ -151,15 +156,33 @@ function Invoke-UnityTests {
         exit 1
     }
 
-    [xml]$results = Get-Content $resultsPath
+    try {
+        [xml]$results = Get-Content -Path $resultsPath -Raw
+    }
+    catch {
+        Write-Error "$Platform 테스트 실패: 결과 XML이 유효하지 않다. 로그: $logPath, 결과: $resultsPath"
+        exit 1
+    }
+
     $testResult = $results.'test-run'.result
+    if ([string]::IsNullOrWhiteSpace($testResult)) {
+        Write-Error "$Platform 테스트 실패: 결과 XML에 test-run result가 없다. 로그: $logPath, 결과: $resultsPath"
+        exit 1
+    }
+
     if ($testResult -ne 'Passed') {
         Write-Error "$Platform 테스트 실패 (result=$testResult). 로그: $logPath, 결과: $resultsPath"
         exit 1
     }
 
-    Write-Host "$Platform tests passed ($($results.'test-run'.passed)/$($results.'test-run'.total))."
-    Wait-ForUnityLockRelease
+    $total = 0
+    $totalText = [string]$results.'test-run'.total
+    if (-not [int]::TryParse($totalText, [ref]$total) -or $total -le 0) {
+        Write-Error "$Platform 테스트 실패: 발견된 테스트 수가 0이거나 유효하지 않다 (total='$totalText'). 로그: $logPath, 결과: $resultsPath"
+        exit 1
+    }
+
+    Write-Host "$Platform tests passed ($($results.'test-run'.passed)/$total)."
 }
 
 switch ($Mode) {
@@ -167,6 +190,9 @@ switch ($Mode) {
     'play' { Invoke-UnityTests -Platform 'PlayMode' -Slug 'playmode' }
     'all' {
         Invoke-UnityTests -Platform 'EditMode' -Slug 'editmode'
+        # PlayMode 실행 전에만 lock 해제를 기다린다. 마지막 실행 뒤에는
+        # 대기가 불필요하고, lock이 늦게 풀리면 통과한 실행을 실패로 뒤집을 수 있다.
+        Wait-ForUnityLockRelease
         Invoke-UnityTests -Platform 'PlayMode' -Slug 'playmode'
     }
 }

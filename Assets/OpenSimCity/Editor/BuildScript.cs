@@ -20,6 +20,7 @@ namespace OpenSimCity.Editor
 
         // 로컬 스크립트가 출력 경로를 넘길 때 사용하는 커스텀 인자.
         private const string BuildPathArg = "-osc-buildPath";
+        private const string BuildResultPathArg = "-osc-buildResultPath";
 
         [MenuItem("OpenSimCity/Build/Windows Standalone")]
         public static void PerformWindowsBuildMenu()
@@ -35,10 +36,11 @@ namespace OpenSimCity.Editor
         {
             string outputPath = ResolveOutputPath();
             BuildReport report = BuildWindows(outputPath);
+            bool success = report != null && report.summary.result == BuildResult.Succeeded;
+            WriteBuildResult(ResolveArgument(BuildResultPathArg), success, report);
 
             if (UnityEngine.Application.isBatchMode)
             {
-                bool success = report != null && report.summary.result == BuildResult.Succeeded;
                 EditorApplication.Exit(success ? 0 : 1);
             }
         }
@@ -96,16 +98,44 @@ namespace OpenSimCity.Editor
 
         private static string ResolveOutputPath()
         {
+            string configuredPath = ResolveArgument(BuildPathArg);
+            return string.IsNullOrEmpty(configuredPath)
+                ? Path.Combine(ProjectRoot(), DefaultRelativePath)
+                : configuredPath;
+        }
+
+        private static string ResolveArgument(string argumentName)
+        {
             string[] args = Environment.GetCommandLineArgs();
             for (int i = 0; i < args.Length - 1; i++)
             {
-                if (string.Equals(args[i], BuildPathArg, StringComparison.Ordinal))
+                if (string.Equals(args[i], argumentName, StringComparison.Ordinal))
                 {
                     return args[i + 1];
                 }
             }
 
-            return Path.Combine(ProjectRoot(), DefaultRelativePath);
+            return null;
+        }
+
+        private static void WriteBuildResult(string resultPath, bool success, BuildReport report)
+        {
+            if (string.IsNullOrEmpty(resultPath))
+            {
+                return;
+            }
+
+            string directory = Path.GetDirectoryName(resultPath);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            string result = success ? "Succeeded" : "Failed";
+            string detail = report == null
+                ? "No build report was produced."
+                : $"result={report.summary.result}; errors={report.summary.totalErrors}; output={report.summary.outputPath}";
+            File.WriteAllText(resultPath, $"{result}{Environment.NewLine}{detail}{Environment.NewLine}");
         }
 
         private static string ProjectRoot()

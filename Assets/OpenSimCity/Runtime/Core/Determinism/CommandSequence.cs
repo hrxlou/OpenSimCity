@@ -6,6 +6,7 @@ namespace OpenSimCity.Core.Determinism
     public readonly struct CommandSequence : IEquatable<CommandSequence>, IComparable<CommandSequence>
     {
         public static readonly CommandSequence Zero = new CommandSequence(0);
+        public static readonly CommandSequence MaxValue = new CommandSequence(ulong.MaxValue);
 
         public CommandSequence(ulong value)
         {
@@ -14,7 +15,15 @@ namespace OpenSimCity.Core.Determinism
 
         public ulong Value { get; }
 
-        public CommandSequence Next() => new CommandSequence(checked(Value + 1));
+        public bool CanAdvance => Value != ulong.MaxValue;
+
+        public CommandSequence Next()
+        {
+            if (!CanAdvance)
+                throw new OverflowException("Command sequence cannot advance past UInt64.MaxValue.");
+
+            return new CommandSequence(Value + 1);
+        }
 
         public int CompareTo(CommandSequence other) => Value.CompareTo(other.Value);
 
@@ -22,12 +31,26 @@ namespace OpenSimCity.Core.Determinism
 
         public override bool Equals(object obj) => obj is CommandSequence other && Equals(other);
 
-        public override int GetHashCode() => Value.GetHashCode();
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (int)(Value ^ (Value >> 32));
+            }
+        }
 
         public override string ToString() => Value.ToString();
 
         public static bool operator ==(CommandSequence left, CommandSequence right) => left.Equals(right);
 
         public static bool operator !=(CommandSequence left, CommandSequence right) => !left.Equals(right);
+
+        public static bool operator <(CommandSequence left, CommandSequence right) => left.CompareTo(right) < 0;
+
+        public static bool operator >(CommandSequence left, CommandSequence right) => left.CompareTo(right) > 0;
+
+        public static bool operator <=(CommandSequence left, CommandSequence right) => left.CompareTo(right) <= 0;
+
+        public static bool operator >=(CommandSequence left, CommandSequence right) => left.CompareTo(right) >= 0;
     }
 }

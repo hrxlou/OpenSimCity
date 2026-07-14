@@ -33,6 +33,13 @@ Simulation Core <------------+
 
 좌표, ID, 시간, 수학 유틸리티, 결정적 난수 등 어느 기능에도 종속되지 않는 기반 타입을 둔다. 가능하면 `UnityEngine` 의존성을 갖지 않는다.
 
+Core의 좌표와 결정성 규칙은 다음과 같다.
+
+- `CellCoord`와 `ChunkCoord`는 `Y`를 먼저 비교하고 같은 행에서 `X`를 비교하는 row-major 순서를 사용한다. 음수 셀의 chunk 변환은 0 방향 절삭이 아니라 floor 나눗셈을 사용한다.
+- `GetHashCode()`는 컬렉션 버킷용일 뿐 저장 데이터나 난수 seed로 사용하지 않는다. 영속 입력에는 명시적인 결정적 hash만 사용한다.
+- `SimulationTick`과 `CommandSequence`는 최댓값에서 wrap하지 않고 overflow를 실패로 보고한다. 순서를 유지할 수 없는 상태를 조용히 다음 값으로 바꾸지 않는다.
+- 시스템별 난수는 `DeterministicRandom.CreateStream(seed, subsystemKey)`로 분리한다. subsystem key는 런타임의 `string.GetHashCode()`가 아닌 명시된 ordinal hash로 파생하며, 각 stream의 `State`를 저장할 수 있다.
+
 ### Simulation
 
 그리드, 건물, 인구, RCI, 경제, 전력, 교통 등 도시의 실제 상태와 규칙을 가진다. Scene, Prefab, Material, UI 타입을 참조하지 않는다.

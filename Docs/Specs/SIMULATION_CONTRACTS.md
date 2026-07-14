@@ -60,8 +60,11 @@ Migration flow: 유입 후보, 유출 후보, 실제 이동량, 원인
 ## 5. 시간과 결정성
 
 - 도시 명령은 `(SimulationTick, CommandSequence)`로 완전히 정렬한다.
+- `CellCoord`와 `ChunkCoord`의 안정 순서는 `Y` 오름차순 후 `X` 오름차순이다. 음수 좌표를 chunk로 바꿀 때도 floor 나눗셈을 사용해 경계 양쪽의 규칙을 동일하게 유지한다.
+- `SimulationTick`과 `CommandSequence`가 표현 가능한 최댓값에 도달하면 wrap하지 않고 overflow를 보고한다. 순서가 역전될 수 있는 값을 생성하지 않는다.
 - 일시정지, 배속, 저장 요청은 도시 명령이 아닌 Application control이다.
 - 시스템마다 독립 RNG 상태를 갖고 저장 스냅샷에 포함한다.
+- RNG stream은 `(seed, subsystemKey)`에서 `DeterministicRandom.CreateStream`으로 파생하며, subsystem key의 hash는 `string.GetHashCode()`에 의존하지 않는다.
 - `Dictionary`와 `HashSet`의 열거 순서를 결과 계산에 사용하지 않는다.
 - 후보와 이벤트는 안정 ID 또는 셀의 row-major 순서로 정렬한다.
 - 부족한 전력·서비스의 배분 우선순위도 안정 ID로 결정한다.
