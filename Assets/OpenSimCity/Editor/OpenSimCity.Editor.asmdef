@@ -8,6 +8,7 @@
     "OpenSimCity.Gameplay",
     "OpenSimCity.Presentation",
     "OpenSimCity.UI",
+    "Unity.InputSystem",
     "Unity.RenderPipelines.Core.Runtime",
     "Unity.RenderPipelines.Universal.Runtime"
   ],

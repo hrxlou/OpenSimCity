@@ -52,6 +52,13 @@ Core의 좌표와 결정성 규칙은 다음과 같다.
 
 셀 선택, 도로 드래그, 구역 칠하기, 철거처럼 입력을 도시 명령으로 변환한다. 상태를 직접 수정하지 않는다.
 
+P1 카메라는 Gameplay 안에서 별도의 view state로 동작한다. `IsometricCameraRig`는
+`WorldBoundsReadModel`만 받아 64x64 bounds, 화면 비율별 ground footprint, orthographic zoom을
+계산하며 Simulation의 셀 배열이나 Scene 이름을 조회하지 않는다. 카메라가 소비한 중클릭 drag는
+`CameraPointerInteractionState.ShouldSuppressClick`으로 노출해 선택 도구의 click 경로와 분리한다.
+WASD, 휠, Q/E action은 `IsometricCamera.inputactions`에 고정하고 Editor 생성 도구가
+`CityPrototype`의 rig·camera·read-model source 참조를 재현 가능하게 구성한다.
+
 ### Presentation
 
 시뮬레이션의 읽기 모델과 이벤트를 받아 지형, 도로, 건물, 차량, 데이터맵을 표현한다. 보이는 차량 수와 실제 통행량은 독립적이다.
@@ -77,7 +84,7 @@ Scene·Prefab·정의 데이터 생성, 검증, 벤치마크, EditMode/PlayMode 
 | `OpenSimCity.Presentation` | 월드 렌더링과 뷰 동기화 | Core, Application |
 | `OpenSimCity.UI` | 화면 UI | Core, Application |
 | `OpenSimCity.Editor` | 생성·검증 도구 | 모든 Runtime assembly, Editor 전용 |
-| `OpenSimCity.Tests.EditMode` | 순수 로직 테스트 | Core, Simulation, Application |
+| `OpenSimCity.Tests.EditMode` | 순수 로직 테스트 | Core, Simulation, Application, Gameplay |
 | `OpenSimCity.Tests.PlayMode` | Scene/UI/입력 통합 테스트 | Runtime assemblies |
 
 금지되는 참조 방향:

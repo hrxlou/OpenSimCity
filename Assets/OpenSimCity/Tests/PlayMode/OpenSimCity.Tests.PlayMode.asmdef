@@ -6,7 +6,9 @@
     "OpenSimCity.Application",
     "OpenSimCity.Gameplay",
     "OpenSimCity.Presentation",
-    "OpenSimCity.UI"
+    "OpenSimCity.UI",
+    "Unity.InputSystem",
+    "Unity.InputSystem.TestFramework"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
