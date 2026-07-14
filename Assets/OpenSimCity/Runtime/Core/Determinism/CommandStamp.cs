@@ -39,5 +39,13 @@ namespace OpenSimCity.Core.Determinism
         public static bool operator ==(CommandStamp left, CommandStamp right) => left.Equals(right);
 
         public static bool operator !=(CommandStamp left, CommandStamp right) => !left.Equals(right);
+
+        public static bool operator <(CommandStamp left, CommandStamp right) => left.CompareTo(right) < 0;
+
+        public static bool operator >(CommandStamp left, CommandStamp right) => left.CompareTo(right) > 0;
+
+        public static bool operator <=(CommandStamp left, CommandStamp right) => left.CompareTo(right) <= 0;
+
+        public static bool operator >=(CommandStamp left, CommandStamp right) => left.CompareTo(right) >= 0;
     }
 }

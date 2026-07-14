@@ -25,12 +25,26 @@ namespace OpenSimCity.Core
 
         public override bool Equals(object obj) => obj is StableId other && Equals(other);
 
-        public override int GetHashCode() => Value.GetHashCode();
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (int)(Value ^ (Value >> 32));
+            }
+        }
 
         public override string ToString() => IsValid ? Value.ToString() : "Invalid";
 
         public static bool operator ==(StableId left, StableId right) => left.Equals(right);
 
         public static bool operator !=(StableId left, StableId right) => !left.Equals(right);
+
+        public static bool operator <(StableId left, StableId right) => left.CompareTo(right) < 0;
+
+        public static bool operator >(StableId left, StableId right) => left.CompareTo(right) > 0;
+
+        public static bool operator <=(StableId left, StableId right) => left.CompareTo(right) <= 0;
+
+        public static bool operator >=(StableId left, StableId right) => left.CompareTo(right) >= 0;
     }
 }
