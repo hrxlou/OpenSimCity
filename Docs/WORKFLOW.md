@@ -160,7 +160,10 @@ Scene이나 Prefab이 필요한 경우 직접 YAML을 편집하라는 요청 대
 
 실행 순서와 장비별 체크리스트는 [Roadmap 이슈 인덱스](Roadmap/README.md)에서 관리한다. 각 로컬 문서는 동일 ID의 GitHub 이슈와 1:1로 대응한다.
 
+- 새 이슈 작업을 시작하기 전에 `git switch main && git pull --ff-only && git lfs pull`로 로컬 `main`과 LFS 객체를 최신화하고, 그 최신 `main`에서 기능 브랜치를 만든다. 오래된 베이스에서 시작하면 머지 충돌과 이미 병합된 작업의 중복이 생기고, `git lfs pull`을 건너뛰면 LFS 포인터만 받고 실제 바이너리(Art, Scene 등)는 이전 버전으로 남는다.
 - Primary 장비에서 구현과 좁은 테스트를 마치면 commit/push하고 칸반 상태를 `Verify on Other Device`로 옮긴다.
+- PR 본문에 `Closes #<이슈번호>`(또는 `Fixes`, `Resolves`)를 넣어 PR과 이슈를 연결한다. 그래야 머지 시 이슈가 자동으로 close되고 칸반이 `Done`으로 이동한다. 키워드가 없으면 이슈·칸반·PR이 따로 놀아 매번 수동으로 닫고 옮겨야 한다.
+- 이슈 본문의 `Done when` 체크박스는 PR 머지나 이슈 close로 자동 채워지지 않는다. 완료 근거(OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처)를 이슈에 남기고 각 항목을 직접 체크한다.
 - Verify 장비는 동일 커밋을 `pull --ff-only`로 받아 import, compile, 관련 테스트와 수동 smoke를 수행한다.
 - 검증 결과에는 OS, Unity 버전, 테스트 종류, 성공/실패, 로그 또는 캡처 위치를 남긴다.
 - 반대 장비에서 실패하면 원래 이슈를 다시 열어 같은 브랜치에서 수정한다. 플랫폼별 수정 이슈로 즉시 분리하지 않는다.
