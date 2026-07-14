@@ -29,6 +29,7 @@
 - Profiler의 상위 병목부터 하나씩 변경하고 capture를 보존한다.
 - instancing/LOD/pool에서 draw calls, GPU/CPU, GC 변화를 측정한다.
 - 128x128 목표 fixture와 256x256 stress fixture를 다시 실행한다.
+- P8-01에서 정한 selection·preview·HUD/query feedback 예산을 같은 fixture에서 다시 측정한다.
 
 ## Contracts and constraints
 
@@ -42,12 +43,20 @@
 - simulation checksum 동일
 - pool/scene lifecycle
 - quality/LOD visual smoke
+- 입력/명령 feedback latency before/after
+
+## Experience acceptance
+
+- 목표 fixture에서 selection, placement preview, command result, 공개 reason 갱신이 P8-01의 플랫폼별 예산을 충족한다.
+- 최적화 전후 같은 문제 fixture에서 플레이어에게 표시되는 원인과 가능한 명령이 의미상 바뀌지 않는다.
+- 품질/LOD를 낮춰야 통과하는 경우 필요한 설정과 시각적 trade-off를 기록한다.
 
 ## Done when
 
 - [ ] 목표 fixture의 성능 예산 충족 여부가 숫자로 판정된다.
 - [ ] 최적화 전후와 부작용이 `Docs/Benchmarks`에 기록된다.
 - [ ] 양쪽 플랫폼 회귀와 결정성 테스트가 통과한다.
+- [ ] 목표 규모에서 문제 식별과 명령 feedback이 응답 예산을 충족한다.
 - [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
 
 ## Out of scope

@@ -232,6 +232,8 @@ UI와 렌더링에 필요한 최소 데이터만 내보낸다.
 - 생성·변경·철거된 건물
 - 도로별 혼잡도
 - RCI, 재정, 인구 통계
+- 도시 시장 압력과 개발 가능한 필지 수를 구분한 개발 상태
+- 결정적으로 정렬된 상위 차단 reason, factor, 적용 기간
 - 플레이어에게 보여줄 경고와 사건
 
 매 틱 전체 도시 복사 대신 변경 집합과 주기적 전체 스냅샷을 병행한다.
@@ -300,8 +302,8 @@ BudgetSettled
 | 시스템 | 주요 입력 | 주요 출력 | 최초 구현 방식 |
 |---|---|---|---|
 | World/Grid | 좌표, 명령 | 셀·청크 상태 | 64x64, 16x16 청크 |
-| Roads | 도로 명령 | 연결 그래프, 접근성 | 격자 직선 도로 |
-| Parcels | 도로·구역 | 개발 가능한 필지 | 1x1~2x2 단순 필지 |
+| Roads | 도로 명령 | 연결 그래프, 외부 연결 접근성 | 격자 직선 도로 + 외부 gate까지 정수 거리 |
+| Parcels | 도로·구역 | 개발 가능한 필지·접근성 factor | 1x1~2x2 단순 필지 |
 | External Connections | 지도 경계, 도로망 | 외부 시장·이주 도달성 | 경계 도로 게이트웨이 |
 | Utilities | 생산시설·연결 | 건물 공급 여부 | 연결 요소 + 총용량 |
 | Employment | 인구·일자리·도달성 | 취업자·실업자·빈 일자리 | 건물/권역 단위 집계 매칭 |
@@ -355,3 +357,9 @@ BudgetSettled
 - Jobs/Burst 적용 범위
 - Addressables 도입 시점
 - 자유 곡선 도로와 지형 높낮이 지원 여부
+
+## 12. Capability gate와 experience gate
+
+각 Phase는 상태·결정성·성능을 검증하는 capability gate와, 플레이어가 공개 UI에서 문제를 이해하고 정상 command로 결과를 바꾸는 experience gate를 함께 가진다. UI는 Simulation/Application query의 reason과 factor를 표시하며 자체 규칙을 만들지 않는다.
+
+단계별 최소 경험과 증거 형식은 [플레이어 경험 게이트 계약](Specs/PLAYER_EXPERIENCE_CONTRACTS.md)을 따른다. Experience gate는 후속 시스템을 앞당겨 임시 구현하는 근거가 아니며, 해당 Phase에 존재하는 기능으로만 시나리오를 구성한다.

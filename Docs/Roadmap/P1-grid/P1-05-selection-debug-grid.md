@@ -44,10 +44,16 @@
 - Bootstrap/CityPrototype smoke
 - 양쪽 OS에서 대표 좌표 일치
 
+## Experience acceptance
+
+- 네 카메라 회전과 최소/최대 줌에서 같은 화면 지점을 반복 선택하면 예측 가능한 같은 셀을 가리킨다.
+- UI 위 click과 camera drag가 도시 셀 선택으로 오인되지 않는다.
+
 ## Done when
 
 - [ ] 사용자가 64x64 모든 셀을 정확히 선택할 수 있다.
 - [ ] 카메라 조작과 선택이 충돌하지 않는다.
+- [ ] P1 experience acceptance가 양쪽 입력 환경에서 통과한다.
 - [ ] P1 관련 EditMode/PlayMode 테스트가 양쪽에서 통과한다.
 - [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
 

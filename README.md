@@ -29,6 +29,7 @@ SimCity 계열의 피드백 루프를 작은 규모부터 검증하는 Unity 기
 - [아키텍처와 디렉터리 구조](Docs/ARCHITECTURE.md)
 - [이슈 단위 개발 로드맵](Docs/Roadmap/README.md)
 - [시뮬레이션 핵심 계약](Docs/Specs/SIMULATION_CONTRACTS.md)
+- [플레이어 경험 게이트 계약](Docs/Specs/PLAYER_EXPERIENCE_CONTRACTS.md)
 - [PC·Mac 최초 환경 설정](Docs/SETUP.md)
 - [Git·두 기기·에셋 작업 방식](Docs/WORKFLOW.md)
 

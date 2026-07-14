@@ -43,10 +43,17 @@
 - reason ordering
 - UI/map/query 일치
 
+## Experience acceptance
+
+- 플레이어가 쇠퇴 건물의 상위 원인을 선택 inspector와 datamap 두 곳에서 같은 기간 기준으로 확인한다.
+- 원인 source를 제거하거나 완화하면 즉시 회복하지 않고 계약된 지연 뒤 점유율·상태가 회복된다.
+- 재개발 완료까지의 상태 전이와 남은 차단 reason을 공개 UI로 추적한다.
+
 ## Done when
 
 - [ ] 조건 악화에서 쇠퇴까지 명시적 시간 지연이 있다.
 - [ ] 플레이어가 두 곳 이상에서 원인을 확인한다.
+- [ ] 문제→원인 완화→지연 회복→재개발 experience acceptance가 통과한다.
 - [ ] P6 시나리오가 양쪽에서 재현된다.
 - [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
 
