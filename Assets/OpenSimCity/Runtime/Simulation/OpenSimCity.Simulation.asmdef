@@ -1,0 +1,16 @@
+{
+  "name": "OpenSimCity.Simulation",
+  "rootNamespace": "OpenSimCity.Simulation",
+  "references": [
+    "OpenSimCity.Core"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": true
+}

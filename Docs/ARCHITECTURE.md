@@ -93,6 +93,7 @@ OpenSimCity/
 │  │  ├─ Runtime/
 │  │  │  ├─ Core/
 │  │  │  │  ├─ Collections/
+│  │  │  │  ├─ Determinism/
 │  │  │  │  ├─ Mathematics/
 │  │  │  │  └─ Time/
 │  │  │  ├─ Simulation/
@@ -101,6 +102,10 @@ OpenSimCity/
 │  │  │  │  ├─ Parcels/
 │  │  │  │  ├─ Zones/
 │  │  │  │  ├─ Buildings/
+│  │  │  │  ├─ ExternalConnections/
+│  │  │  │  ├─ Employment/
+│  │  │  │  ├─ Migration/
+│  │  │  │  ├─ Markets/
 │  │  │  │  ├─ Population/
 │  │  │  │  ├─ Demand/
 │  │  │  │  ├─ Economy/
@@ -208,8 +213,12 @@ OpenSimCity/
 - `WorldState`: 맵 크기, 시드, 셀/청크
 - `RoadNetworkState`: 노드, 간선, 용량, 교통량, 버전
 - `BuildingState`: definition ID, 위치, 점유율, 상태, 공급 여부
+- `ExternalConnectionState`: 도시 밖과 연결되는 도로·철도·항만·유틸리티 게이트웨이
 - `PopulationState`: 건물 또는 코호트 단위 인구·노동자·학생
-- `EconomyState`: 재정, 세율, 수입/지출 원장
+- `EmploymentState`: 노동 가능 인구, 충원된 일자리, 실업자, 빈 일자리
+- `MigrationState`: 외부 유입·유출 압력과 월별 실제 이동량
+- `UrbanEconomyState`: 집계된 생산, 상품 공급, 소비력, 사업체 가동률
+- `MunicipalFinanceState`: 시 재정, 세율, 건설비, 유지비, 수입/지출 원장
 - `DemandState`: R/C/I 및 부유도·산업 유형별 수요
 - `CityStatistics`: UI와 규칙이 사용할 집계값
 
@@ -237,10 +246,13 @@ ZoneAreaCommand
 BulldozeCommand
 PlaceUtilityCommand
 SetTaxRateCommand
-SetSimulationSpeedCommand
 ```
 
 명령 처리 결과는 성공/실패와 비용, 영향을 받은 영역을 반환한다. 성공한 변경은 도메인 이벤트와 Dirty Flag를 발생시킨다.
+
+일시정지, 배속, 저장 요청은 도시 상태를 변경하는 명령과 분리된 Application control이다. 배속이 달라도 같은 수의 시뮬레이션 틱과 같은 도시 명령을 적용했다면 도시 결과는 같아야 한다.
+
+모든 도시 명령에는 적용할 `SimulationTick`과 해당 틱 안에서 단조 증가하는 `CommandSequence`를 붙인다. 시뮬레이션은 이 두 값을 기준으로 명령을 정렬한다.
 
 ```text
 RoadNetworkChanged
@@ -266,20 +278,22 @@ BudgetSettled
 
 ### 고정 시뮬레이션 스텝
 
-1. 대기 중인 플레이어 명령 적용
-2. 그리드·도로·필지 변경 처리
-3. Dirty 전력/수도 네트워크 재계산
-4. 필요한 경로 캐시 무효화
-5. 교통량 및 혼잡 갱신
+1. `(SimulationTick, CommandSequence)` 순으로 도시 명령 적용
+2. 그리드·도로·필지·외부 연결 변경 처리
+3. Dirty 전력/수도 네트워크 재계산과 경로 캐시 무효화
+4. 기간 시작 시점의 건물·인구·고용 스냅샷 확정
+5. 스냅샷 기반 통행량·혼잡 갱신
 6. 오염·토지가치·서비스 필드 갱신
-7. 건물 운영과 점유율 갱신
-8. 인구·일자리·도시 통계 집계
-9. RCI 수요 계산
-10. 성장·쇠퇴 후보 처리
-11. 재정 정산
-12. 변경 집합과 이벤트 발행
+7. 건물 생산·소비·운영 상태 갱신
+8. 고용 매칭, 이주, 입주·퇴거 갱신
+9. 인구·일자리·상품·도시 통계 집계
+10. 도시 전체 RCI 시장 압력 계산
+11. 필지 입지 적합도와 개발 실행 가능성 평가
+12. 성장·쇠퇴 후보 처리
+13. 시 재정 정산
+14. 변경 집합과 이벤트 발행
 
-모든 단계를 매 스텝 실행할 필요는 없다. 전력은 Dirty 시, 교통은 일 단위, 재정과 RCI는 월 단위처럼 스케줄링한다. 같은 입력, 시드, 명령 순서에서 같은 결과가 나오도록 결정성을 유지한다.
+모든 단계를 매 스텝 실행할 필요는 없다. 전력은 Dirty 시, 교통은 일 단위, 이주·RCI·재정은 월 단위처럼 스케줄링한다. 한 기간의 교통은 기간 시작 스냅샷을 사용하고 그 결과가 다음 점유율·이주 갱신에 반영되는 식으로 순환 의존의 시차를 명시한다.
 
 ## 8. 시스템별 최소 계약
 
@@ -288,10 +302,14 @@ BudgetSettled
 | World/Grid | 좌표, 명령 | 셀·청크 상태 | 64x64, 16x16 청크 |
 | Roads | 도로 명령 | 연결 그래프, 접근성 | 격자 직선 도로 |
 | Parcels | 도로·구역 | 개발 가능한 필지 | 1x1~2x2 단순 필지 |
+| External Connections | 지도 경계, 도로망 | 외부 시장·이주 도달성 | 경계 도로 게이트웨이 |
 | Utilities | 생산시설·연결 | 건물 공급 여부 | 연결 요소 + 총용량 |
-| Demand | 통계·세율 | -1~1 RCI 값 | 단순 가중합 + 평활화 |
-| Development | 수요·입지·필지 | 건물 생성/쇠퇴 | 월별 제한된 후보 샘플 |
-| Economy | 건물·시설·세율 | 원장·재정 | 월간 정산 |
+| Employment | 인구·일자리·도달성 | 취업자·실업자·빈 일자리 | 건물/권역 단위 집계 매칭 |
+| Migration | 주택·일자리·도시 매력도 | 유입·유출 코호트 | 월별 집계 이동 |
+| Markets | 인구·산업·상업 | 소비력·상품 공급·가동률 | 집계된 상품 한 종류 |
+| Demand | 고용·주택·시장·세율 | -1~1 RCI 시장 압력 | 단순 가중합 + 평활화 |
+| Development | 시장 압력·입지·필지 | 건물 생성/쇠퇴 | 월별 제한된 후보 샘플 |
+| Municipal Finance | 건물·시설·세율 | 시 예산 원장 | 월간 정산 |
 | Traffic | OD 통행·도로 | 교통량·통근시간 | 청크 집계 + 경로 캐시 |
 | Services | 시설·예산 | 셀별 서비스 효과 | 거리 감쇠 필드 |
 | Persistence | 전체 런타임 상태 | 버전 스냅샷 | JSON 디버그 후 바이너리 검토 |
@@ -314,6 +332,7 @@ BudgetSettled
 - 모든 개체는 저장 가능한 안정 ID를 사용한다.
 - `SaveHeader`에 포맷 버전, 게임 버전, 타임스탬프, 맵 시드를 둔다.
 - 시스템별 DTO를 분리하고 마이그레이션 함수를 둔다.
+- 결정적 RNG 상태, 현재 틱, 명령 sequence, 시스템별 다음 실행 시점을 저장한다.
 - 자동 저장은 임시 파일에 쓴 뒤 성공 시 교체한다.
 - 런타임 상태와 화면용 차량/파티클/뷰 풀은 분리하여 후자는 저장하지 않는다.
 
@@ -324,6 +343,8 @@ BudgetSettled
 - 통계 기반 시뮬레이션 + 샘플링된 가시 에이전트
 - Simulation/Presentation 분리
 - 64x64 평지, 저밀도, 격자 도로부터 시작
+- 외부 도로 연결을 이주·노동·시장 흐름의 최소 게이트웨이로 사용
+- 시 재정과 집계 민간경제를 별도 상태로 관리
 - 중앙 스케줄러와 시스템별 틱 주기
 - Unity Editor 스크립트로 Scene/Prefab 생성
 

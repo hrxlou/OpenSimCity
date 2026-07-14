@@ -28,6 +28,7 @@ SimCity 계열의 피드백 루프를 작은 규모부터 검증하는 Unity 기
 
 - [아키텍처와 디렉터리 구조](Docs/ARCHITECTURE.md)
 - [단계별 개발 로드맵](Docs/ROADMAP.md)
+- [시뮬레이션 핵심 계약](Docs/Specs/SIMULATION_CONTRACTS.md)
 - [PC·Mac 최초 환경 설정](Docs/SETUP.md)
 - [Git·두 기기·에셋 작업 방식](Docs/WORKFLOW.md)
 
@@ -37,8 +38,9 @@ SimCity 계열의 피드백 루프를 작은 규모부터 검증하는 Unity 기
 
 1. Unity Hub에서 이 저장소를 Add/Open한다.
 2. `ProjectSettings/ProjectVersion.txt`와 같은 `6000.5.3f1` Editor를 사용한다.
-3. `OpenSimCity/Setup/Configure Project` 메뉴를 실행해 설정·씬 생성을 재현할 수 있는지 확인한다.
-4. Phase 0 검증을 통과한 뒤 `SimulationClock`과 `WorldGrid`를 시작한다.
+3. `OpenSimCity/Setup/Configure Project` 메뉴를 실행해 설정과 필수 Scene 루트 구성을 재현한다.
+4. `./Tools/CI/run-unity-tests.sh all`로 Phase 0의 EditMode/PlayMode 기반 검증을 실행한다.
+5. Phase 0 검증을 통과한 뒤 `SimulationClock`과 `WorldGrid`를 시작한다.
 
 Unity Hub가 비어 있지 않은 저장소에 새 프로젝트 생성을 허용하지 않는 경우, 같은 Unity 버전의 임시 URP 프로젝트를 만든 뒤 Unity를 종료하고 그 프로젝트의 `Assets`, `Packages`, `ProjectSettings`만 이 저장소 루트로 옮긴 후 다시 연다.
 

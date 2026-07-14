@@ -123,6 +123,16 @@ Blender/Source
 - draw call과 GPU frame time
 - 저장 크기와 로드 시간
 
+저장소 루트에서 공통 테스트 실행 스크립트를 사용한다.
+
+```bash
+./Tools/CI/run-unity-tests.sh edit
+./Tools/CI/run-unity-tests.sh play
+./Tools/CI/run-unity-tests.sh all
+```
+
+다른 Unity 설치 경로를 사용할 때는 `UNITY_EDITOR` 환경 변수에 실행 파일 경로를 지정한다.
+
 ## 8. Codex 작업 요청 형식
 
 한 요청에는 하나의 수직 기능과 명확한 수정 범위를 준다.

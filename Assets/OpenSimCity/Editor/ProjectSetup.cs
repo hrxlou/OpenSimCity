@@ -1,9 +1,12 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
 
 namespace OpenSimCity.Editor
 {
@@ -16,6 +19,12 @@ namespace OpenSimCity.Editor
         [MenuItem("OpenSimCity/Setup/Configure Project")]
         public static void ConfigureProject()
         {
+            if (!UnityEngine.Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            {
+                Debug.Log("OpenSimCity project setup cancelled because an open scene has unsaved changes.");
+                return;
+            }
+
             ConfigureEditorSettings();
             ConfigureUrp();
             CreateScenes();
@@ -28,7 +37,9 @@ namespace OpenSimCity.Editor
         private static void ConfigureEditorSettings()
         {
             EditorSettings.serializationMode = SerializationMode.ForceText;
+#pragma warning disable CS0618
             EditorSettings.externalVersionControl = "Visible Meta Files";
+#pragma warning restore CS0618
         }
 
         private static void ConfigureUrp()
@@ -39,8 +50,9 @@ namespace OpenSimCity.Editor
             if (urpAsset != null &&
                 (urpAsset.rendererDataList.Length == 0 || urpAsset.rendererDataList[0] == null))
             {
-                AssetDatabase.DeleteAsset(UrpAssetPath);
-                urpAsset = null;
+                throw new InvalidOperationException(
+                    $"The URP asset at {UrpAssetPath} has no renderer. " +
+                    "Repair or intentionally replace it instead of deleting configured project settings.");
             }
 
             if (urpAsset == null)
@@ -61,30 +73,74 @@ namespace OpenSimCity.Editor
         {
             EnsureFolder(SceneFolder);
 
-            var sceneNames = new[]
+            var sceneDefinitions = new[]
             {
-                "Bootstrap",
-                "MainMenu",
-                "CityPrototype",
-                "Benchmark"
+                new SceneDefinition("Bootstrap", "OpenSimCity.Bootstrap"),
+                new SceneDefinition("MainMenu", "OpenSimCity.MainMenu"),
+                new SceneDefinition("CityPrototype", "OpenSimCity.Prototype"),
+                new SceneDefinition("Benchmark", "OpenSimCity.Benchmark")
             };
 
-            var buildScenes = new EditorBuildSettingsScene[sceneNames.Length];
-            for (var i = 0; i < sceneNames.Length; i++)
-            {
-                var scenePath = $"{SceneFolder}/{sceneNames[i]}.unity";
-                if (!File.Exists(scenePath))
-                {
-                    var scene = EditorSceneManager.NewScene(
-                        NewSceneSetup.DefaultGameObjects,
-                        NewSceneMode.Single);
-                    EditorSceneManager.SaveScene(scene, scenePath);
-                }
+            var previousSetup = EditorSceneManager.GetSceneManagerSetup();
+            var ownedScenePaths = new HashSet<string>(StringComparer.Ordinal);
+            var buildScenes = new List<EditorBuildSettingsScene>(sceneDefinitions.Length);
 
-                buildScenes[i] = new EditorBuildSettingsScene(scenePath, true);
+            try
+            {
+                foreach (var definition in sceneDefinitions)
+                {
+                    var scenePath = $"{SceneFolder}/{definition.Name}.unity";
+                    EnsureScene(scenePath, definition.RequiredRootName);
+                    ownedScenePaths.Add(scenePath);
+                    buildScenes.Add(new EditorBuildSettingsScene(scenePath, true));
+                }
+            }
+            finally
+            {
+                if (previousSetup.Length > 0)
+                    EditorSceneManager.RestoreSceneManagerSetup(previousSetup);
             }
 
-            EditorBuildSettings.scenes = buildScenes;
+            foreach (var existingScene in EditorBuildSettings.scenes)
+            {
+                if (!ownedScenePaths.Contains(existingScene.path))
+                    buildScenes.Add(existingScene);
+            }
+
+            EditorBuildSettings.scenes = buildScenes.ToArray();
+        }
+
+        private static void EnsureScene(string scenePath, string requiredRootName)
+        {
+            Scene scene;
+            if (File.Exists(scenePath))
+            {
+                scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+            }
+            else
+            {
+                scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
+            }
+
+            var hasRequiredRoot = false;
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                if (string.Equals(root.name, requiredRootName, StringComparison.Ordinal))
+                {
+                    hasRequiredRoot = true;
+                    break;
+                }
+            }
+
+            if (!hasRequiredRoot)
+            {
+                var requiredRoot = new GameObject(requiredRootName);
+                SceneManager.MoveGameObjectToScene(requiredRoot, scene);
+                EditorSceneManager.MarkSceneDirty(scene);
+            }
+
+            if (!File.Exists(scenePath) || scene.isDirty)
+                EditorSceneManager.SaveScene(scene, scenePath);
         }
 
         private static void EnsureFolder(string path)
@@ -101,6 +157,19 @@ namespace OpenSimCity.Editor
                     AssetDatabase.CreateFolder(current, segments[i]);
                 current = next;
             }
+        }
+
+        private readonly struct SceneDefinition
+        {
+            public SceneDefinition(string name, string requiredRootName)
+            {
+                Name = name;
+                RequiredRootName = requiredRootName;
+            }
+
+            public string Name { get; }
+
+            public string RequiredRootName { get; }
         }
     }
 }

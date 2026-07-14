@@ -1,0 +1,23 @@
+{
+  "name": "OpenSimCity.Tests.PlayMode",
+  "rootNamespace": "OpenSimCity.Tests.PlayMode",
+  "references": [
+    "OpenSimCity.Core",
+    "OpenSimCity.Application",
+    "OpenSimCity.Gameplay",
+    "OpenSimCity.Presentation",
+    "OpenSimCity.UI"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
