@@ -41,8 +41,13 @@ New-Item -ItemType Directory -Force -Path $ResultsDir | Out-Null
 function Invoke-UnityTests {
     param(
         [string]$Platform,
-        [string]$Slug
+        [string]$Slug,
+        [int]$TimeoutSeconds = 1800
     )
+
+    $resultsPath = Join-Path $ResultsDir "$Slug.xml"
+    $logPath = Join-Path $ResultsDir "$Slug.log"
+    if (Test-Path $resultsPath) { Remove-Item $resultsPath -Force }
 
     $unityArgs = @(
         '-batchmode'
@@ -50,16 +55,35 @@ function Invoke-UnityTests {
         '-projectPath', $RepoRoot
         '-runTests'
         '-testPlatform', $Platform
-        '-testResults', (Join-Path $ResultsDir "$Slug.xml")
-        '-logFile', (Join-Path $ResultsDir "$Slug.log")
+        '-testResults', $resultsPath
+        '-logFile', $logPath
     )
 
     Write-Host "Running $Platform tests..."
     & $UnityEditor @unityArgs
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "$Platform 테스트 실패 (exit $LASTEXITCODE). 로그: $ResultsDir\$Slug.log"
-        exit $LASTEXITCODE
+
+    # Unity는 첫 프로세스가 내부적으로 재실행(relaunch)하며 원래 프로세스 핸들을
+    # 먼저 종료하는 경우가 있어, 이 프로세스의 종료 코드는 신뢰할 수 없다.
+    # 대신 실제 NUnit 결과 XML이 나타날 때까지 기다려 그 결과를 판정 기준으로 쓴다.
+    $elapsed = 0
+    while (-not (Test-Path $resultsPath) -and $elapsed -lt $TimeoutSeconds) {
+        Start-Sleep -Seconds 2
+        $elapsed += 2
     }
+
+    if (-not (Test-Path $resultsPath)) {
+        Write-Error "$Platform 테스트 실패: ${TimeoutSeconds}초 내에 결과 파일이 생성되지 않았다. 로그: $logPath"
+        exit 1
+    }
+
+    [xml]$results = Get-Content $resultsPath
+    $testResult = $results.'test-run'.result
+    if ($testResult -ne 'Passed') {
+        Write-Error "$Platform 테스트 실패 (result=$testResult). 로그: $logPath, 결과: $resultsPath"
+        exit 1
+    }
+
+    Write-Host "$Platform tests passed ($($results.'test-run'.passed)/$($results.'test-run'.total))."
 }
 
 switch ($Mode) {
