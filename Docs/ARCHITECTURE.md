@@ -60,6 +60,8 @@ Core의 좌표와 결정성 규칙은 다음과 같다.
 
 예산, RCI, 툴바, 선택 정보, 경고를 표시한다. 시뮬레이션 내부 배열을 직접 읽지 않고 공개된 조회 API나 읽기 모델을 사용한다.
 
+UI와 Presentation의 시각 token, component, 화면 슬롯과 Phase별 노출 범위는 [디자인·UI·아트 기준](DESIGN.md)을 따른다. 디자인 문서는 표현 계약이며 Simulation/Core의 참조 대상이 아니다.
+
 ### Editor / Tests
 
 Scene·Prefab·정의 데이터 생성, 검증, 벤치마크, EditMode/PlayMode 테스트를 둔다. Scene YAML을 자동화 스크립트 없이 대규모로 직접 편집하지 않는다.
@@ -148,8 +150,11 @@ OpenSimCity/
 │  │  │  │  ├─ Buildings/
 │  │  │  │  ├─ Roads/
 │  │  │  │  ├─ Vehicles/
-│  │  │  │  ├─ Environment/
-│  │  │  │  └─ UI/
+│  │  │  │  └─ Environment/
+│  │  │  ├─ UI/
+│  │  │  │  ├─ Styles/
+│  │  │  │  ├─ Fonts/
+│  │  │  │  └─ Icons/
 │  │  │  ├─ Audio/
 │  │  │  ├─ Materials/
 │  │  │  ├─ Prefabs/
@@ -178,10 +183,18 @@ OpenSimCity/
 ├─ UserSettings/                 # 커밋하지 않음
 ├─ Blender/
 │  ├─ Source/
+│  │  ├─ External/
+│  │  └─ OpenSimCity/
 │  ├─ Export/
 │  ├─ Scripts/
+│  │  ├─ Importers/
+│  │  ├─ Generators/
+│  │  ├─ Validators/
+│  │  ├─ Exporters/
+│  │  └─ Previews/
 │  └─ References/
 ├─ Docs/
+│  ├─ DESIGN.md
 │  ├─ Decisions/
 │  ├─ Specs/
 │  ├─ Benchmarks/
@@ -199,7 +212,10 @@ OpenSimCity/
 ### 디렉터리 규칙
 
 - 원본 `.blend`는 `Blender/Source`, 내보낸 FBX/glTF는 `Blender/Export`에서 관리한다.
-- 실제 Unity 임포트 파일은 승인된 결과만 `Assets/OpenSimCity/Content/Art`로 이동한다.
+- Unity runtime asset은 source 소유권에 따라 나눈다. vendor 원본과 호환성 정규화 mesh/texture는 `Assets/ThirdParty`, 자체 제작 art와 프로젝트 wrapper prefab/material/definition은 `Assets/OpenSimCity`에 둔다.
+- 외부 source는 `Blender/Source/External`, 자체 제작·변형 source는 `Blender/Source/OpenSimCity`에 둔다. 임시 art 결과와 report는 gitignore된 `Artifacts/Art`를 사용한다.
+- vendor runtime asset과 호환성 정규화 결과는 `Assets/ThirdParty`에 두고 source URL, hash, license와 변형 provenance를 보존한다.
+- 에셋 파일명은 definition ID나 prefab key가 아니다. 런타임과 저장 데이터는 이동·rename에 안정적인 ID를 사용한다.
 - ScriptableObject는 정적 정의다. 인구, 점유율, 현재 전력 같은 런타임 상태를 저장하지 않는다.
 - 공용 `Scripts/Managers`, `Misc`, `Utils` 폴더를 만들지 않는다. 책임이 드러나는 모듈에 둔다.
 - 외부 패키지 파일을 `Assets/OpenSimCity` 아래로 복사하지 않는다.

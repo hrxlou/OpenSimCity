@@ -3,7 +3,7 @@
 - Phase: `P5`
 - Primary: `Mac`
 - Verify: `Windows`
-- Estimate: `3–5 days`
+- Estimate: `Epic; Ready 전 2개 1–3 day 이슈로 분할`
 - Branch: `feature/p5-05-bus-transit`
 - Depends on: `P5-03, P5-04`
 
@@ -18,6 +18,11 @@
 - 보행 접근권, 노선 우회 비용, 대기 비용, 용량을 사용한 집계 mode choice
 - 자동차·버스 통행량 보존, 노선 승객 수, 혼잡도, 운영비
 - pooled bus view와 대중교통/접근성 overlay
+
+## Required split before Ready
+
+1. 정류장·노선 command/state, 접근·mode choice·용량·재정과 저장/결정성
+2. 노선 편집 UX, pooled bus view, overlay와 교통 전략 experience gate
 
 ## Mac steps
 

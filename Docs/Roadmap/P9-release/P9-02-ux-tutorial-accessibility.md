@@ -1,66 +1,63 @@
-# [P9-02] UX·튜토리얼·접근성·오디오·낮밤 통합
+# [P9-02] 출시 UX·접근성·presentation 통합 gate
 
 - Phase: `P9`
-- Primary: `Windows`
-- Verify: `Mac`
-- Estimate: `3+ days`
-- Branch: `feature/p9-02-release-ux`
-- Depends on: `P9-01`
+- Primary: `Cross-platform`
+- Verify: `Both`
+- Estimate: `1 day gate review`
+- Branch: `feature/p9-02-release-ux-gate`
+- Depends on: `P9-02A, P9-02B, P9-02C`
 
 ## Goal
 
-P3~P7에서 제공한 플레이어용 원인·회복 흐름을 출시 수준으로 다듬어 신규 사용자가 도로→구역→전력→성장 루프와 대표 실패 복구를 완료하도록 하고 접근성, 오디오, 낮/밤을 통합한다.
+onboarding, 접근성/입력 설정, 오디오/낮밤을 각각 작은 이슈로 검증한 뒤 첫 15분 경험과 설정 지속성, 결정성 불변을 하나의 출시 UX gate로 판정한다.
+
+## Execution issues
+
+- [P9-02A onboarding·메뉴·문제 연결](P9-02a-onboarding-release-ui.md)
+- [P9-02B 접근성·입력·UI 설정](P9-02b-accessibility-input-settings.md)
+- [P9-02C 오디오·낮밤 presentation](P9-02c-audio-day-night-presentation.md)
 
 ## Scope
 
-- onboarding/tutorial tasks and contextual hints
-- problem indicators, tooltip, datamap cross-links
-- UI scale, remapping, color alternatives, audio controls
-- day/night and audio presentation with settings persistence
+- 세 하위 이슈의 test/capture/settings evidence 검토
+- 첫 15분 신규 프로필 end-to-end smoke
+- 전력 또는 외부 연결 실패 진단→정상 command 복구
+- Windows/macOS 설정 저장과 결정성 checksum 비교
 
 ## Mac steps
 
-- 키보드/트랙패드, Retina scale, macOS audio/build에서 접근성을 검증한다.
-- 튜토리얼이 command/query만 사용하고 simulation을 직접 우회하지 않는지 검토한다.
-- 신규 사용자 task checklist와 문제 설명 coverage를 테스트한다.
+- Retina/trackpad/audio와 저장된 UI·입력·오디오 설정을 release candidate 설정으로 확인한다.
+- 같은 tutorial command log의 checksum이 presentation 설정과 무관한지 검증한다.
 
 ## Windows steps
 
-- 첫 15분 onboarding 흐름과 실패 회복 UX를 구현한다.
-- 색상 외 icon/pattern, UI scale, key remap, volume 옵션을 연결한다.
-- 낮/밤과 audio manager를 중앙 scheduler/settings로 구성한다.
-- 대표 해상도와 controller/mouse-keyboard에서 PlayMode/사용성 smoke를 수행한다.
+- 새 프로필에서 메뉴→새 도시→도로→구역→전력→첫 성장과 대표 실패 복구를 한 흐름으로 smoke한다.
+- 대표 해상도와 mouse/keyboard/controller 설정에서 하위 이슈 결과가 함께 동작하는지 확인한다.
 
 ## Contracts and constraints
 
-- 튜토리얼은 허용되지 않은 simulation mutation을 하지 않는다.
-- P9는 핵심 시스템의 첫 진단 채널을 새로 만들지 않고 기존 query/ViewModel과 경험 시나리오를 onboarding으로 연결한다.
-- 시각/오디오 설정은 결정성 결과에 영향을 주지 않는다.
-- 주요 문제는 화면, 데이터맵, UI 중 두 곳 이상에서 설명한다.
+- 이 gate에서 새 UI, simulation 기능이나 첫 진단 채널을 구현하지 않는다. 실패하면 소유 하위 이슈로 되돌린다.
+- 튜토리얼과 presentation 설정은 application command/query 경계를 우회하지 않고 simulation 결과를 바꾸지 않는다.
+- AI 시안의 사진·logo·수치·문구를 production asset으로 사용하지 않는다.
 
 ## Verification
 
-- 새 프로필 onboarding completion
-- UI scale/color alternative/key remap
-- audio/day-night on/off checksum
-- 양쪽 build UX smoke
-
-## Experience acceptance
-
-- 저장 데이터가 없는 신규 사용자가 첫 15분 안에 도로→구역→전력→첫 성장 루프를 완료한다.
-- 튜토리얼 fixture에서 전력 또는 외부 연결 문제를 공개 UI로 확인하고 정상 command로 복구한다.
-- 핵심 문제와 조작 상태를 색상만 사용하지 않고 icon/pattern/text 중 하나 이상의 대체 채널로 구분한다.
+- P9-02A/B/C 완료 증거와 알려진 문제
+- 새 프로필 first-15-minute 양 플랫폼 smoke
+- UI/input/audio/day-night 설정 round-trip
+- presentation on/off와 tutorial replay checksum
 
 ## Done when
 
-- [ ] 신규 사용자가 핵심 성장 루프를 완료한다.
-- [ ] 신규 사용자가 대표 실패 원인을 확인하고 첫 15분 onboarding 안에서 복구한다.
-- [ ] 주요 도시 문제를 두 채널 이상에서 이해할 수 있다.
-- [ ] 접근성·설정이 저장되고 양쪽 플랫폼에서 동작한다.
+- [ ] 신규 사용자가 첫 15분 안에 핵심 성장 루프와 대표 실패 복구를 완료한다.
+- [ ] 주요 문제를 색상만이 아닌 두 채널 이상에서 이해한다.
+- [ ] 접근성·입력·오디오·낮밤 설정이 저장되고 양 플랫폼에서 동작한다.
+- [ ] presentation 설정 전후 simulation checksum이 같다.
 - [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
 
 ## Out of scope
 
+- gate 중 신규 기능 구현
 - 현지화 전체 언어
+- News·Community·Mods·Scenarios와 온라인 기능
 - 마케팅 영상
-- 온라인 기능

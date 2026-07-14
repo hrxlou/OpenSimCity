@@ -59,6 +59,7 @@ docs(architecture): record save snapshot boundary
 - 정상 플레이 루프에서 불필요한 프레임별 할당을 만들지 않는다.
 - 저장 대상 상태라면 save DTO와 round-trip 테스트를 갱신한다.
 - 사용자에게 보이는 변경은 Prototype Scene에서 재현된다.
+- 사용자에게 보이는 UI·아트 변경은 [디자인·UI·아트 기준](DESIGN.md)의 현재 Phase 범위와 token/component 계약을 따른다.
 - 아키텍처나 작업 방식이 변했다면 문서도 함께 수정한다.
 
 ## 5. Unity 편집 규칙
@@ -67,29 +68,39 @@ docs(architecture): record save snapshot boundary
 - 건물·차량마다 `Update()`를 두지 않는다.
 - `FindObjectOfType`, 문자열 기반 Scene 탐색, 전역 mutable singleton을 핵심 경로에서 사용하지 않는다.
 - Scene/Prefab 생성은 가능한 한 `Assets/OpenSimCity/Editor` 도구로 재현한다.
+- Editor Build Settings에는 Benchmark 같은 개발 Scene을 등록할 수 있지만 Player build는 `BuildScript`의 명시적 release Scene 목록만 사용한다. Benchmark를 출시 빌드에 포함하지 않는다.
 - ScriptableObject는 정적 definition 용도로 제한한다.
 - Addressables는 MVP 필수가 아니다. 로딩/메모리 요구가 확인된 후 도입한다.
 - 최적화는 Profiler capture 또는 benchmark 숫자와 함께 제출한다.
 
 ## 6. Blender와 Unity 계약
 
+- 기준 source 경로는 vendor `Blender/Source/External`, 자체 제작 `Blender/Source/OpenSimCity`로 나눈다.
+- 반복 가능한 작업은 `Blender/Scripts/{Importers,Generators,Validators,Exporters,Previews}`에 두고 임시 결과와 보고서는 gitignore된 `Artifacts/Art/<batch>`에 둔다.
 - 단위: 1 Blender unit = 1 m = 1 Unity unit
 - 축/내보내기 preset을 팀 공용 Blender script로 고정
 - pivot: 건물 바닥 중심을 기본으로 하며 필지 정렬 규칙을 별도 metadata로 둔다.
 - 적용 scale: `(1, 1, 1)`
-- collider: 단순 box 우선
+- collider: grid query를 selection 기준으로 사용하고 물리 상호작용이 필요한 view에만 단순 형태를 둔다.
 - 동일 건물군은 material/texture atlas를 공유
 - `.blend`를 Unity가 직접 참조하지 않고 FBX 또는 glTF를 명시적으로 내보낸다.
 - 파일 이름 예: `BLD_R_LOW_House_A_LOD0.fbx`, `VEH_Car_A.fbx`
+- 파일 이름은 runtime ID가 아니다. `asset_id`, definition ID와 prefab key는 이동·rename에 안정적인 별도 값으로 관리한다.
+- 외부 에셋은 source URL, 취득일, 배포 tier, hash, license, 변형 내역을 acquisition manifest/provenance sidecar에 기록한다.
+- 원본 vendor archive 전체를 Unity `Assets`에 넣지 않는다. vendor 원본과 축·scale·pivot·texture path 호환성 정규화 mesh/texture는 `Assets/ThirdParty`, 프로젝트 전용 wrapper prefab/material/definition과 자체 제작 art는 `Assets/OpenSimCity`에 둔다.
+- `Assets/ThirdParty`, `Blender/Source`, `Blender/References`의 PNG/JPG/JPEG는 디렉터리별 `.gitattributes` 규칙으로 LFS에 저장한다. 작은 first-party UI image까지 전역 LFS로 강제하지 않는다.
+- LOD 단계, material 수와 triangle 기준은 source pack 수치가 아니라 P8 benchmark 결과로 정한다.
 
 에셋 승인 흐름:
 
 ```text
 Blender/Source
-  -> Blender/Export
-  -> scale/pivot/naming 검증
-  -> Assets/OpenSimCity/Content/Art
-  -> material/prefab/LOD 구성
+  -> license/hash/provenance와 texture relink 검증
+  -> Blender/Scripts를 통한 정규화·Blender/Export
+  -> scale/axis/pivot/footprint/stable ID 검증
+  -> vendor mesh/texture는 Assets/ThirdParty
+  -> wrapper와 자체 제작 결과는 Assets/OpenSimCity
+  -> material/prefab과 측정 기반 LOD/선택적 collider 구성
   -> Benchmark Scene 확인
 ```
 

@@ -15,6 +15,7 @@
 
 - building/vehicle pool and renderer batching
 - LOD/culling/material atlas readiness
+- selected production-candidate asset의 material/triangle/renderer inventory
 - measured simulation hotspot optimization
 - before/after benchmark report
 
@@ -28,6 +29,7 @@
 
 - Profiler의 상위 병목부터 하나씩 변경하고 capture를 보존한다.
 - instancing/LOD/pool에서 draw calls, GPU/CPU, GC 변화를 측정한다.
+- MegaKit 등 source asset의 표본 수치는 성능 budget으로 사용하지 않고, 정규화된 Unity fixture에서 병목과 시각 trade-off를 측정한다.
 - 128x128 목표 fixture와 256x256 stress fixture를 다시 실행한다.
 - P8-01에서 정한 selection·preview·HUD/query feedback 예산을 같은 fixture에서 다시 측정한다.
 
@@ -36,6 +38,8 @@
 - 숫자 없는 성능 개선 주장을 하지 않는다.
 - 시각 최적화가 simulation state와 command 순서를 바꾸지 않는다.
 - optimization commit은 가능하면 병목 하나씩 분리한다.
+- 모든 건물에 collider나 동일한 LOD 단계를 일괄 요구하지 않는다. grid query를 selection의 기준으로 유지하고, P8-01 측정과 camera distance에 근거해 asset군별 규칙을 정한다.
+- material 통합과 atlas는 appearance·provenance·배포 라이선스를 보존하는 범위에서 draw call 병목이 확인된 경우에만 적용한다.
 
 ## Verification
 
@@ -43,6 +47,7 @@
 - simulation checksum 동일
 - pool/scene lifecycle
 - quality/LOD visual smoke
+- asset군별 renderer/material/triangle/LOD 결정표
 - 입력/명령 feedback latency before/after
 
 ## Experience acceptance

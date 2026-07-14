@@ -29,6 +29,7 @@ SimCity 계열의 피드백 루프를 작은 규모부터 검증하는 Unity 기
 ## 설계 문서
 
 - [아키텍처와 디렉터리 구조](Docs/ARCHITECTURE.md)
+- [디자인·UI·아트 기준](Docs/DESIGN.md)
 - [이슈 단위 개발 로드맵](Docs/Roadmap/README.md)
 - [시뮬레이션 핵심 계약](Docs/Specs/SIMULATION_CONTRACTS.md)
 - [플레이어 경험 게이트 계약](Docs/Specs/PLAYER_EXPERIENCE_CONTRACTS.md)
@@ -36,15 +37,16 @@ SimCity 계열의 피드백 루프를 작은 규모부터 검증하는 Unity 기
 - [PC·Mac 최초 환경 설정](Docs/SETUP.md)
 - [Git·두 기기·에셋 작업 방식](Docs/WORKFLOW.md)
 
-사용자가 제공한 `SIMCITY_STYLE_PROJECT_GUIDE.md`를 기획 기준으로 삼았으며, 이 저장소 문서는 그 내용을 실제 구현 순서와 모듈 경계에 맞게 재구성한 것이다. 원본을 저장소에 보관하려면 Unity 초기화 후 `Docs/References`에 복사한다.
+외부 기획안, AI 시안과 에셋 가이드는 아이디어 입력으로 사용한다. 저장소에서 구현할 디자인 계약과 Phase별 적용 범위는 `Docs/DESIGN.md`를 기준으로 하며, 외부 초안이 이 문서나 로드맵과 충돌하면 저장소 문서를 우선한다.
 
-## 바로 다음 작업
+## 프로젝트 열기와 기준선 확인
 
 1. Unity Hub에서 이 저장소를 Add/Open한다.
 2. `ProjectSettings/ProjectVersion.txt`와 같은 `6000.5.3f1` Editor를 사용한다.
-3. `OpenSimCity/Setup/Configure Project` 메뉴를 실행해 설정과 필수 Scene 루트 구성을 재현한다.
-4. `./Tools/CI/run-unity-tests.sh all`로 Phase 0의 EditMode/PlayMode 기반 검증을 실행한다.
-5. Phase 0 검증을 통과한 뒤 `SimulationClock`과 `WorldGrid`를 시작한다.
+3. `OpenSimCity/Setup/Validate Project`로 커밋된 설정과 필수 Scene 루트를 확인한다. drift가 있을 때만 `Configure Project`로 재현한다.
+4. `./Tools/CI/run-unity-tests.sh all`로 현재 EditMode/PlayMode 기준선을 확인한다.
+
+현재 작업 순서와 완료 상태는 README에 중복해서 적지 않고 [실행 로드맵](Docs/Roadmap/README.md)과 GitHub Workflow Kanban에서 관리한다.
 
 Unity Hub가 비어 있지 않은 저장소에 새 프로젝트 생성을 허용하지 않는 경우, 같은 Unity 버전의 임시 URP 프로젝트를 만든 뒤 Unity를 종료하고 그 프로젝트의 `Assets`, `Packages`, `ProjectSettings`만 이 저장소 루트로 옮긴 후 다시 연다.
 

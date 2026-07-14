@@ -3,7 +3,7 @@
 - Phase: `P7`
 - Primary: `Mac`
 - Verify: `Windows`
-- Estimate: `3–5 days`
+- Estimate: `Epic; Ready 전 2개 1–3 day 이슈로 분할`
 - Branch: `feature/p7-06-district-policy`
 - Depends on: `P5-05, P6-02, P7-05`
 
@@ -18,6 +18,11 @@
 - `HeavyVehicleRestriction`, `TransitSubsidy` 두 정책과 다음 월 적용
 - 정책 비용, 적용 범위, 입력 factor, 파생 결과 reason/query
 - 지구별 인구·고용·통행·서비스·오염·재정 read model
+
+## Required split before Ready
+
+1. District ID·membership command/read model·저장과 지구 편집 UX
+2. 두 policy command/effective month·파생 결과·비교 UI와 P7 experience gate
 
 ## Mac steps
 

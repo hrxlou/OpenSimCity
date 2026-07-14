@@ -40,6 +40,7 @@
 ## Contracts and constraints
 
 - placeholder는 아트 방향 확정으로 간주하지 않는다.
+- P3 제품 화면은 primitive 기반 placeholder를 사용한다. Downtown City MegaKit Standard는 P3-08의 Benchmark 전용 representative slice까지 사용할 수 있으며 CityPrototype prefab 교체, catalog 확장과 한국 도시화 production 통합은 P9-01 범위다.
 - 표시 building/view를 비활성화해도 simulation checksum이 같아야 한다.
 - 성능 개선이나 목표 FPS 달성 주장은 profiler/benchmark 전까지 하지 않는다.
 - P3의 회복은 성장 정지와 재개를 뜻한다. 쇠퇴·폐건물·재개발 회복은 P6 범위다.
@@ -73,5 +74,6 @@
 ## Out of scope
 
 - production low-poly 세트
+- Downtown City MegaKit 전체 import, material 정리와 한국 도시화 세트
 - 차량·시민 표현
 - 출시 수준 UX
