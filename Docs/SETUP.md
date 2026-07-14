@@ -59,15 +59,15 @@ iOS 빌드가 필요할 때만 전체 Xcode와 Unity의 iOS Build Support를 추
 
 ### 필수 도구
 
-- [ ] RTX 3060용 최신 안정 NVIDIA Studio Driver
-- [ ] Git for Windows
-- [ ] Git LFS
-- [ ] GitHub CLI 또는 GitHub Desktop
-- [ ] Unity Hub
-- [ ] Unity Editor `6000.5.3f1` (x86_64)
-- [ ] Windows Build Support (IL2CPP; 필요하면 Mono도 추가)
-- [ ] VS Code와 C# 확장 또는 Visual Studio 2022의 Unity 워크로드/Rider
-- [ ] Blender `5.1.2`
+- [ ] RTX 3060용 최신 안정 NVIDIA Studio Driver (현재 드라이버 버전은 확인했지만 Studio 채널과 최신 여부는 별도 확인 필요)
+- [x] Git for Windows
+- [x] Git LFS
+- [x] GitHub CLI 또는 GitHub Desktop
+- [x] Unity Hub
+- [x] Unity Editor `6000.5.3f1` (x86_64)
+- [x] Windows Build Support (IL2CPP; 필요하면 Mono도 추가)
+- [x] VS Code와 C# 확장 또는 Visual Studio 2022의 Unity 워크로드/Rider
+- [x] Blender `5.1.2`
 
 PowerShell 또는 Git Bash에서 확인한다.
 
@@ -91,17 +91,34 @@ Test Framework: 1.7.0
 
 ### Windows 확인 사항
 
-- [ ] `git config --global user.name`과 `user.email` 설정
-- [ ] GitHub SSH 또는 HTTPS 인증 완료
-- [ ] VS Code/C# 확장 또는 Visual Studio/Rider 설치
+- [x] `git config --global user.name`과 `user.email` 설정
+- [x] GitHub SSH 또는 HTTPS 인증 완료
+- [x] VS Code/C# 확장 또는 Visual Studio/Rider 설치
 - [ ] Unity Preferences에서 외부 스크립트 편집기 확인
-- [ ] Blender Preferences에서 RTX 3060용 OptiX 활성화
-- [ ] 저장소 clone 후 `git lfs pull` 실행
-- [ ] Windows 장기 경로 문제가 발생하면 Git/OS long path 설정 검토
-- [ ] 프로젝트와 Unity 캐시는 여유 공간이 충분한 SSD에 배치
+- [x] Blender Preferences에서 RTX 3060용 OptiX 활성화
+- [x] 저장소 clone 후 `git lfs pull` 실행
+- [x] Windows 장기 경로 문제가 발생하면 Git/OS long path 설정 검토
+- [x] 프로젝트와 Unity 캐시는 여유 공간이 충분한 SSD에 배치
 - [ ] 고부하 테스트 시 전원 모드를 성능 우선으로 설정
 
 이 PC는 32GB RAM이므로 Unity·Blender·브라우저 동시 실행 여유가 Mac보다 크다. 다만 Blender 렌더링과 Unity 플레이 테스트를 동시에 장시간 실행할 때는 GPU VRAM과 SSD 캐시 여유를 확인한다.
+
+### 2026-07-14 Windows 점검 결과
+
+| 항목 | 상태 |
+|---|---|
+| Git / Git LFS / GitHub CLI | 설치 및 GitHub HTTPS 인증 확인 (`git 2.51.0`, `git-lfs 3.7.0`, `gh 2.92.0`) |
+| Unity Hub | 설치됨 (`3.19.4`) |
+| Unity Editor | 설치됨 (`6000.5.3f1`, x86_64) |
+| Windows Build Support | IL2CPP 설치 확인 |
+| VS Code C# 확장 | 설치됨 (`ms-dotnettools.csharp 2.140.9`) |
+| Blender | 설치됨 (`5.1.2`), RTX 3060 OptiX 활성화 확인 |
+| NVIDIA 드라이버 | RTX 3060과 드라이버 `610.62` 확인; Studio 채널/최신 여부는 미확인 |
+| Unity 외부 스크립트 편집기 | Unity Preferences에서 GUI 확인 필요 |
+| 저장 공간 | C: 드라이브 여유 약 90GiB 확인 |
+| 전원 모드 | 현재 Balanced; 고부하 테스트 전 성능 우선 설정 필요 |
+
+Unity의 `ProjectSetup.ConfigureProject` 실행이 완료되었고, 최신 프로젝트 기준 EditMode 테스트 5개가 모두 통과했다.
 
 ## 4. Unity 프로젝트 최초 생성
 
@@ -179,13 +196,13 @@ git lfs pull
 | VS Code C# 확장 | 설치됨 (`ms-dotnettools.csharp`) |
 | iOS/Windows Build Support | 아직 설치하지 않음 |
 
-PC 상태는 이 환경에서 직접 확인할 수 없으므로 Windows 체크리스트를 해당 PC에서 실행해 확인한다.
+Windows PC 상태는 위의 2026-07-14 점검 결과를 기준으로 한다. Studio 드라이버 채널, Unity 외부 스크립트 편집기, 고부하 테스트용 전원 모드는 해당 환경에서 추가 확인한다.
 
 현재 Mac에서 남은 단계는 Unity Hub에서 저장소를 Add/Open해 첫 GUI 실행을 확인하고, Blender Metal 사용 여부를 확인하는 것이다. iOS 또는 Windows 빌드가 필요해지는 시점에 해당 Build Support 모듈을 추가한다.
 
-## 8. GitHub 최초 업로드
+## 8. GitHub 저장소 운영
 
-현재 파일은 문서와 설정뿐이며 비밀키 패턴이나 50MB 초과 파일이 없어 초기 설계 커밋으로 올려도 된다. 업로드 전에 작성자 정보와 Git LFS를 설정한다.
+현재 저장소에는 문서·설정과 결정성 시뮬레이션 기반 코드·테스트가 포함되어 있다. 비밀키 패턴이나 50MB 초과 파일이 없는지 확인하고, 변경을 업로드하기 전에 작성자 정보와 Git LFS를 설정한다.
 
 ```bash
 git config --global user.name "<your-name>"
@@ -210,4 +227,4 @@ git remote add origin <repository-url>
 git push -u origin main
 ```
 
-`Library`, `Temp`, IDE 설정 파일이 staged 목록에 나타나면 커밋하지 말고 `.gitignore` 적용 상태부터 확인한다. 실제 Unity 프로젝트를 생성한 뒤에는 `Assets`, `Packages`, `ProjectSettings`, `.meta`를 두 번째 커밋으로 올린다.
+`Library`, `Temp`, IDE 설정 파일이 staged 목록에 나타나면 커밋하지 말고 `.gitignore` 적용 상태부터 확인한다. Unity 프로젝트 설정과 시뮬레이션 기반 코드가 변경되면 `Assets`, `Packages`, `ProjectSettings`, `.meta` 및 관련 테스트를 검토한 뒤 커밋한다.
