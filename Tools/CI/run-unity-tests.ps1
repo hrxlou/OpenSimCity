@@ -37,6 +37,15 @@ if (-not (Test-Path $UnityEditor)) {
 
 $ResultsDir = Join-Path $RepoRoot 'TestResults'
 New-Item -ItemType Directory -Force -Path $ResultsDir | Out-Null
+$TimeoutSeconds = 1800
+if ($env:UNITY_TEST_TIMEOUT_SECONDS) {
+    $parsedTimeout = 0
+    if (-not [int]::TryParse($env:UNITY_TEST_TIMEOUT_SECONDS, [ref]$parsedTimeout) -or $parsedTimeout -le 0) {
+        Write-Error "UNITY_TEST_TIMEOUT_SECONDS는 양의 정수여야 한다: $($env:UNITY_TEST_TIMEOUT_SECONDS)"
+        exit 2
+    }
+    $TimeoutSeconds = $parsedTimeout
+}
 
 function Wait-ForUnityLockRelease {
     param(
@@ -92,13 +101,13 @@ function Find-UnityFatalError {
 function Invoke-UnityTests {
     param(
         [string]$Platform,
-        [string]$Slug,
-        [int]$TimeoutSeconds = 1800
+        [string]$Slug
     )
 
     $resultsPath = Join-Path $ResultsDir "$Slug.xml"
     $logPath = Join-Path $ResultsDir "$Slug.log"
     if (Test-Path $resultsPath) { Remove-Item $resultsPath -Force }
+    if (Test-Path $logPath) { Remove-Item $logPath -Force }
 
     $unityArgs = @(
         '-batchmode'

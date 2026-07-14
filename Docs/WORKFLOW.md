@@ -165,3 +165,88 @@ Scene이나 Prefab이 필요한 경우 직접 YAML을 편집하라는 요청 대
 - 검증 결과에는 OS, Unity 버전, 테스트 종류, 성공/실패, 로그 또는 캡처 위치를 남긴다.
 - 반대 장비에서 실패하면 원래 이슈를 다시 열어 같은 브랜치에서 수정한다. 플랫폼별 수정 이슈로 즉시 분리하지 않는다.
 - 두 장비 검증이 필요 없는 문서 전용 작업은 이슈에 이유를 적고 Verify 단계를 생략할 수 있다.
+
+### 9.1 P0-03 테스트 인계 절차
+
+P0-03의 Primary 장비는 Mac, Verify 장비는 Windows다. Primary는 변경을 하나의 커밋으로
+정리하고 테스트 결과를 확인한 뒤 push한다. Verify는 그 커밋을 수정하지 않고 먼저 그대로
+재현한다.
+
+#### 공통 테스트 결과
+
+두 runner는 같은 모드와 결과 경로를 사용한다.
+
+| 모드 | macOS | Windows PowerShell | 결과 XML | Unity 로그 |
+| --- | --- | --- | --- | --- |
+| EditMode | `./Tools/CI/run-unity-tests.sh edit` | `powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\run-unity-tests.ps1 edit` | `TestResults/editmode.xml` | `TestResults/editmode.log` |
+| PlayMode | `./Tools/CI/run-unity-tests.sh play` | `powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\run-unity-tests.ps1 play` | `TestResults/playmode.xml` | `TestResults/playmode.log` |
+| 모두 | `./Tools/CI/run-unity-tests.sh all` | `powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\run-unity-tests.ps1 all` | 위 두 XML | 위 두 로그 |
+
+Unity 경로는 저장소의 `ProjectSettings/ProjectVersion.txt`에서 읽는다. 기본 경로가 다르면
+양쪽 모두 `UNITY_EDITOR`로 실행 파일을 명시한다.
+
+```bash
+UNITY_EDITOR="/Applications/Unity/Hub/Editor/6000.5.3f1/Unity.app/Contents/MacOS/Unity" \
+  ./Tools/CI/run-unity-tests.sh all
+```
+
+```powershell
+$env:UNITY_EDITOR = 'D:\Unity\6000.5.3f1\Editor\Unity.exe'
+powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\run-unity-tests.ps1 all
+```
+
+`UNITY_TEST_TIMEOUT_SECONDS`의 기본값은 1800초다. 이전 실행의 XML과 로그는 각 모드 시작 시
+삭제한다. Unity launcher의 종료 코드는 relaunch 상황에서 신뢰할 수 없으므로 NUnit XML의
+`test-run/@result`가 `Passed`인지 최종 판정한다. XML이 없거나 유효하지 않거나 `Passed`가
+아니면 runner는 non-zero로 종료한다. XML이 `Passed`인데 launcher만 non-zero를 반환한 경우는
+relaunch 진단 메시지를 남기고 통과시킨다.
+
+#### Primary → Verify 인계
+
+Mac에서 다음을 실행하고, 결과 XML과 로그를 이슈 또는 PR artifact에 첨부한다.
+
+```bash
+git status --short
+git rev-parse HEAD
+git lfs version
+awk '/m_EditorVersion:/{print $2; exit}' ProjectSettings/ProjectVersion.txt
+./Tools/CI/run-unity-tests.sh edit
+./Tools/CI/run-unity-tests.sh play
+```
+
+그 다음 `git push origin <branch>`로 커밋을 올리고 이슈에 아래 형식으로 Windows 검증을
+요청한다.
+
+```markdown
+### P0-03 handoff: Mac → Windows
+- Commit: `<full SHA>`
+- Branch/PR: `<branch or PR URL>`
+- Primary: macOS `<version>`, `<arch>`, Unity `<version>`
+- Commands: `./Tools/CI/run-unity-tests.sh edit`, `./Tools/CI/run-unity-tests.sh play`
+- Result: EditMode `<passed>/<total>`, PlayMode `<passed>/<total>`
+- Evidence: `TestResults/editmode.xml`, `TestResults/editmode.log`, `TestResults/playmode.xml`, `TestResults/playmode.log`
+- First error: `None` 또는 로그의 첫 오류 한 줄
+- Windows action: 같은 SHA를 `pull --ff-only`한 뒤 동일한 EditMode/PlayMode 명령을 실행
+```
+
+Windows 검증자는 `git status --short`가 깨끗한지 확인하고, 같은 SHA에서 다음을 실행한다.
+
+```powershell
+git pull --ff-only
+powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\run-unity-tests.ps1 edit
+powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\run-unity-tests.ps1 play
+```
+
+실패를 의도적으로 확인할 때는 전용 테스트에 임시 실패 assertion을 넣어 `all`을 실행하고,
+`TestResults/<mode>.xml`의 `result="Failed"`와 runner의 non-zero 종료를 확인한 뒤 그 임시
+변경을 제거하고 같은 커밋 상태로 복귀한다. 검증 이슈에는 OS, Unity 버전, SHA, 실행 명령,
+첫 오류, 결과 XML·로그 경로를 기록한다.
+
+#### 실패 복귀
+
+실패한 장비는 구현 커밋을 수정한 채로 다음 작업을 진행하지 않는다. 먼저 결과 XML의
+`test-run/@result`와 해당 로그의 첫 오류를 기록하고, `git status --short`로 generated
+출력이 커밋 대상에 섞이지 않았는지 확인한다. 원인 수정이 필요하면 동일 브랜치에 작은
+수정 커밋을 추가해 Primary 장비에서 다시 `edit`와 `play`를 실행한 뒤 새 SHA를 재인계한다.
+환경 문제로 원인 파악이 안 되면 원래 커밋으로 작업 트리를 되돌린 것이 아니라, 변경을
+보존한 상태에서 Unity Library/패키지 import와 에디터 경로를 재확인하고 재현 로그를 남긴다.
