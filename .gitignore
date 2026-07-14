@@ -37,3 +37,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Unity license files (never commit)
+*.alf
+*.ulf
