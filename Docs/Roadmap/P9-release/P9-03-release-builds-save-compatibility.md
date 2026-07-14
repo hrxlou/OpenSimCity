@@ -3,7 +3,7 @@
 - Phase: `P9`
 - Primary: `Cross-platform`
 - Verify: `Both`
-- Estimate: `3+ days`
+- Estimate: `Epic; Ready 전 3개 1–3 day 이슈로 분할`
 - Branch: `release/p9-03-candidate`
 - Depends on: `P9-02`
 
@@ -18,6 +18,12 @@ Windows와 macOS 출시 후보를 고정 절차로 만들고 저장 호환, 라�
 - versioned built-in content catalog, definition validator, missing-content policy
 - license/third-party inventory, crash/log paths
 - full regression, soak, packaging checklist
+
+## Required split before Ready
+
+1. Windows/macOS clean build profile·versioning·제품 Scene 목록과 packaging
+2. cross-platform·이전 지원 save/content catalog compatibility fixture
+3. full regression·benchmark·soak·license audit와 release candidate gate
 
 ## Mac steps
 

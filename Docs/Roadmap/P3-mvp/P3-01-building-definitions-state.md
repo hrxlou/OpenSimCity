@@ -5,7 +5,7 @@
 - Verify: `Windows`
 - Estimate: `2 days`
 - Branch: `feature/p3-01-building-contracts`
-- Depends on: `P2-04`
+- Depends on: `P2-05`
 
 ## Goal
 

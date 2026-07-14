@@ -18,16 +18,40 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  tests:
+    name: Unity tests for build SHA
+    runs-on: [self-hosted, Windows, unity]
+    timeout-minutes: 70
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          lfs: true
+          clean: true
+
+      - name: Run EditMode + PlayMode tests
+        shell: cmd
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File "Tools\CI\run-unity-tests.ps1" all
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: unity-build-sha-test-results-${{ github.run_id }}
+          path: TestResults
+          if-no-files-found: warn
+
   build:
     name: StandaloneWindows64
+    needs: tests
     runs-on: [self-hosted, Windows, unity]
     timeout-minutes: 40
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           lfs: true
-          clean: false
+          clean: true
 
       # 로컬 Tools/CI/build-windows.ps1과 동일한 진입점
       # (OpenSimCity.Editor.BuildScript.PerformWindowsBuild)을 사용해 재현성을 보장한다.
@@ -40,7 +64,7 @@ jobs:
       # main 빌드: 상시 보관, 14일 유지
       - name: Upload build artifact
         if: startsWith(github.ref, 'refs/heads/')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: OpenSimCity-Windows-${{ github.sha }}
           path: build/StandaloneWindows64
@@ -50,7 +74,7 @@ jobs:
       # 태그 빌드: 릴리스 후보, 90일 유지
       - name: Upload release candidate
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: OpenSimCity-Windows-${{ github.ref_name }}
           path: build/StandaloneWindows64

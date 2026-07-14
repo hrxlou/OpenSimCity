@@ -3,7 +3,7 @@
 - Phase: `P8`
 - Primary: `Mac`
 - Verify: `Windows`
-- Estimate: `2–5 days`
+- Estimate: `1 day decision + 채택 시 2–3 day 하위 이슈`
 - Branch: `feature/p8-03-map-expansion`
 - Depends on: `P4-03, P8-01, P8-02`
 
@@ -18,6 +18,10 @@
 - 확장 맵이면 stable region ID, 잠금 상태, 비용/조건, 한 번의 인접 권역 해금
 - 확장 뒤 도로·전력·교통·서비스 cache invalidation과 저장 왕복
 - 잠금/확장 가능 영역 overlay와 장기 목표 UI
+
+## Conditional split
+
+먼저 benchmark 근거로 고정 맵/확장 맵 decision record만 1일 이슈로 완료한다. 확장을 채택한 경우에만 region state·unlock command와 UI/성능 검증을 별도 2–3일 이슈로 만든다. 고정 맵을 선택하면 구현 slice를 만들지 않는다.
 
 ## Mac steps
 

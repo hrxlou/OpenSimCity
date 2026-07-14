@@ -30,7 +30,9 @@
 
 ## Windows steps
 
-- UI Toolkit 또는 프로젝트 기준 UI로 날짜, 잔액, 월 수입/지출, 인구, RCI, 개발 상태를 배치한다.
+- P2-00에서 확정한 Unity UI Toolkit 기반으로 날짜, 잔액, 월 수입/지출, 인구, RCI, 개발 상태를 배치한다.
+- [디자인 기준](../../DESIGN.md)의 `GlobalHud`, `SimulationControls`, `ProblemIndicator`, `Toast/CommandFeedback`와 기본 색 토큰을 사용한다.
+- 실제 font asset import 전에 한글 glyph/fallback, 숫자 정렬, 최소 크기와 font/icon 라이선스를 기록한다.
 - `수요 있음/개발 가능`, `수요 있음/개발 가능 필지 없음`, `수요 없음`을 서로 다른 문구와 상태로 표시한다.
 - 성장 차단 상위 3개 reason과 필지/overlay 상세 보기로 가는 진입점을 제공한다.
 - UI action이 application command를 생성하고 simulation을 직접 수정하지 않게 연결한다.
@@ -40,10 +42,13 @@
 ## Contracts and constraints
 
 - UI는 simulation 배열과 구체 renderer를 참조하지 않는다.
+- 화면별 임의 USS 값 대신 P2-00의 공통 token, PanelSettings와 focus/pointer boundary를 재사용한다.
 - UI는 reason/factor를 재계산하지 않고 ViewModel의 코드·순서·기간을 표시한다.
 - debug inspector만으로 보이는 factor는 experience acceptance를 충족하지 않는다.
 - 원장 entry 순서와 반올림 규칙은 결정적이다.
 - HUD의 animation/refresh 빈도는 monthly simulation 결과를 바꾸지 않는다.
+- 날씨·행복도·교통·서비스·정책 등 P3에 없는 지표는 HUD에 placeholder나 비활성 메뉴로 노출하지 않는다.
+- 반투명 UI의 대비는 실제 CityPrototype 월드 위에서 확인하며 상태를 색만으로 구분하지 않는다.
 
 ## Verification
 
@@ -52,6 +57,7 @@
 - UI command wiring PlayMode test
 - 수요/실행 가능성 상태와 상위 차단 reason PlayMode test
 - 다른 aspect ratio와 scale smoke
+- keyboard focus와 실제 game render 위 text/status contrast smoke
 - Mac에서 HUD와 query 값 비교
 
 ## Experience acceptance
@@ -73,4 +79,5 @@
 - 상세 예산 패널
 - 그래프 애니메이션
 - 서비스 예산
+- 날씨·행복도·교통·서비스·정책 dashboard
 - P9 출시 수준 onboarding과 contextual tutorial

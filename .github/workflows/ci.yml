@@ -1,7 +1,7 @@
 name: CI
 
-# PR과 기능 브랜치 push에서 컴파일 오류와 EditMode/PlayMode 테스트를 검증한다.
-# main 브랜치의 빌드는 build-windows.yml이 담당한다.
+# 기능 브랜치 push에서 컴파일 오류와 EditMode/PlayMode 테스트를 검증한다.
+# main과 태그의 동일 SHA 테스트는 build-windows.yml의 선행 tests job이 담당한다.
 #
 # Unity Personal 라이선스는 GitHub 호스팅 러너(UNITY_LICENSE Secret) 방식을 더 이상
 # 지원하지 않아(Unity가 수동 활성화를 막음), 이미 라이선스가 활성화된 이 저장소 소유자의
@@ -23,12 +23,12 @@ jobs:
     timeout-minutes: 70
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           lfs: true
-          # Library/를 매번 새로 받지 않도록 clean을 끈다. Unity Library 캐시는
-          # 이 러너 디스크에 그대로 남아 재사용된다.
-          clean: false
+          # self-hosted 러너의 이전 branch에서 남은 untracked Assets/build 결과가
+          # 현재 SHA에 섞이지 않게 작업 트리를 먼저 정리한다.
+          clean: true
 
       # 러너의 시스템 전역 실행 정책(Restricted)을 바꾸지 않도록, 이 프로세스에만
       # -ExecutionPolicy Bypass를 적용해 스크립트를 실행한다.
@@ -39,7 +39,7 @@ jobs:
       # 성공/실패와 무관하게 결과와 Unity 로그를 남긴다.
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unity-test-results-${{ github.run_id }}
           path: TestResults

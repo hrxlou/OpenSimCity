@@ -5,7 +5,7 @@
 - Verify: `Both`
 - Estimate: `3 days`
 - Branch: `perf/p8-01-benchmark-budgets`
-- Depends on: `P7-05`
+- Depends on: `P3-08, P7-06`
 
 ## Goal
 
@@ -14,6 +14,7 @@
 ## Scope
 
 - Benchmark Scene/fixture generator
+- P3-08 representative production-like catalog을 포함한 placeholder/production-like 분리 fixture
 - simulation tick, monthly tick, frame, GC, memory, draw call markers
 - selection, placement preview, command result, HUD/query refresh 응답 측정
 - Mac/Windows hardware-specific baseline docs
@@ -27,6 +28,7 @@
 ## Windows steps
 
 - 건물 2,000개·표시 차량 500대 fixture를 재현한다.
+- placeholder와 representative production-like renderer 구성을 각각 측정해 content 구조 차이를 기록한다.
 - Profiler capture로 CPU/GPU frame, GC, draw calls, memory를 기록한다.
 - 256x256 stress run에서 실패 지점과 bottleneck marker를 분류한다.
 - 목표 fixture에서 입력→preview와 command→공개 UI 갱신 시간을 반복 측정한다.
@@ -36,6 +38,7 @@
 - 서로 다른 하드웨어 숫자를 직접 평균내지 않는다.
 - 측정 전 warm-up, sample duration, quality, resolution을 고정한다.
 - 최적화 전 baseline과 동일 fixture/checksum을 보존한다.
+- production-like catalog가 누락되거나 placeholder만으로 측정된 결과는 release art의 render budget으로 확정하지 않는다.
 
 ## Verification
 

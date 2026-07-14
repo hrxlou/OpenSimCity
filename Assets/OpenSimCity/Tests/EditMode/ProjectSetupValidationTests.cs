@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using OpenSimCity.Editor;
 
@@ -19,6 +20,17 @@ namespace OpenSimCity.Tests.EditMode
                 issues,
                 Is.Empty,
                 "ProjectSetup.Validate() reported configuration issues:\n" + string.Join("\n", issues));
+        }
+
+        [Test]
+        public void ReleaseBuildScenesExcludeDevelopmentFixtures()
+        {
+            IReadOnlyList<string> scenes = BuildScript.ReleaseScenePaths();
+
+            Assert.That(scenes, Does.Contain("Assets/OpenSimCity/Scenes/Bootstrap.unity"));
+            Assert.That(scenes, Does.Contain("Assets/OpenSimCity/Scenes/MainMenu.unity"));
+            Assert.That(scenes, Does.Contain("Assets/OpenSimCity/Scenes/CityPrototype.unity"));
+            Assert.That(scenes.Any(path => path.Contains("Benchmark")), Is.False);
         }
     }
 }

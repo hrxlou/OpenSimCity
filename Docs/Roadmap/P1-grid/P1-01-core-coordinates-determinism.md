@@ -5,7 +5,7 @@
 - Verify: `Windows`
 - Estimate: `1–2 days`
 - Branch: `feature/p1-01-core-determinism`
-- Depends on: `P0-03`
+- Depends on: `P0-04`
 
 ## Goal
 

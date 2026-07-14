@@ -3,7 +3,7 @@
 - Phase: `P5`
 - Primary: `Mac`
 - Verify: `Windows`
-- Estimate: `3–5 days`
+- Estimate: `Epic; Ready 전 2개 1–3 day 이슈로 분할`
 - Branch: `feature/p5-04-road-hierarchy`
 - Depends on: `P5-02, P5-03`
 
@@ -18,6 +18,11 @@
 - 양방향·일방통행 directed edge와 경로 cache 무효화
 - 건설 차액·유지비·용량·속도·소음 read model
 - upgrade preview, 실패 reason, 교통 overlay 통합
+
+## Required split before Ready
+
+1. road definition·upgrade/replace command·directed graph와 저장/결정성
+2. preview·방향 표시·overlay와 철거 없는 병목 회복 experience gate
 
 ## Mac steps
 
