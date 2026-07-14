@@ -24,8 +24,8 @@
 - [ ] GitHub CLI 또는 GitHub Desktop
 - [ ] Unity Hub
 - [ ] 프로젝트가 고정한 Unity 6 Editor 및 필요한 Build Support
-- [ ] Blender 기준 버전
-- [ ] Rider 또는 VS Code와 C# 확장
+- [x] Blender 기준 버전
+- [x] VS Code와 C# 확장
 
 권장 설치·확인 명령:
 
@@ -45,8 +45,9 @@ iOS 빌드가 필요할 때만 전체 Xcode와 Unity의 iOS Build Support를 추
 
 - [ ] `git config --global user.name`과 `user.email` 설정
 - [ ] GitHub SSH 또는 HTTPS 인증 완료
-- [ ] Unity Hub에서 Apple Silicon용 Editor 설치
-- [ ] Unity 외부 스크립트 편집기 연결
+- [x] Unity Hub 설치 (`3.19.5`)
+- [x] Unity 외부 스크립트 편집기 연결 준비
+- [x] Blender 설치 (`5.1.2`)
 - [ ] Blender에서 Metal GPU 사용 가능 여부 확인
 - [ ] 16GB 메모리를 고려해 Unity·Blender·브라우저 동시 실행 최소화
 
@@ -150,11 +151,15 @@ git lfs pull
 | GitHub CLI | 설치 및 로그인됨 |
 | Git 작성자 이름/이메일 | 설정됨 (`hrxlou`, `kimhyun4103@gmail.com`) |
 | Git LFS | 설치 및 초기화됨 |
-| Unity Hub/Editor | `/Applications`에서 확인되지 않음 |
-| Blender | `/Applications`에서 확인되지 않음 |
+| Unity Hub | 설치됨 (`3.19.5`) |
+| Unity Editor | 프로젝트 버전 선택·설치 필요 |
+| Blender | 설치됨 (`5.1.2`) |
+| VS Code C# 확장 | 설치됨 (`ms-dotnettools.csharp`) |
 | Unity 프로젝트 파일 | 아직 생성하지 않음 |
 
 PC 상태는 이 환경에서 직접 확인할 수 없으므로 Windows 체크리스트를 해당 PC에서 실행해 확인한다.
+
+현재 Mac에서 남은 수동 단계는 Unity Hub 로그인, 사용할 Unity 6 Editor의 정확한 버전 선택, 해당 Editor 설치, 그리고 첫 Unity 프로젝트 생성이다.
 
 ## 8. GitHub 최초 업로드
 
