@@ -61,6 +61,7 @@ Migration flow: 유입 후보, 유출 후보, 실제 이동량, 원인
 
 - 도시 명령은 `(SimulationTick, CommandSequence)`로 완전히 정렬한다.
 - `CellCoord`와 `ChunkCoord`의 안정 순서는 `Y` 오름차순 후 `X` 오름차순이다. 음수 좌표를 chunk로 바꿀 때도 floor 나눗셈을 사용해 경계 양쪽의 규칙을 동일하게 유지한다.
+- 유한 `WorldState`의 로컬 셀 범위는 `0 <= X < width`, `0 <= Y < height`이며 셀 index는 `Y * width + X`, 청크 index는 `chunkY * ceil(width / chunkSize) + chunkX`다. 마지막 청크 행·열은 partial chunk가 될 수 있다.
 - `SimulationTick`과 `CommandSequence`가 표현 가능한 최댓값에 도달하면 wrap하지 않고 overflow를 보고한다. 순서가 역전될 수 있는 값을 생성하지 않는다.
 - 일시정지, 배속, 저장 요청은 도시 명령이 아닌 Application control이다.
 - 시스템마다 독립 RNG 상태를 갖고 저장 스냅샷에 포함한다.

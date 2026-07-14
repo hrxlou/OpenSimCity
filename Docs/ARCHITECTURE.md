@@ -239,6 +239,23 @@ OpenSimCity/
 
 MonoBehaviour가 이 데이터의 진실 원천이 되어서는 안 된다.
 
+### WorldState/grid 저장 계약
+
+`WorldState`의 기본 맵은 64x64 셀과 16x16 청크다. 생성 DTO에서 width, height,
+chunk size, seed를 받아 셀 배열과 청크 인덱스를 한 번 생성하며, 청크 인덱스와
+dirty 표식은 셀 상태에서 파생되는 런타임 데이터다.
+
+- 맵 좌표는 `0 <= X < width`, `0 <= Y < height`인 로컬 좌표다.
+- 셀 순회와 셀 배열 index는 `Y` 오름차순 안에서 `X` 오름차순인
+  `index = Y * width + X` row-major 규칙을 사용한다.
+- 청크 순회와 청크 index도 같은 규칙을 사용한다. `chunkColumns`는
+  `ceil(width / chunkSize)`이며 `chunkIndex = chunkY * chunkColumns + chunkX`다.
+- 맵 크기가 chunk size로 나누어지지 않으면 마지막 행·열 청크는 실제 남은
+  셀 수만 가진다. 청크의 첫 셀 index는 주소 정보이며 청크 내부 행이 셀 배열에서
+  하나의 연속 구간이라고 가정하지 않는다.
+- dirty 상태는 변경된 청크의 index만 표시한다. `Try` 조회는 범위 밖에서
+  `false`를 반환하고, 검증된 접근 API는 명시적 범위 예외를 보고한다.
+
 ### 읽기 모델
 
 UI와 렌더링에 필요한 최소 데이터만 내보낸다.
