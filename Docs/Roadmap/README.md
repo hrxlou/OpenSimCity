@@ -2,7 +2,7 @@
 
 이 디렉터리는 제품 로드맵을 1~3일 안에 검토 가능한 이슈 단위로 관리한다. 각 이슈 문서는 목표, 선행 작업, Mac/Windows 단계, 계약, 검증, 완료 조건을 함께 가진다.
 
-GitHub 실행 현황은 [roadmap 이슈 목록](https://github.com/hrxlou/OpenSimCity/issues?q=is%3Aissue%20is%3Aopen%20label%3Aroadmap)에서 확인한다. 로컬 문서와 GitHub 이슈는 제목의 이슈 ID로 대응한다.
+GitHub 실행 현황은 [Workflow Kanban](https://github.com/users/hrxlou/projects/7/views/3)과 [roadmap 이슈 목록](https://github.com/hrxlou/OpenSimCity/issues?q=is%3Aissue%20is%3Aopen%20label%3Aroadmap)에서 확인한다. 로컬 문서와 GitHub 이슈는 제목의 이슈 ID로 대응한다.
 
 ## 운영 원칙
 
@@ -40,6 +40,8 @@ GitHub 실행 현황은 [roadmap 이슈 목록](https://github.com/hrxlou/OpenSi
 ## 권장 칸반 상태
 
 `Backlog → Ready → In Progress → Verify on Other Device → Done`
+
+GitHub Project의 `Workflow` 필드를 칸반 상태의 기준으로 사용한다. 각 카드에는 `Phase`와 `Primary Device`가 표시되며, 상태 라벨은 초기 검색과 보조 표시 용도다.
 
 - `Ready`: 선행 이슈와 필요한 계약이 완료됨
 - `In Progress`: Primary 장비에서 구현 중
