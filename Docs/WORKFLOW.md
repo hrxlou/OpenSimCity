@@ -197,9 +197,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\run-unity-tests.ps1
 
 `UNITY_TEST_TIMEOUT_SECONDS`의 기본값은 1800초다. 이전 실행의 XML과 로그는 각 모드 시작 시
 삭제한다. Unity launcher의 종료 코드는 relaunch 상황에서 신뢰할 수 없으므로 NUnit XML의
-`test-run/@result`가 `Passed`인지 최종 판정한다. XML이 없거나 유효하지 않거나 `Passed`가
-아니면 runner는 non-zero로 종료한다. XML이 `Passed`인데 launcher만 non-zero를 반환한 경우는
-relaunch 진단 메시지를 남기고 통과시킨다.
+`test-run/@result`가 `Passed`이고 `test-run/@total`이 1 이상인지 최종 판정한다. XML이 없거나
+유효하지 않거나 `Passed`가 아니거나 발견된 테스트가 0개면 runner는 non-zero로 종료한다.
+두 runner 모두 라이선스·중복 인스턴스·컴파일 오류를 로그에서 감지해 즉시 실패하고, 다음 모드
+실행 전에 Unity project lock 해제를 기다린다. XML이 `Passed`인데 launcher만 non-zero를 반환한
+경우는 relaunch 진단 메시지를 남기고 통과시킨다.
 
 #### Primary → Verify 인계
 
