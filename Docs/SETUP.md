@@ -22,8 +22,8 @@
 - [ ] Git
 - [ ] Git LFS
 - [ ] GitHub CLI 또는 GitHub Desktop
-- [ ] Unity Hub
-- [ ] 프로젝트가 고정한 Unity 6 Editor 및 필요한 Build Support
+- [x] Unity Hub
+- [x] 프로젝트가 고정한 Unity 6 Editor (`6000.5.3f1`, arm64)
 - [x] Blender 기준 버전
 - [x] VS Code와 C# 확장
 
@@ -46,6 +46,7 @@ iOS 빌드가 필요할 때만 전체 Xcode와 Unity의 iOS Build Support를 추
 - [ ] `git config --global user.name`과 `user.email` 설정
 - [ ] GitHub SSH 또는 HTTPS 인증 완료
 - [x] Unity Hub 설치 (`3.19.5`)
+- [x] Unity Editor 설치 (`6000.5.3f1`, arm64)
 - [x] Unity 외부 스크립트 편집기 연결 준비
 - [x] Blender 설치 (`5.1.2`)
 - [ ] Blender에서 Metal GPU 사용 가능 여부 확인
@@ -89,9 +90,9 @@ gh auth status
 
 ## 4. Unity 프로젝트 최초 생성
 
-현재 저장소에는 설계 문서만 있고 Unity 생성 파일은 아직 없다. 한 장비에서만 최초 생성하고 Git으로 다른 장비에 전달한다.
+현재 저장소에는 기준 Mac에서 Unity 프로젝트 파일까지 생성되어 있다. 최초 생성은 한 장비에서만 수행하고, 다른 장비는 Git으로 동일한 `Assets`, `Packages`, `ProjectSettings`를 받는다.
 
-1. 기준 장비에서 Unity Hub로 Unity 6 URP 프로젝트를 임시 위치에 생성한다.
+1. 기준 장비에서 Unity Hub로 프로젝트를 생성하거나, 현재 저장소의 생성 절차를 사용한다.
 2. Unity를 종료한다.
 3. 임시 프로젝트의 `Assets`, `Packages`, `ProjectSettings`를 이 저장소 루트로 옮긴다.
 4. 저장소 루트에서 아래 스크립트를 실행한다.
@@ -152,14 +153,20 @@ git lfs pull
 | Git 작성자 이름/이메일 | 설정됨 (`hrxlou`, `kimhyun4103@gmail.com`) |
 | Git LFS | 설치 및 초기화됨 |
 | Unity Hub | 설치됨 (`3.19.5`) |
-| Unity Editor | 프로젝트 버전 선택·설치 필요 |
+| Unity Editor | 설치됨 (`6000.5.3f1`, arm64) |
+| Unity 모듈 | Mac Standalone, WebGL 설치됨 |
+| Unity 프로젝트 | 생성됨 (`/Users/hyunkim/Documents/OpenSimCity`) |
+| URP | 활성화됨 (`17.5.0`) |
+| Test Framework | 활성화됨 (`1.7.0`) |
+| Input System | 활성화됨 (`1.19.0`, 새 Input System) |
+| Editor 설정 | Force Text, Visible Meta Files 적용 |
 | Blender | 설치됨 (`5.1.2`) |
 | VS Code C# 확장 | 설치됨 (`ms-dotnettools.csharp`) |
-| Unity 프로젝트 파일 | 아직 생성하지 않음 |
+| iOS/Windows Build Support | 아직 설치하지 않음 |
 
 PC 상태는 이 환경에서 직접 확인할 수 없으므로 Windows 체크리스트를 해당 PC에서 실행해 확인한다.
 
-현재 Mac에서 남은 수동 단계는 Unity Hub 로그인, 사용할 Unity 6 Editor의 정확한 버전 선택, 해당 Editor 설치, 그리고 첫 Unity 프로젝트 생성이다.
+현재 Mac에서 남은 단계는 Unity Hub에서 저장소를 Add/Open해 첫 GUI 실행을 확인하고, Blender Metal 사용 여부를 확인하는 것이다. iOS 또는 Windows 빌드가 필요해지는 시점에 해당 Build Support 모듈을 추가한다.
 
 ## 8. GitHub 최초 업로드
 
@@ -172,7 +179,7 @@ brew install git-lfs
 git lfs install
 ```
 
-아직 GitHub 저장소가 없다면 초기에는 비공개 저장소를 권장한다.
+저장소를 새로 만들 때는 초기에는 비공개 저장소를 권장한다. 현재 프로젝트는 이미 `hrxlou/OpenSimCity` 비공개 저장소에 연결되어 있다.
 
 ```bash
 git add .

@@ -2,7 +2,7 @@
 
 SimCity 계열의 피드백 루프를 작은 규모부터 검증하는 Unity 기반 2.5D 도시 시뮬레이션 프로젝트다.
 
-> 현재 저장소는 설계 단계다. Unity 프로젝트 파일은 아직 생성하지 않았다.
+> 현재 저장소에는 Unity `6000.5.3f1` + URP `17.5.0` 기반이 초기화되어 있다. 도시 시뮬레이션 기능은 Phase 1부터 구현한다.
 
 ## 제품 방향
 
@@ -35,11 +35,10 @@ SimCity 계열의 피드백 루프를 작은 규모부터 검증하는 Unity 기
 
 ## 바로 다음 작업
 
-1. Unity Hub에서 이 저장소를 Unity 6 URP 프로젝트로 초기화한다.
-2. Unity 버전을 `ProjectSettings/ProjectVersion.txt`로 고정한다.
-3. `Tools/Bootstrap/create-project-directories.sh`를 실행해 [정의된 기본 구조](Docs/ARCHITECTURE.md#권장-디렉터리)를 만든다.
-4. Bootstrap, CityPrototype, Benchmark 씬을 Editor 도구로 생성한다.
-5. Phase 0 검증을 통과한 뒤 `SimulationClock`과 `WorldGrid`를 시작한다.
+1. Unity Hub에서 이 저장소를 Add/Open한다.
+2. `ProjectSettings/ProjectVersion.txt`와 같은 `6000.5.3f1` Editor를 사용한다.
+3. `OpenSimCity/Setup/Configure Project` 메뉴를 실행해 설정·씬 생성을 재현할 수 있는지 확인한다.
+4. Phase 0 검증을 통과한 뒤 `SimulationClock`과 `WorldGrid`를 시작한다.
 
 Unity Hub가 비어 있지 않은 저장소에 새 프로젝트 생성을 허용하지 않는 경우, 같은 Unity 버전의 임시 URP 프로젝트를 만든 뒤 Unity를 종료하고 그 프로젝트의 `Assets`, `Packages`, `ProjectSettings`만 이 저장소 루트로 옮긴 후 다시 연다.
 
