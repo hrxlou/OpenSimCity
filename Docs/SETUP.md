@@ -17,11 +17,11 @@
 
 ### 필수 도구
 
-- [ ] Xcode Command Line Tools
-- [ ] Homebrew
-- [ ] Git
-- [ ] Git LFS
-- [ ] GitHub CLI 또는 GitHub Desktop
+- [x] Xcode Command Line Tools
+- [x] Homebrew
+- [x] Git
+- [x] Git LFS
+- [x] GitHub CLI 또는 GitHub Desktop
 - [x] Unity Hub
 - [x] 프로젝트가 고정한 Unity 6 Editor (`6000.5.3f1`, arm64)
 - [x] Blender 기준 버전
@@ -59,15 +59,15 @@ iOS 빌드가 필요할 때만 전체 Xcode와 Unity의 iOS Build Support를 추
 
 ### 필수 도구
 
-- [ ] 최신 안정 NVIDIA Studio Driver
+- [ ] RTX 3060용 최신 안정 NVIDIA Studio Driver
 - [ ] Git for Windows
 - [ ] Git LFS
 - [ ] GitHub CLI 또는 GitHub Desktop
 - [ ] Unity Hub
-- [ ] Mac과 정확히 같은 Unity Editor
-- [ ] Windows Build Support (IL2CPP)
-- [ ] Visual Studio 2022의 Game development with Unity 워크로드 또는 Rider
-- [ ] Blender 기준 버전
+- [ ] Unity Editor `6000.5.3f1` (x86_64)
+- [ ] Windows Build Support (IL2CPP; 필요하면 Mono도 추가)
+- [ ] VS Code와 C# 확장 또는 Visual Studio 2022의 Unity 워크로드/Rider
+- [ ] Blender `5.1.2`
 
 PowerShell 또는 Git Bash에서 확인한다.
 
@@ -77,17 +77,31 @@ git lfs install
 git lfs version
 gh auth login
 gh auth status
+git config --global user.name "hrxlou"
+git config --global user.email "kimhyun4103@gmail.com"
+```
+
+프로젝트의 `Packages/manifest.json`에 고정된 패키지는 양쪽에서 따로 설치하지 않는다. Git으로 받은 뒤 Unity가 자동으로 해석한다.
+
+```text
+URP:           17.5.0
+Input System:  1.19.0
+Test Framework: 1.7.0
 ```
 
 ### Windows 확인 사항
 
 - [ ] `git config --global user.name`과 `user.email` 설정
 - [ ] GitHub SSH 또는 HTTPS 인증 완료
-- [ ] Unity 외부 스크립트 편집기 연결
+- [ ] VS Code/C# 확장 또는 Visual Studio/Rider 설치
+- [ ] Unity Preferences에서 외부 스크립트 편집기 확인
 - [ ] Blender Preferences에서 RTX 3060용 OptiX 활성화
+- [ ] 저장소 clone 후 `git lfs pull` 실행
 - [ ] Windows 장기 경로 문제가 발생하면 Git/OS long path 설정 검토
 - [ ] 프로젝트와 Unity 캐시는 여유 공간이 충분한 SSD에 배치
 - [ ] 고부하 테스트 시 전원 모드를 성능 우선으로 설정
+
+이 PC는 32GB RAM이므로 Unity·Blender·브라우저 동시 실행 여유가 Mac보다 크다. 다만 Blender 렌더링과 Unity 플레이 테스트를 동시에 장시간 실행할 때는 GPU VRAM과 SSD 캐시 여유를 확인한다.
 
 ## 4. Unity 프로젝트 최초 생성
 
