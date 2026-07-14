@@ -30,7 +30,7 @@ jobs:
           clean: false
 
       - name: Run EditMode + PlayMode tests
-        shell: pwsh
+        shell: powershell
         run: ./Tools/CI/run-unity-tests.ps1 all
 
       # 성공/실패와 무관하게 결과와 Unity 로그를 남긴다.

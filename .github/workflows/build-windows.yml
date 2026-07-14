@@ -31,7 +31,7 @@ jobs:
       # 로컬 Tools/CI/build-windows.ps1과 동일한 진입점
       # (OpenSimCity.Editor.BuildScript.PerformWindowsBuild)을 사용해 재현성을 보장한다.
       - name: Build
-        shell: pwsh
+        shell: powershell
         run: ./Tools/CI/build-windows.ps1 -OutputPath "${{ github.workspace }}/build/StandaloneWindows64/OpenSimCity.exe"
 
       # main 빌드: 상시 보관, 14일 유지
