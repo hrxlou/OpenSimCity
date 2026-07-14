@@ -5,7 +5,7 @@
 - Verify: `Both`
 - Estimate: `3 days`
 - Branch: `perf/p8-01-benchmark-budgets`
-- Depends on: `P7-03`
+- Depends on: `P7-05`
 
 ## Goal
 
@@ -15,6 +15,7 @@
 
 - Benchmark Scene/fixture generator
 - simulation tick, monthly tick, frame, GC, memory, draw call markers
+- selection, placement preview, command result, HUD/query refresh 응답 측정
 - Mac/Windows hardware-specific baseline docs
 
 ## Mac steps
@@ -28,6 +29,7 @@
 - 건물 2,000개·표시 차량 500대 fixture를 재현한다.
 - Profiler capture로 CPU/GPU frame, GC, draw calls, memory를 기록한다.
 - 256x256 stress run에서 실패 지점과 bottleneck marker를 분류한다.
+- 목표 fixture에서 입력→preview와 command→공개 UI 갱신 시간을 반복 측정한다.
 
 ## Contracts and constraints
 
@@ -41,12 +43,20 @@
 - 3회 반복 측정 분산
 - view-off/on 분리
 - save size/load time
+- 입력/명령 feedback latency
+
+## Experience acceptance
+
+- 목표 fixture에서 selection과 placement preview가 정한 응답 예산 안에 표시된다.
+- 도시 명령 뒤 공개 HUD/reason이 해당 simulation 기간과 UI refresh 예산 안에 갱신된다.
+- stress fixture가 예산을 넘으면 기능 실패와 구분해 한계 및 완화 설정을 기록한다.
 
 ## Done when
 
 - [ ] 플랫폼별 재현 가능한 baseline과 목표 예산이 문서화된다.
 - [ ] 병목이 profiler marker와 수치로 특정된다.
 - [ ] 후속 최적화 우선순위가 근거와 함께 정해진다.
+- [ ] 문제 식별과 명령 feedback의 응답 예산이 플랫폼별로 정의된다.
 - [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
 
 ## Out of scope

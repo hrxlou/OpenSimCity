@@ -15,7 +15,7 @@
 
 - construction tool state machine
 - 직선 도로와 zone brush preview·cancel·commit
-- 도로 connection, zone, parcel overlay
+- 도로 connection, 외부 접근성 band, zone, parcel overlay
 - CityPrototype PlayMode/smoke fixture
 
 ## Mac steps
@@ -28,6 +28,7 @@
 
 - 도로/구역/철거 도구 전환, drag, 우클릭/Escape 취소를 구현한다.
 - 유효/무효 preview 색과 비용·실패 사유를 표시한다.
+- 접면 없음, 외부 연결 없음, 도달 가능하지만 먼 필지의 reason/band를 플레이어용 overlay에서 구분한다.
 - overlay toggle과 카메라/selection 충돌을 검증한다.
 - 대표 도시 fixture를 재현하는 Editor 메뉴 또는 테스트 setup을 만든다.
 
@@ -42,12 +43,20 @@
 - 취소 후 state와 재정 불변
 - preview/commit 결과 일치
 - 고립망과 frontage 표시
+- 외부 접근성 band와 parcel query 일치
 - Windows/macOS CityPrototype smoke
+
+## Experience acceptance
+
+- 플레이어가 설치 전 preview에서 비용과 성공/실패를 확인하고 취소하면 도시 상태와 재정이 변하지 않는다.
+- 접면 없음, 외부 연결 없음, 도달 가능하지만 먼 필지를 debug inspector 없이 구분한다.
+- 도로를 연결하거나 끊으면 영향 필지의 자격 reason과 접근성 band가 같은 갱신 안에서 바뀐다.
 
 ## Done when
 
 - [ ] 플레이어가 도로와 구역을 설치·취소·철거할 수 있다.
-- [ ] 고립 도로망과 개발 불가 필지를 화면에서 구분한다.
+- [ ] 고립 도로망, 개발 불가 필지, 접근성 band를 화면에서 구분한다.
+- [ ] P2 capability/experience gate가 양쪽에서 통과한다.
 - [ ] P2 모든 완료 조건과 양쪽 검증 증거가 이슈에 기록된다.
 - [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
 
