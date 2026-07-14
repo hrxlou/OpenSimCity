@@ -20,7 +20,7 @@
 ## Mac steps
 
 - clock에 실제 시간 누적과 고정 tick 소비를 분리한다.
-- 동일 tick 명령은 sequence로 안정 정렬하고 중복 stamp 정책을 정한다.
+- 동일 tick 명령은 sequence로 안정 정렬하고 중복 stamp는 거부한다.
 - 명령이 simulation 배열을 직접 노출하지 않도록 handler/facade 경계를 만든다.
 - pause, 배속, 큰 delta, 명령 순서 EditMode 테스트를 추가한다.
 

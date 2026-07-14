@@ -60,6 +60,11 @@ Migration flow: 유입 후보, 유출 후보, 실제 이동량, 원인
 ## 5. 시간과 결정성
 
 - 도시 명령은 `(SimulationTick, CommandSequence)`로 완전히 정렬한다.
+- `SimulationClock`은 고정 delta를 누적해 틱을 소비하며 첫 틱은 0이다. 기본 고정 간격은
+  0.1초이고 프레임당 catch-up은 최대 4틱으로 제한한다. pause 중 실시간 delta는 누적하지
+  않으며 상한을 넘긴 backlog는 버린다.
+- 같은 `(SimulationTick, CommandSequence)` stamp는 중복으로 보고 거부한다. 이미 소비한
+  틱에 뒤늦게 도착한 명령도 거부해 과거 상태를 재작성하지 않는다.
 - `CellCoord`와 `ChunkCoord`의 안정 순서는 `Y` 오름차순 후 `X` 오름차순이다. 음수 좌표를 chunk로 바꿀 때도 floor 나눗셈을 사용해 경계 양쪽의 규칙을 동일하게 유지한다.
 - 유한 `WorldState`의 로컬 셀 범위는 `0 <= X < width`, `0 <= Y < height`이며 셀 index는 `Y * width + X`, 청크 index는 `chunkY * ceil(width / chunkSize) + chunkX`다. 마지막 청크 행·열은 partial chunk가 될 수 있다.
 - `SimulationTick`과 `CommandSequence`가 표현 가능한 최댓값에 도달하면 wrap하지 않고 overflow를 보고한다. 순서가 역전될 수 있는 값을 생성하지 않는다.

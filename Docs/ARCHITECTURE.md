@@ -294,6 +294,18 @@ SetDistrictPolicyCommand
 
 모든 도시 명령에는 적용할 `SimulationTick`과 해당 틱 안에서 단조 증가하는 `CommandSequence`를 붙인다. 시뮬레이션은 이 두 값을 기준으로 명령을 정렬한다.
 
+P1-03의 Application 구현은 렌더 프레임과 시뮬레이션을 `SimulationClock`으로 분리한다.
+새 clock의 첫 실행 틱은 0이며 기본 고정 간격은 0.1초, 한 프레임에서 소비할 수 있는
+최대 catch-up은 4틱이다. pause 중에는 실시간 delta를 누적하지 않고, catch-up 상한을
+넘긴 delta는 무제한 backlog로 남기지 않고 버린다. 배속은 `Paused`, `One`, `Two`,
+`Four` application control만 허용한다.
+
+`CommandQueue`는 미래 틱 명령을 받아 `(SimulationTick, CommandSequence)` 순으로
+정렬하고 동일 stamp를 거부한다. 이미 처리한 틱의 명령도 거부한다. 고정 틱마다
+`CommandDispatcher`가 등록된 handler 하나를 선택하고 검증한 뒤 실행하므로 Gameplay와
+View가 Simulation 배열을 직접 수정하지 않는다. 처리 결과는 적용·거부·미지원·실패를
+포함한 결정적 순서의 결과 목록으로 반환한다.
+
 ```text
 RoadNetworkChanged
 TransitLineChanged
