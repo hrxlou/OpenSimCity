@@ -17,7 +17,7 @@ PR과 `main` 병합을 GitHub Actions로 자동 검증하고, Windows Standalone
 
 - `.github/workflows/ci.yml`: 기능 브랜치에서 clean checkout 뒤 EditMode + PlayMode 테스트
 - `.github/workflows/build-windows.yml`: `main`/태그의 동일 SHA를 clean checkout에서 테스트한 뒤 Windows 빌드 artifact 또는 릴리스 후보 생성
-- `Library`는 source checkout과 분리된 branch/ref별 Actions cache로 관리
+- `Library`는 clean checkout에서 재생성한다. self-hosted runner에 cache action이 요구하는 압축 도구가 검증되기 전에는 cache를 사용하지 않는다.
 - `Tools/CI/run-unity-tests.ps1`: 기존 `run-unity-tests.sh`와 동일 인터페이스의 Windows 버전
 - `Tools/CI/build-windows.ps1` + `Assets/OpenSimCity/Editor/BuildScript.cs`: 로컬/CI 공통 빌드 진입점
 
@@ -68,7 +68,7 @@ Unity를 실행한다. `game-ci` 액션과 UNITY_LICENSE/EMAIL/PASSWORD Secrets�
 - 라이선스나 인증 정보를 저장소나 워크플로에 두지 않는다. self-hosted 러너 방식에서는 애초에
   Secrets 자체가 필요 없다.
 - 로컬 빌드와 CI 빌드는 동일한 진입점(`BuildScript.PerformWindowsBuild`)을 사용해 재현성을 보장한다.
-- checkout은 `clean: true`로 이전 branch의 untracked asset·생성물을 제거하고 `Library`만 같은 branch/ref의 별도 cache에서 복원한다.
+- checkout은 `clean: true`로 이전 branch의 untracked asset·생성물과 `Library`를 제거한다. 재현성을 우선하고, cache는 runner의 GNU tar/zstd 또는 동등한 압축 도구와 restore/save smoke를 통과한 뒤 별도 이슈로 도입한다.
 - `main`/태그 build job은 같은 SHA의 EditMode·PlayMode tests job 성공을 `needs`로 요구한다.
 - Editor Build Settings에는 Benchmark를 둘 수 있지만 release BuildScript는 Bootstrap/MainMenu/CityPrototype의 명시적 제품 Scene 목록만 사용한다.
 - self-hosted 러너는 PR에서 들어온 코드를 그대로 실행하므로, 저장소가 Public으로 전환되기 전에
@@ -91,7 +91,7 @@ Unity를 실행한다. `game-ci` 액션과 UNITY_LICENSE/EMAIL/PASSWORD Secrets�
 - [ ] PlayMode smoke test가 자동 실행된다.
 - [ ] `main` 병합 시 Windows 빌드 artifact가 생성된다.
 - [ ] `main`과 태그의 정확한 build SHA에서 EditMode/PlayMode가 먼저 통과한다.
-- [ ] self-hosted workspace는 clean checkout이고 Library만 별도 cache로 재사용한다.
+- [ ] self-hosted workspace가 clean checkout이며 이전 branch의 Library·untracked asset을 재사용하지 않는다.
 - [ ] release Scene 목록에서 Benchmark가 제외된다.
 - [ ] 실패 시 Unity 로그가 Actions artifact에 남는다.
 - [ ] Mac과 Windows에서 같은 명령(`run-unity-tests.sh` / `.ps1`)으로 테스트를 실행할 수 있다.

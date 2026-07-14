@@ -23,22 +23,12 @@ jobs:
     timeout-minutes: 70
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           lfs: true
           # self-hosted 러너의 이전 branch에서 남은 untracked Assets/build 결과가
           # 현재 SHA에 섞이지 않게 작업 트리를 먼저 정리한다.
           clean: true
-
-      # checkout 정리와 Library 재사용을 분리한다. Library는 source가 아니며 Unity가
-      # 현재 checkout을 기준으로 갱신한다.
-      - name: Restore Unity Library cache
-        uses: actions/cache@v4
-        with:
-          path: Library
-          key: unity-library-${{ runner.os }}-${{ github.ref_name }}-${{ hashFiles('ProjectSettings/ProjectVersion.txt', 'ProjectSettings/*.asset', 'Packages/manifest.json', 'Packages/packages-lock.json') }}
-          restore-keys: |
-            unity-library-${{ runner.os }}-${{ github.ref_name }}-
 
       # 러너의 시스템 전역 실행 정책(Restricted)을 바꾸지 않도록, 이 프로세스에만
       # -ExecutionPolicy Bypass를 적용해 스크립트를 실행한다.
@@ -49,7 +39,7 @@ jobs:
       # 성공/실패와 무관하게 결과와 Unity 로그를 남긴다.
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unity-test-results-${{ github.run_id }}
           path: TestResults
