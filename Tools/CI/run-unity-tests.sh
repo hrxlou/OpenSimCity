@@ -152,8 +152,6 @@ run_tests() {
     printf 'Unity launcher exit code was %s, but the NUnit result was Passed; continuing.\n' \
       "${unity_exit_code}" >&2
   fi
-
-  wait_for_unity_lock_release
 }
 
 case "${MODE}" in
@@ -165,6 +163,9 @@ case "${MODE}" in
     ;;
   all)
     run_tests EditMode editmode
+    # Wait for the lock only before the next run. After the final run the wait
+    # is pointless, and a lingering lock could flip a passing run into a failure.
+    wait_for_unity_lock_release
     run_tests PlayMode playmode
     ;;
   *)

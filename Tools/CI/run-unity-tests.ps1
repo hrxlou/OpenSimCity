@@ -183,7 +183,6 @@ function Invoke-UnityTests {
     }
 
     Write-Host "$Platform tests passed ($($results.'test-run'.passed)/$total)."
-    Wait-ForUnityLockRelease
 }
 
 switch ($Mode) {
@@ -191,6 +190,9 @@ switch ($Mode) {
     'play' { Invoke-UnityTests -Platform 'PlayMode' -Slug 'playmode' }
     'all' {
         Invoke-UnityTests -Platform 'EditMode' -Slug 'editmode'
+        # PlayMode 실행 전에만 lock 해제를 기다린다. 마지막 실행 뒤에는
+        # 대기가 불필요하고, lock이 늦게 풀리면 통과한 실행을 실패로 뒤집을 수 있다.
+        Wait-ForUnityLockRelease
         Invoke-UnityTests -Platform 'PlayMode' -Slug 'playmode'
     }
 }
