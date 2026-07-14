@@ -1,0 +1,70 @@
+name: Build Windows
+
+# main 병합 시 Windows Standalone 빌드를 만들고 artifact로 보관한다.
+# 태그(v*) push 시에는 릴리스 후보로 별도 보관한다.
+# 초기 CD는 "빌드를 자동으로 만들어 다운로드 가능하게 보관"하는 수준까지만 다룬다.
+# Steam/itch.io 업로드, 코드 서명, 자동 릴리스는 MVP 안정화 이후에 붙인다.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+concurrency:
+  group: build-windows-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: StandaloneWindows64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-build-StandaloneWindows64-${{ hashFiles('Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: |
+            Library-build-StandaloneWindows64-
+            Library-
+
+      # game-ci는 Linux 컨테이너에서 StandaloneWindows64로 크로스 컴파일한다.
+      # 별도 Windows 러너 없이 Windows 실행 파일을 만들 수 있어 CI 비용이 낮다.
+      # buildMethod를 명시해 로컬 build-windows.ps1과 동일한 진입점을 사용한다.
+      - name: Build
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: StandaloneWindows64
+          buildName: OpenSimCity
+          buildMethod: OpenSimCity.Editor.BuildScript.PerformWindowsBuild
+
+      # main 빌드: 상시 보관, 14일 유지
+      - name: Upload build artifact
+        if: startsWith(github.ref, 'refs/heads/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenSimCity-Windows-${{ github.sha }}
+          path: build/StandaloneWindows64
+          if-no-files-found: error
+          retention-days: 14
+
+      # 태그 빌드: 릴리스 후보, 90일 유지
+      - name: Upload release candidate
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenSimCity-Windows-${{ github.ref_name }}
+          path: build/StandaloneWindows64
+          if-no-files-found: error
+          retention-days: 90

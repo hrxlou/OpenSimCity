@@ -1,0 +1,64 @@
+name: CI
+
+# PR과 기능 브랜치 push에서 컴파일과 테스트를 검증한다.
+# main 브랜치의 빌드는 build-windows.yml이 담당한다.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches-ignore: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  tests:
+    name: ${{ matrix.testMode }} tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        testMode: [editmode, playmode]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # Unity 버전은 ProjectSettings/ProjectVersion.txt에 고정되어 있으며
+      # game-ci가 이를 그대로 사용한다. 패키지는 Packages/packages-lock.json으로 고정된다.
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ matrix.testMode }}-${{ hashFiles('Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: |
+            Library-${{ matrix.testMode }}-
+            Library-
+
+      - name: Run ${{ matrix.testMode }} tests
+        id: tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          testMode: ${{ matrix.testMode }}
+          artifactsPath: ${{ matrix.testMode }}-results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: ${{ matrix.testMode }} results
+
+      # 성공/실패와 무관하게 결과와 Unity 로그를 남긴다.
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.testMode }}-results
+          path: ${{ steps.tests.outputs.artifactsPath }}
+          if-no-files-found: warn

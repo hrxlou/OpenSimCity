@@ -40,6 +40,10 @@ P0 저장소/Unity 기반
 - EditMode/PlayMode 샘플 테스트가 양쪽 기기에서 통과한다.
 - Scene과 Prefab 생성이 수동 배치가 아니라 Editor 메뉴로 재현된다.
 
+### 세부 이슈
+
+- [P0-03: Windows CI baseline and standalone build](Roadmap/P0/P0-03-windows-ci.md)
+
 ## 4. Phase 1 — 그리드 상호작용
 
 ### 산출물
