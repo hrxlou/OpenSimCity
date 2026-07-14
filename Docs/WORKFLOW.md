@@ -155,3 +155,13 @@ Blender/Source
 ```
 
 Scene이나 Prefab이 필요한 경우 직접 YAML을 편집하라는 요청 대신 생성/검증 Editor 도구와 실행 절차를 함께 요청한다.
+
+## 9. 로드맵 이슈와 장비 인계
+
+실행 순서와 장비별 체크리스트는 [Roadmap 이슈 인덱스](Roadmap/README.md)에서 관리한다. 각 로컬 문서는 동일 ID의 GitHub 이슈와 1:1로 대응한다.
+
+- Primary 장비에서 구현과 좁은 테스트를 마치면 commit/push하고 칸반 상태를 `Verify on Other Device`로 옮긴다.
+- Verify 장비는 동일 커밋을 `pull --ff-only`로 받아 import, compile, 관련 테스트와 수동 smoke를 수행한다.
+- 검증 결과에는 OS, Unity 버전, 테스트 종류, 성공/실패, 로그 또는 캡처 위치를 남긴다.
+- 반대 장비에서 실패하면 원래 이슈를 다시 열어 같은 브랜치에서 수정한다. 플랫폼별 수정 이슈로 즉시 분리하지 않는다.
+- 두 장비 검증이 필요 없는 문서 전용 작업은 이슈에 이유를 적고 Verify 단계를 생략할 수 있다.
