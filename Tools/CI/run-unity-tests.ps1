@@ -38,6 +38,57 @@ if (-not (Test-Path $UnityEditor)) {
 $ResultsDir = Join-Path $RepoRoot 'TestResults'
 New-Item -ItemType Directory -Force -Path $ResultsDir | Out-Null
 
+function Wait-ForUnityLockRelease {
+    param(
+        [int]$TimeoutSeconds = 60
+    )
+
+    # Unity's batchmode process can relaunch internally and exit its original
+    # handle before the relaunched process finishes, so the results XML can
+    # appear slightly before the project's lock is actually released. Running
+    # the next test invocation ('all' mode) before that happens fails with
+    # "Multiple Unity instances cannot open the same project."
+    $lockPath = Join-Path $RepoRoot 'Temp\UnityLockfile'
+    $elapsed = 0
+    while ((Test-Path $lockPath) -and $elapsed -lt $TimeoutSeconds) {
+        Start-Sleep -Seconds 1
+        $elapsed += 1
+    }
+}
+
+# Unity가 결과 XML을 만들지 못하고 batchmode를 중단할 때 로그에 남기는 신호들.
+# 이 경우 XML은 영영 나타나지 않으므로 타임아웃까지 기다리지 말고 즉시 실패해야 한다.
+$FatalErrorSignatures = @(
+    'Aborting batchmode due to fatal error',
+    'Multiple Unity instances cannot open the same project',
+    'It looks like another Unity instance is running',
+    'No valid Unity Editor license found',
+    'Failed to activate/update license'
+)
+
+function Find-UnityFatalError {
+    param(
+        [string]$LogPath
+    )
+
+    if (-not (Test-Path $LogPath)) {
+        return $null
+    }
+
+    $content = Get-Content -Path $LogPath -Raw -ErrorAction SilentlyContinue
+    if (-not $content) {
+        return $null
+    }
+
+    foreach ($signature in $FatalErrorSignatures) {
+        if ($content -like "*$signature*") {
+            return $signature
+        }
+    }
+
+    return $null
+}
+
 function Invoke-UnityTests {
     param(
         [string]$Platform,
@@ -65,14 +116,29 @@ function Invoke-UnityTests {
     # Unity는 첫 프로세스가 내부적으로 재실행(relaunch)하며 원래 프로세스 핸들을
     # 먼저 종료하는 경우가 있어, 이 프로세스의 종료 코드는 신뢰할 수 없다.
     # 대신 실제 NUnit 결과 XML이 나타날 때까지 기다려 그 결과를 판정 기준으로 쓴다.
+    # 단, Unity가 fatal error로 중단하면 XML은 영영 생기지 않으므로, 그 사이에
+    # 로그의 fatal error 신호를 감지하면 타임아웃을 기다리지 않고 즉시 실패시킨다.
     $elapsed = 0
     while (-not (Test-Path $resultsPath) -and $elapsed -lt $TimeoutSeconds) {
+        $fatalError = Find-UnityFatalError -LogPath $logPath
+        if ($fatalError) {
+            Write-Error "$Platform 테스트 실패: Unity가 fatal error로 중단했다: '$fatalError'. 로그: $logPath"
+            exit 1
+        }
+
         Start-Sleep -Seconds 2
         $elapsed += 2
     }
 
     if (-not (Test-Path $resultsPath)) {
-        Write-Error "$Platform 테스트 실패: ${TimeoutSeconds}초 내에 결과 파일이 생성되지 않았다. 로그: $logPath"
+        # 마지막으로 한 번 더 fatal error를 확인해 원인을 구체적으로 보고한다.
+        $fatalError = Find-UnityFatalError -LogPath $logPath
+        if ($fatalError) {
+            Write-Error "$Platform 테스트 실패: Unity가 fatal error로 중단했다: '$fatalError'. 로그: $logPath"
+        }
+        else {
+            Write-Error "$Platform 테스트 실패: ${TimeoutSeconds}초 내에 결과 파일이 생성되지 않았다. 로그: $logPath"
+        }
         exit 1
     }
 
@@ -84,6 +150,7 @@ function Invoke-UnityTests {
     }
 
     Write-Host "$Platform tests passed ($($results.'test-run'.passed)/$($results.'test-run'.total))."
+    Wait-ForUnityLockRelease
 }
 
 switch ($Mode) {
