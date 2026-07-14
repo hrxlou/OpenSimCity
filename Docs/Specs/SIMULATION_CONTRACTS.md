@@ -84,3 +84,30 @@ Migration flow: 유입 후보, 유출 후보, 실제 이동량, 원인
 ## 8. 플레이어 경험 게이트
 
 기능의 정확성·결정성 gate와 플레이어가 문제를 이해하고 수정할 수 있는 experience gate를 함께 관리한다. 공통 증거 형식, 단계별 최소 경험, P3 접근성 근사는 [플레이어 경험 게이트 계약](PLAYER_EXPERIENCE_CONTRACTS.md)을 따른다.
+
+## 9. 도로 계층과 대중교통
+
+- 도로 등급은 비용, 용량, 속도, 유지비, 소음처럼 다른 시스템이 소비하는 명명된 입력으로 구분한다.
+- 산업 수요나 토지가치 같은 결과를 도로 종류가 직접 수정하지 않는다.
+- 일방통행은 directed edge로 표현하며 경로 탐색과 도달성은 표시 mesh가 아니라 simulation graph를 읽는다.
+- 도로 등급·방향 변경은 application command이며 road version과 영향 cache를 명시적으로 갱신한다.
+- 버스 전환량은 정류장 접근성, 자동차 대비 일반화 이동비용, 노선 용량, 예산에서 결정한다.
+- 자동차와 버스 통행량은 같은 OD를 분할하며 mode choice가 통행을 새로 만들거나 삭제하지 않는다.
+- 승객과 버스 GameObject는 집계 결과를 보여줄 뿐 mode share와 혼잡의 진실 원천이 아니다.
+
+## 10. District와 정책
+
+- 셀은 첫 수직 슬라이스에서 최대 하나의 `DistrictId`에 속하며 membership은 stable ID 기반 runtime state로 저장한다.
+- 지구 칠하기·지우기·정책 변경은 application command로만 수행하고 변경 셀을 안정 순서로 처리한다.
+- 정책은 경로 접근/비용, 서비스·교통 용량, 시 예산처럼 명명된 입력만 변경한다.
+- 정책이 수요, 토지가치, 행복도, 성장률 같은 출력값을 직접 더하거나 곱하지 않는다.
+- 정책 효과는 명시된 기간 경계부터 적용하고 UI는 직접 변경한 입력과 파생된 지난 기간 결과를 구분한다.
+- 모든 정책은 비용, 기회비용, 우회, 오염·소음 중 하나 이상의 관찰 가능한 대가를 가져야 한다.
+
+## 11. 콘텐츠와 해금 경계
+
+- runtime state는 built-in 또는 향후 data-only pack 여부와 관계없이 stable definition ID를 저장한다.
+- 저장 파일은 필요한 content catalog version과 definition ID를 식별할 수 있어야 한다.
+- 누락 definition을 임의의 다른 콘텐츠로 조용히 치환하지 않는다. category별 명시적 오류 또는 계약된 안전 fallback만 허용한다.
+- 마일스톤은 simulation capability의 구현 순서를 결정하지 않으며 검증된 기능을 플레이어에게 소개하는 별도 progression state다.
+- 진단·원인 설명·기본 복구 명령은 progression에 의해 잠기지 않는다.

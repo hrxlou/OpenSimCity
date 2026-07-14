@@ -12,6 +12,8 @@ SimCity 계열의 피드백 루프를 작은 규모부터 검증하는 Unity 기
 - 표현: 실제 시뮬레이션과 화면상의 GameObject/차량을 분리
 - 초기 맵: 64 x 64 셀
 - 첫 목표: 도로, RCI 구역, 전력, 자동 성장, 인구·일자리, 월간 재정, 저장/불러오기
+- 제품 검증: 같은 seed에서도 도로·교통·지구 선택에 따라 외형과 운영이 다른 두 도시가 모두 생존 가능해야 함
+- 범위 원칙: 대형 도시 게임의 기능 수를 복제하지 않고 버스 한 종류와 정책 두 종류 같은 작은 수직 슬라이스로 공간적 선택을 검증
 
 핵심 플레이 루프는 다음과 같다.
 
@@ -30,6 +32,7 @@ SimCity 계열의 피드백 루프를 작은 규모부터 검증하는 Unity 기
 - [이슈 단위 개발 로드맵](Docs/Roadmap/README.md)
 - [시뮬레이션 핵심 계약](Docs/Specs/SIMULATION_CONTRACTS.md)
 - [플레이어 경험 게이트 계약](Docs/Specs/PLAYER_EXPERIENCE_CONTRACTS.md)
+- [Post-MVP 후보와 진입 조건](Docs/Roadmap/POST_MVP.md)
 - [PC·Mac 최초 환경 설정](Docs/SETUP.md)
 - [Git·두 기기·에셋 작업 방식](Docs/WORKFLOW.md)
 

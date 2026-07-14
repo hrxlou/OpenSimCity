@@ -15,6 +15,8 @@ GitHub 실행 현황은 [Workflow Kanban](https://github.com/users/hrxlou/projec
 - Phase gate를 통과하기 전 다음 Phase의 상태를 `In Progress`로 바꾸지 않는다. 조사와 준비 작업은 허용한다.
 - Phase gate는 기능·결정성을 증명하는 capability gate와 플레이어가 상태를 이해하고 수정할 수 있는 experience gate를 함께 가진다.
 - Experience gate는 [플레이어 경험 게이트 계약](../Specs/PLAYER_EXPERIENCE_CONTRACTS.md)에 따라 해당 Phase에 구현된 기능만 검증한다.
+- 새 기능은 `P3.5` 같은 대형 중간 묶음으로 끼워 넣지 않고 선행 capability가 검증된 Phase의 후속 이슈로 추가한다.
+- 첫 출시 gate를 막지 않는 마일스톤·시설 업그레이드·시그니처 건물·data-only 콘텐츠 후보는 [Post-MVP 후보와 진입 조건](POST_MVP.md)에서 관리한다.
 
 ## 장비 역할
 
@@ -33,15 +35,17 @@ GitHub 실행 현황은 [Workflow Kanban](https://github.com/users/hrxlou/projec
 | P2 도로·구역·필지 | 도로 접면·외부 연결·접근성 거리가 개발 입력으로 제공됨 | 설치·취소·철거가 가능하고 고립망·개발 불가·접근성 band를 화면에서 구분함 | [P2-01](P2-roads-zones/P2-01-road-state-commands.md), [P2-02](P2-roads-zones/P2-02-road-graph-external-connection.md), [P2-03](P2-roads-zones/P2-03-zoning-commands.md), [P2-04](P2-roads-zones/P2-04-parcels-development-eligibility.md), [P2-05](P2-roads-zones/P2-05-placement-overlays-cross-platform.md) |
 | P3 첫 MVP | 도로·전력·수요·접근성 기반 성장과 월간 경제가 30분 동작 | 성장 정지 원인을 공개 UI에서 확인하고 전력·외부 연결 복구 뒤 성장이 재개되며, 서로 다른 두 도로 배치가 기본 루프를 완주함 | [P3-01](P3-mvp/P3-01-building-definitions-state.md), [P3-02](P3-mvp/P3-02-power-network.md), [P3-03](P3-mvp/P3-03-population-employment-migration.md), [P3-04](P3-mvp/P3-04-market-rci-demand.md), [P3-05](P3-mvp/P3-05-growth-development.md), [P3-06](P3-mvp/P3-06-municipal-economy-hud.md), [P3-07](P3-mvp/P3-07-placeholder-art-deterministic-soak.md) |
 | P4 저장·복원 | 성장 중인 도시가 양쪽 플랫폼에서 동일하게 복원됨 | 저장 전후 공개 원인·가능 명령·다음 기간 결과가 의미상 동일함 | [P4-01](P4-save/P4-01-snapshot-dto-serialization.md), [P4-02](P4-save/P4-02-storage-migration.md), [P4-03](P4-save/P4-03-save-ui-cross-platform-roundtrip.md) |
-| P5 집계 교통 | 표시 차량과 무관한 교통 결과와 벤치마크가 존재함 | 병목·도달 불가 원인을 확인하고 도로 변경으로 대표 시나리오를 개선함 | [P5-01](P5-traffic/P5-01-trip-demand-matching.md), [P5-02](P5-traffic/P5-02-routing-traffic-aggregation.md), [P5-03](P5-traffic/P5-03-vehicle-views-congestion-benchmark.md) |
+| P5 집계 교통·교통 설계 | 표시 차량과 무관한 교통 결과, 도로 계층·방향, 집계형 버스 결과와 벤치마크가 존재함 | 철거 없는 도로 변경 또는 버스 투자로 병목을 개선하고 두 전략의 비용·공간 trade-off를 설명함 | [P5-01](P5-traffic/P5-01-trip-demand-matching.md), [P5-02](P5-traffic/P5-02-routing-traffic-aggregation.md), [P5-03](P5-traffic/P5-03-vehicle-views-congestion-benchmark.md), [P5-04](P5-traffic/P5-04-road-hierarchy-upgrade-one-way.md), [P5-05](P5-traffic/P5-05-aggregate-bus-transit.md) |
 | P6 입지·쇠퇴 | 입지 악화가 시간 지연을 거쳐 쇠퇴로 설명됨 | 쇠퇴 원인을 두 채널 이상에서 확인하고 조건 회복 뒤 재개발까지 추적함 | [P6-01](P6-decline/P6-01-spatial-condition-fields.md), [P6-02](P6-decline/P6-02-decline-redevelopment-datamaps.md) |
-| P7 서비스·밀도·정체성 | 서비스·수도·예산·밀도와 특성화 한 종류가 도시 상태에 반영됨 | 일반 도시와 특성화 도시가 서로 다른 실행 가능한 운영과 trade-off를 제공함 | [P7-01](P7-services/P7-01-service-coverage-budget.md), [P7-02](P7-services/P7-02-water-density-progression.md), [P7-03](P7-services/P7-03-dispatch-vehicles-service-ui.md), [P7-04](P7-services/P7-04-specialization-vertical-slice.md), [P7-05](P7-services/P7-05-specialization-experience-gate.md) |
-| P8 규모·성능 | 목표 규모의 CPU/GPU/GC 예산을 양쪽에서 기록함 | 목표 규모에서도 문제 식별과 명령 feedback이 실질적으로 막히지 않음 | [P8-01](P8-performance/P8-01-benchmark-fixtures-budgets.md), [P8-02](P8-performance/P8-02-pooling-instancing-lod.md) |
-| P9 출시 준비 | 신규 사용자 루프와 Windows/macOS 출시 후보가 검증됨 | 신규 사용자가 첫 15분 안에 핵심 루프와 대표 실패 회복을 완료함 | [P9-01](P9-release/P9-01-production-art-pipeline.md), [P9-02](P9-release/P9-02-ux-tutorial-accessibility.md), [P9-03](P9-release/P9-03-release-builds-save-compatibility.md) |
+| P7 서비스·밀도·정체성 | 서비스·수도·예산·밀도, 특성화 한 종류, 지구와 정책 두 종류가 도시 상태에 반영됨 | 일반/특성화 도시와 정책 유무 지구가 서로 다른 실행 가능한 운영과 설명 가능한 trade-off를 제공함 | [P7-01](P7-services/P7-01-service-coverage-budget.md), [P7-02](P7-services/P7-02-water-density-progression.md), [P7-03](P7-services/P7-03-dispatch-vehicles-service-ui.md), [P7-04](P7-services/P7-04-specialization-vertical-slice.md), [P7-05](P7-services/P7-05-specialization-experience-gate.md), [P7-06](P7-services/P7-06-district-policy-vertical-slice.md) |
+| P8 규모·성능·맵 범위 | 목표 규모의 CPU/GPU/GC 예산과 고정 맵/한 단계 확장 제품 결정을 기록함 | 목표 규모에서도 문제 식별과 명령 feedback이 막히지 않고, 선택한 맵 경계 또는 확장 목표를 이해함 | [P8-01](P8-performance/P8-01-benchmark-fixtures-budgets.md), [P8-02](P8-performance/P8-02-pooling-instancing-lod.md), [P8-03](P8-performance/P8-03-map-expansion-decision-slice.md) |
+| P9 출시 준비 | 콘텐츠 catalog·저장 호환을 포함한 Windows/macOS 출시 후보가 검증됨 | 신규 사용자가 첫 15분 안에 핵심 루프와 대표 실패 회복을 완료하고 도시 선택의 시각적 차이를 확인함 | [P9-01](P9-release/P9-01-production-art-pipeline.md), [P9-02](P9-release/P9-02-ux-tutorial-accessibility.md), [P9-03](P9-release/P9-03-release-builds-save-compatibility.md) |
 
 ## 권장 칸반 상태
 
 `Backlog → Ready → In Progress → Verify on Other Device → Done`
+
+Post-MVP 후보는 진입 조건을 충족하고 별도 승인되기 전까지 이 칸반의 `Ready`로 올리지 않는다.
 
 GitHub Project의 `Workflow` 필드를 칸반 상태의 기준으로 사용한다. 각 카드에는 `Phase`와 `Primary Device`가 표시되며, 상태 라벨은 초기 검색과 보조 표시 용도다.
 
