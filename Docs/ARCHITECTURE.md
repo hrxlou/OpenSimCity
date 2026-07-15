@@ -59,6 +59,12 @@ P1 카메라는 Gameplay 안에서 별도의 view state로 동작한다. `Isomet
 WASD, 휠, Q/E action은 `IsometricCamera.inputactions`에 고정하고 Editor 생성 도구가
 `CityPrototype`의 rig·camera·read-model source 참조를 재현 가능하게 구성한다.
 
+P1-05의 `GridSelectionTool`은 별도 `Selection` action map에서 좌클릭을 받아 화면 ray를
+ground plane으로 투영한 뒤 `GridSelectionMath`로 `CellCoord` 조회 결과만 만든다. 선택은
+simulation state를 변경하지 않으며, camera drag 억제 상태와 UI pointer 차단을 먼저 확인한다.
+`GridDebugGridRenderer`는 bounds read model로 만든 단일 line mesh를, highlight는 재사용되는
+단일 `LineRenderer`를 사용하므로 선택 변경마다 GameObject를 만들지 않는다.
+
 ### Presentation
 
 시뮬레이션의 읽기 모델과 이벤트를 받아 지형, 도로, 건물, 차량, 데이터맵을 표현한다. 보이는 차량 수와 실제 통행량은 독립적이다.

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using OpenSimCity.Gameplay.Camera;
+using OpenSimCity.Gameplay.Selection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -22,6 +23,10 @@ namespace OpenSimCity.Editor
         public const string InputActionsAssetPath = "Assets/OpenSimCity/Settings/IsometricCamera.inputactions";
         public const string RigName = "IsometricCameraRig";
         public const string RequiredRootName = "OpenSimCity.Prototype";
+        public const string SelectionRootName = "GridSelection";
+        public const string DebugGridName = "DebugGrid";
+        public const string HighlightName = "SelectionHighlight";
+        public const string SelectionMaterialPath = "Assets/OpenSimCity/Content/Materials/OpenSimCityDebugGrid.mat";
 
         [MenuItem("OpenSimCity/Setup/Configure Camera Rig")]
         public static void ConfigureCameraRigMenu()
@@ -47,28 +52,36 @@ namespace OpenSimCity.Editor
                         $"Could not import generated Input System asset '{InputActionsAssetPath}'.");
                 }
             }
-            else if (!IsometricCameraInputActions.HasRequiredActions(inputActions))
+            else if (!IsometricCameraInputActions.HasRequiredActions(inputActions) ||
+                     !GridSelectionInputActions.HasRequiredActions(inputActions))
             {
+                // .inputactions files are JSON source assets. Persist the updated
+                // JSON then reimport instead of only dirtying the imported object.
                 IsometricCameraInputActions.ConfigureAsset(inputActions);
-                EditorUtility.SetDirty(inputActions);
+                WriteInputActionsJsonAsset(inputActions);
+                inputActions = LoadInputActionsAsset();
+                if (inputActions == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Could not reimport generated Input System asset '{InputActionsAssetPath}'.");
+                }
             }
 
             return inputActions;
         }
 
-        private static void WriteInputActionsJsonAsset()
+        private static void WriteInputActionsJsonAsset(InputActionAsset sourceAsset = null)
         {
-            if (File.Exists(InputActionsAssetPath))
-                AssetDatabase.DeleteAsset(InputActionsAssetPath);
-
-            var generatedAsset = IsometricCameraInputActions.CreateDefaultAsset();
+            var generatedAsset = sourceAsset ?? IsometricCameraInputActions.CreateDefaultAsset();
+            var ownsGeneratedAsset = sourceAsset == null;
             try
             {
                 File.WriteAllText(InputActionsAssetPath, generatedAsset.ToJson());
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(generatedAsset);
+                if (ownsGeneratedAsset)
+                    UnityEngine.Object.DestroyImmediate(generatedAsset);
             }
 
             AssetDatabase.ImportAsset(
@@ -175,6 +188,8 @@ namespace OpenSimCity.Editor
                 EditorUtility.SetDirty(boundsSource);
                 EditorUtility.SetDirty(camera);
 
+                ConfigureGridSelection(root, rig, boundsSource, inputActions, ref sceneChanged);
+
                 if (sceneChanged || scene.isDirty)
                     EditorSceneManager.SaveScene(scene);
             }
@@ -183,6 +198,119 @@ namespace OpenSimCity.Editor
                 if (ownsScene)
                     EditorSceneManager.CloseScene(scene, removeScene: true);
             }
+        }
+
+        private static void ConfigureGridSelection(
+            GameObject root,
+            IsometricCameraRig rig,
+            WorldBoundsReadModelSource boundsSource,
+            InputActionAsset inputActions,
+            ref bool sceneChanged)
+        {
+            var material = EnsureSelectionMaterial();
+            var selectionRoot = root.transform.Find(SelectionRootName)?.gameObject;
+            if (selectionRoot == null)
+            {
+                selectionRoot = new GameObject(SelectionRootName);
+                selectionRoot.transform.SetParent(root.transform, worldPositionStays: false);
+                sceneChanged = true;
+            }
+
+            var debugGridObject = selectionRoot.transform.Find(DebugGridName)?.gameObject;
+            if (debugGridObject == null)
+            {
+                debugGridObject = new GameObject(DebugGridName);
+                debugGridObject.transform.SetParent(selectionRoot.transform, worldPositionStays: false);
+                sceneChanged = true;
+            }
+
+            var debugGrid = debugGridObject.GetComponent<GridDebugGridRenderer>();
+            if (debugGrid == null)
+            {
+                debugGrid = debugGridObject.AddComponent<GridDebugGridRenderer>();
+                sceneChanged = true;
+            }
+            debugGrid.Configure(boundsSource, material);
+
+            var highlightObject = selectionRoot.transform.Find(HighlightName)?.gameObject;
+            if (highlightObject == null)
+            {
+                highlightObject = new GameObject(HighlightName);
+                highlightObject.transform.SetParent(selectionRoot.transform, worldPositionStays: false);
+                sceneChanged = true;
+            }
+
+            var highlight = highlightObject.GetComponent<GridSelectionHighlightView>();
+            if (highlight == null)
+            {
+                highlight = highlightObject.AddComponent<GridSelectionHighlightView>();
+                sceneChanged = true;
+            }
+            highlight.Configure(material);
+
+            var tool = selectionRoot.GetComponent<GridSelectionTool>();
+            if (tool == null)
+            {
+                tool = selectionRoot.AddComponent<GridSelectionTool>();
+                sceneChanged = true;
+            }
+            tool.ConfigureReferences(rig, highlight, inputActions);
+
+            ApplySelectionSerializedReferences(debugGrid, highlight, tool, boundsSource, rig, material, inputActions);
+            EditorUtility.SetDirty(debugGrid);
+            EditorUtility.SetDirty(highlight);
+            EditorUtility.SetDirty(tool);
+        }
+
+        private static Material EnsureSelectionMaterial()
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(SelectionMaterialPath);
+            if (material != null)
+                return material;
+
+            var folder = Path.GetDirectoryName(SelectionMaterialPath)?.Replace('\\', '/');
+            if (!string.IsNullOrEmpty(folder))
+                EnsureAssetFolder(folder);
+
+            var shader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default");
+            if (shader == null)
+                throw new InvalidOperationException("Could not find an unlit shader for the P1 debug grid material.");
+
+            material = new Material(shader) { name = "OpenSimCity Debug Grid" };
+            if (material.HasProperty("_BaseColor"))
+                material.SetColor("_BaseColor", new Color(0.15f, 0.9f, 1f, 0.9f));
+            if (material.HasProperty("_Color"))
+                material.SetColor("_Color", new Color(0.15f, 0.9f, 1f, 0.9f));
+            AssetDatabase.CreateAsset(material, SelectionMaterialPath);
+            return material;
+        }
+
+        private static void ApplySelectionSerializedReferences(
+            GridDebugGridRenderer debugGrid,
+            GridSelectionHighlightView highlight,
+            GridSelectionTool tool,
+            WorldBoundsReadModelSource boundsSource,
+            IsometricCameraRig rig,
+            Material material,
+            InputActionAsset inputActions)
+        {
+            var serializedGrid = new SerializedObject(debugGrid);
+            serializedGrid.FindProperty("worldBoundsSource").objectReferenceValue = boundsSource;
+            serializedGrid.FindProperty("lineMaterial").objectReferenceValue = material;
+            SetSerializedComponentName(serializedGrid, DebugGridName);
+            serializedGrid.ApplyModifiedPropertiesWithoutUndo();
+
+            var serializedHighlight = new SerializedObject(highlight);
+            serializedHighlight.FindProperty("lineMaterial").objectReferenceValue = material;
+            SetSerializedComponentName(serializedHighlight, HighlightName);
+            serializedHighlight.ApplyModifiedPropertiesWithoutUndo();
+
+            var serializedTool = new SerializedObject(tool);
+            serializedTool.FindProperty("cameraRig").objectReferenceValue = rig;
+            serializedTool.FindProperty("highlightView").objectReferenceValue = highlight;
+            serializedTool.FindProperty("inputActions").objectReferenceValue = inputActions;
+            SetSerializedComponentName(serializedTool, SelectionRootName);
+            serializedTool.ApplyModifiedPropertiesWithoutUndo();
         }
 
         public static void Validate(ICollection<string> issues)
@@ -197,6 +325,11 @@ namespace OpenSimCity.Editor
             {
                 issues.Add(
                     $"Camera Input System asset at '{InputActionsAssetPath}' is missing one or more required actions.");
+            }
+            else if (!GridSelectionInputActions.HasRequiredActions(inputActions))
+            {
+                issues.Add(
+                    $"Input System asset at '{InputActionsAssetPath}' is missing required selection actions.");
             }
 
             if (!System.IO.File.Exists(CityPrototypeScenePath))
@@ -233,11 +366,58 @@ namespace OpenSimCity.Editor
                         "CityPrototype IsometricCameraRig is not wired to the committed " +
                         $"Input System asset '{InputActionsAssetPath}'.");
                 }
+
+                ValidateGridSelection(root, rig, inputActions, issues);
             }
             finally
             {
                 if (ownsScene)
                     EditorSceneManager.CloseScene(scene, removeScene: true);
+            }
+        }
+
+        private static void ValidateGridSelection(
+            GameObject root,
+            IsometricCameraRig rig,
+            InputActionAsset inputActions,
+            ICollection<string> issues)
+        {
+            var selectionRoot = root.transform.Find(SelectionRootName)?.gameObject;
+            var tool = selectionRoot?.GetComponent<GridSelectionTool>();
+            var grid = selectionRoot?.transform.Find(DebugGridName)?.GetComponent<GridDebugGridRenderer>();
+            var highlight = selectionRoot?.transform.Find(HighlightName)?.GetComponent<GridSelectionHighlightView>();
+
+            if (tool == null)
+                issues.Add($"CityPrototype is missing '{SelectionRootName}' with a GridSelectionTool. Run Configure Project.");
+            else
+            {
+                if (tool.CameraRig != rig)
+                    issues.Add("CityPrototype GridSelectionTool is not wired to the IsometricCameraRig.");
+                if (tool.HighlightView != highlight)
+                    issues.Add("CityPrototype GridSelectionTool is not wired to its single selection highlight view.");
+                if (inputActions != null && tool.ConfiguredInputActions != inputActions)
+                    issues.Add("CityPrototype GridSelectionTool is not wired to the committed Input System asset.");
+            }
+
+            if (grid == null)
+                issues.Add($"CityPrototype is missing '{DebugGridName}' with a GridDebugGridRenderer. Run Configure Project.");
+            if (highlight == null)
+                issues.Add($"CityPrototype is missing '{HighlightName}' with a GridSelectionHighlightView. Run Configure Project.");
+        }
+
+        private static void EnsureAssetFolder(string path)
+        {
+            if (AssetDatabase.IsValidFolder(path))
+                return;
+
+            var segments = path.Split('/');
+            var current = segments[0];
+            for (var index = 1; index < segments.Length; index++)
+            {
+                var next = $"{current}/{segments[index]}";
+                if (!AssetDatabase.IsValidFolder(next))
+                    AssetDatabase.CreateFolder(current, segments[index]);
+                current = next;
             }
         }
 
