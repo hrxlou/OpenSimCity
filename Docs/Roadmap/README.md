@@ -70,6 +70,11 @@ P2-03은 `ZoneType`/stable definition ID, 정규화된 path·area brush, 무료 
 `ZoneCommandResult`/`ZoneReadModel` 변경 집합을 제공한다. 도로 셀·범위 밖·다른 zone 덮어쓰기는
 원자적으로 거부하고, Presentation은 zone state를 소유하지 않는다.
 
+P2-04는 같은 zone 셀을 row-major 기준 `1x1~2x2` 직사각형 parcel로 분할하고, stable parcel ID,
+방향별 road frontage, 외부 gate 최소 정수 거리·band와 공개 개발 불가 reason을 제공한다. zone/road
+version 변경 뒤 실제 공개 값이 바뀐 필지만 dirty로 전달하며, P2-05 overlay와 P3-05 개발 시스템은
+`ParcelReadModel`을 통해 이 결과를 소비한다.
+
 ## 디자인·아트 단계 적용
 
 | 시점 | 제품 화면에 적용 | 준비 작업 |

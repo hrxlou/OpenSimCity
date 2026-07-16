@@ -55,11 +55,28 @@
 
 ## Done when
 
-- [ ] 도로에 접하지 않거나 외부 연결이 없는 구역은 개발 후보가 아니다.
-- [ ] 도달 가능한 필지는 외부 접근성 거리와 band를 조회할 수 있다.
-- [ ] 필지 stable ID와 dirty 갱신 규칙이 테스트로 고정된다.
+- [x] 도로에 접하지 않거나 외부 연결이 없는 구역은 개발 후보가 아니다.
+- [x] 도달 가능한 필지는 외부 접근성 거리와 band를 조회할 수 있다.
+- [x] 필지 stable ID와 dirty 갱신 규칙이 테스트로 고정된다.
 - [ ] Windows overlay가 Mac fixture 결과를 정확히 표현한다.
-- [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+- [x] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+
+## Mac implementation evidence
+
+- Date: `2026-07-16`
+- OS: `macOS 26.5.2 (25F84), Apple Silicon arm64`
+- Unity: `6000.5.3f1 (c2eb47b3a2a9)`
+- Stacked branch: `feature/p2-03-zoning` (`b9b4514`) → `feature/p2-04-parcels`
+- Commit/PR: this implementation commit on the local stacked branch; PR and Windows handoff pending
+- Test: `./Tools/CI/run-unity-tests.sh all` → EditMode `95/95`, PlayMode `16/16` passed
+- Result XML/log: `TestResults/editmode.xml`, `TestResults/editmode.log`,
+  `TestResults/playmode.xml`, `TestResults/playmode.log` (local generated artifacts)
+- Covered fixtures: deterministic `1x1~2x2` same-zone partition, distinct-zone split, no-frontage and
+  disconnected-frontage reasons, multiple-frontage minimum distance and `Far` band, intersection
+  frontage directions, road split/reconnect refresh, zone clear, stable ID/object reuse outside the
+  exact dirty set, and Application query parity
+- Remaining verify: P2-05 parcel/debug overlay boundary, frontage direction, band/reason parity and
+  Windows road/zone refresh smoke
 
 ## Out of scope
 

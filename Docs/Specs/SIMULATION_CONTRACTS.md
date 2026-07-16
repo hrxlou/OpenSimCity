@@ -56,6 +56,26 @@ P2 접근성 query의 고정 단위와 sentinel은 다음과 같다.
 - `ZoneReadModel`은 전체 셀 snapshot과 version당 변경 셀 집합을 Application DTO로 제공하며,
   Presentation은 simulation 배열을 직접 읽거나 zone 규칙을 재계산하지 않는다.
 
+### P2 단순 필지와 개발 자격
+
+- zone 셀은 `Y`, `X` row-major anchor 순서로 처리하고 같은 `ZoneType`을 최대 `2x2` 직사각형으로
+  탐욕 분할한다. anchor에서 동쪽 셀을 먼저 폭에 포함한 뒤 같은 폭의 북쪽 행을 높이에 포함한다.
+  따라서 P2 필지는 `1x1`, `2x1`, `1x2`, `2x2` 중 하나이며 혼합 zone이나 비정형 셀 집합을
+  만들지 않는다.
+- parcel stable ID는 상위 parcel namespace `0x5`, anchor의 world row-major cell index,
+  `ZoneType` 저장 값을 조합한다. world 크기와 anchor·zone type이 같으면 재계산 순서나 도로
+  상태와 무관하게 같은 ID를 얻고, 서로 다른 anchor·zone type은 충돌하지 않는다.
+- frontage는 parcel 셀에서 상하좌우로 인접한 점유 도로 셀과 방향을 row-major parcel cell,
+  `North`, `East`, `South`, `West` 순으로 보존한다. frontage가 없으면 `NoRoadFrontage`, frontage는
+  있으나 모두 외부 gate에 도달하지 못하면 `NoExternalRoadConnection`이다.
+- 도달 가능한 frontage가 하나 이상이면 개발 자격을 얻는다. parcel 접근성은 frontage road 셀 중
+  최소 `NetworkDistanceToExternalGate`, 동일 거리에서는 최소 external gate stable ID를 선택한다.
+  `Gate/Near/Medium/Far`는 진단 factor이며 도달 가능한 `Far` 필지의 자격을 박탈하지 않는다.
+- zone version 또는 road graph version 변경 뒤 공개 parcel 값이 동일한 필지는 기존 state와 ID를
+  재사용한다. 추가·삭제·frontage·자격·거리 값이 달라진 필지만 stable ID 변경 집합과 row-major
+  dirty cell 집합에 포함한다. `ParcelReadModel`은 이 snapshot과 변경 집합을 Application DTO로
+  제공하며 Presentation은 world-space 거리나 개발 reason을 다시 계산하지 않는다.
+
 ### 개발 실행 가능성
 
 도시 수요, 입지 적합도, 비어 있는 적법한 필지, 전력·수도, 성장 cap, 건설 중인 공급을 함께 확인한다. 후보는 안정적으로 정렬한 뒤 시스템 전용 RNG로 제한 수만 샘플링한다.

@@ -427,6 +427,20 @@ BudgetSettled
 | Services | 시설·예산 | 셀별 서비스 효과 | 거리 감쇠 필드 |
 | Persistence | 전체 런타임 상태 | 버전 스냅샷 | JSON 디버그 후 바이너리 검토 |
 
+P2 필지는 zone 셀을 row-major anchor부터 같은 용도의 최대 `2x2` 직사각형으로 탐욕 분할한다.
+가능한 크기는 `1x1`, `2x1`, `1x2`, `2x2`이며 비정형 결합이나 건물 prefab footprint 기반 분할은
+하지 않는다. `ParcelState`의 stable ID는 parcel namespace, anchor의 world row-major index, zone
+type을 충돌 없이 조합한다. 따라서 같은 크기의 world에서 anchor와 zone이 유지되는 필지는 도로
+접근성만 바뀌어도 ID가 유지된다.
+
+`ParcelNetworkState`는 zone version과 road graph version을 관찰한다. 재계산 후보가 이전 공개
+값과 같으면 기존 `ParcelState` 객체를 재사용하고, 추가·삭제·자격 또는 frontage가 달라진 필지만
+`ChangedParcelIds`와 row-major `DirtyCells`에 포함한다. 개발 자격은 같은 zone으로 구성된 필지에
+하나 이상의 도로 frontage가 있고 그중 하나가 external road gate에 도달할 때 얻는다. 여러
+frontage는 최소 정수 네트워크 거리, 동일 거리에서는 최소 gate stable ID를 선택한다. 거리 band는
+진단·P3 입지 factor이며 도달 가능한 먼 필지의 자격을 P2에서 박탈하지 않는다. Application의
+`ParcelReadModel`이 이 값과 변경 집합을 복사해 Presentation에 제공한다.
+
 ## 9. 성능 예산
 
 프로토타입 목표:
