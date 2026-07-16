@@ -49,7 +49,10 @@ namespace OpenSimCity.Application.Commands
                     var message = string.IsNullOrEmpty(validation.Message)
                         ? "The command was rejected by validation."
                         : validation.Message;
-                    return CommandExecutionResult.Rejected(message).WithStamp(command.Stamp);
+                    var rejected = CommandExecutionResult.Rejected(message);
+                    if (validation.HasDetails)
+                        rejected = rejected.WithDetails(validation.Details);
+                    return rejected.WithStamp(command.Stamp);
                 }
 
                 return handler.Execute(command).WithStamp(command.Stamp);
