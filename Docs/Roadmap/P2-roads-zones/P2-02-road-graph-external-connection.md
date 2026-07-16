@@ -58,12 +58,27 @@
 
 ## Done when
 
-- [ ] 고립망과 외부 연결망을 정확히 구분한다.
-- [ ] 가장 가까운 외부 gate까지의 정수 거리와 band가 결정적으로 계산된다.
-- [ ] 그래프 변경 시 version과 dirty 영역이 정확히 갱신된다.
-- [ ] 외부 연결 query가 후속 이주·시장 시스템에서 사용할 수 있다.
+- [x] 고립망과 외부 연결망을 정확히 구분한다.
+- [x] 가장 가까운 외부 gate까지의 정수 거리와 band가 결정적으로 계산된다.
+- [x] 그래프 변경 시 version과 dirty 영역이 정확히 갱신된다.
+- [x] 외부 연결 query가 후속 이주·시장 시스템에서 사용할 수 있다.
 - [ ] 접근성 overlay와 query가 같은 값을 표시한다.
 - [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+
+## Mac implementation evidence
+
+- Date: `2026-07-16`
+- OS: `macOS 26.5.2 (25F84), Apple Silicon arm64`
+- Unity: `6000.5.3f1 (c2eb47b3a2a9)`
+- Stacked branch: `feature/p2-01-road-commands` → `feature/p2-02-road-connectivity`
+- Commit/PR: this implementation commit on the local stacked branch; PR and Windows handoff pending
+- Test: `./Tools/CI/run-unity-tests.sh all` → EditMode `78/78`, PlayMode `16/16` passed
+- Result XML: `TestResults/editmode.xml`, `TestResults/playmode.xml` (local generated artifacts)
+- Connectivity fixture checksum: `0x437e8c870287f6db`
+- Covered fixtures: intersection/dead end, isolated component, boundary gate, split/reconnect,
+  multi-gate tie, distance bands, invalid gates, graph version, exact dirty cells, Application
+  read-model parity
+- Remaining verify: P2-05 actual overlay consumption and the Windows steps/checksum comparison
 
 ## Out of scope
 

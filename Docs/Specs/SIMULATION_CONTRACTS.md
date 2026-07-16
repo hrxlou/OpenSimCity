@@ -33,6 +33,15 @@
 
 P5 교통 전에는 통근시간을 미리 구현하지 않는다. P2 도로 그래프가 외부 연결까지의 결정적 정수 거리인 `NetworkDistanceToExternalGate`와 거리 band를 제공하고, P3 개발 시스템이 이를 용도별 약한 입지 factor로 사용한다. 도달 불가는 개발 자격을 막지만, 도달 가능한 필지의 거리는 단독으로 개발 여부를 결정하지 않는다. P5 이후 실제 통행·혼잡 비용이 준비되면 같은 접근성 query 계약을 확장한다.
 
+P2 접근성 query의 고정 단위와 sentinel은 다음과 같다.
+
+- 활성 `Road` external connection이 지도 경계의 점유 도로 셀에 있을 때만 gate로 인정한다.
+- gate 셀 거리는 `0`, 상하좌우 도로 edge 비용은 `1`, 도달 불가는 `-1`이다.
+- band는 거리 `0`을 `Gate`, `1..4`를 `Near`, `5..12`를 `Medium`, `13` 이상을 `Far`, 거리 `-1`을 `Unreachable`로 분류한다.
+- 가장 가까운 gate가 같은 거리이면 가장 작은 stable gate ID를 선택한다.
+- queue 우선순위는 거리, gate stable ID, row-major cell index 순서이며 이 순서를 플랫폼별 결과 계약으로 사용한다.
+- component label은 재구축 가능한 로컬 값이며 저장하거나 entity ID로 참조하지 않는다.
+
 ### 개발 실행 가능성
 
 도시 수요, 입지 적합도, 비어 있는 적법한 필지, 전력·수도, 성장 cap, 건설 중인 공급을 함께 확인한다. 후보는 안정적으로 정렬한 뒤 시스템 전용 RNG로 제한 수만 샘플링한다.

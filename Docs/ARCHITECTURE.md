@@ -253,7 +253,7 @@ OpenSimCity/
 배열 또는 조밀한 컬렉션으로 관리하는 저장 가능한 데이터다.
 
 - `WorldState`: 맵 크기, 시드, 셀/청크
-- `RoadNetworkState`: 노드, 간선, 용량, 교통량, 버전
+- `RoadNetworkState`: row-major 도로 셀 점유와 변경 batch version
 - `TransitState`: stable 정류장·노선 ID, 정렬된 정류장 순서, 예산, 집계 승객·용량
 - `DistrictState`: stable 지구 ID, 셀 membership, 이름, 활성 정책과 적용 기간
 - `BuildingState`: definition ID, 위치, 점유율, 상태, 공급 여부
@@ -322,6 +322,20 @@ SetDistrictPolicyCommand
 P2 도로 명령은 이 결과를 `RoadCommandResult` DTO로 제공하며, preview와 commit이 같은
 검증·비용·변경 셀 집합을 공유한다. Application dispatcher의 상세 payload는 UI가 실패
 사유와 비용을 다시 계산하지 않고 표시할 수 있도록 전달된다.
+
+P2-02의 `RoadConnectivityGraph`는 `RoadNetworkState`에서 다시 만들 수 있는 cardinal
+연결 그래프와 외부 road gate 거리 cache다. 그래프 version은 성공한 도로 batch의
+`RoadNetworkState.Version`을 따르고, 각 rebuild는 이전 공개 query와 비교해 실제 값이
+달라진 row-major 셀 목록과 그 bounding dirty region을 남긴다. component label은 component의
+최소 row-major cell index를 사용해 무관한 component가 지역 편집 때문에 다시 번호 매겨지지
+않게 하지만, stable entity ID나 저장 계약은 아니다. 저장에는 도로 셀과 stable external gate
+ID만 필요하며 graph, component, 거리 cache는 load 뒤 재구축한다.
+
+외부 접근성은 활성 `Road` gate가 지도 경계의 점유 도로 셀에 있을 때만 시작한다. gate 셀은
+거리 0, cardinal edge는 비용 1이며 동일 거리 gate가 여럿이면 가장 작은 stable gate ID를
+선택한다. `RoadAccessibilityReadModel`은 이 결과를 Application 소유 DTO로 version당 한 번
+복사한다. Presentation과 UI는 이 read model의 connection mask, 거리, band, reason을 그대로
+표시하고 road view에서 다시 계산하지 않는다.
 
 일시정지, 배속, 저장 요청은 도시 상태를 변경하는 명령과 분리된 Application control이다. 배속이 달라도 같은 수의 시뮬레이션 틱과 같은 도시 명령을 적용했다면 도시 결과는 같아야 한다.
 

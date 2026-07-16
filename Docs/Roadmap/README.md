@@ -61,6 +61,11 @@ GitHub 실행 현황은 [Workflow Kanban](https://github.com/users/hrxlou/projec
 
 이 표는 설명용이며 각 이슈의 `Depends on` 필드가 자동화의 실제 입력이다. `P3-08`은 P3 capability/experience gate가 아니라 P8 전에 완료하는 병행 성능 준비다. `P9-02B`는 `P9-01` 외에 `P2-00`의 token·focus 기반에도 의존하는 Phase 간 예외이므로 이 표에 나타나지 않는다.
 
+P2-02가 후속 이슈에 넘기는 접근성 계약은 cardinal edge 비용 `1`, gate 셀 거리 `0`,
+도달 불가 `-1`과 결정적 거리 band다. graph component label과 거리 cache는 도로 셀과 stable
+external gate에서 재구축하며 저장하지 않는다. P2-05 overlay와 P3-05 성장 입력은
+Simulation 값을 재계산하지 않고 versioned Application read model을 소비한다.
+
 ## 디자인·아트 단계 적용
 
 | 시점 | 제품 화면에 적용 | 준비 작업 |
