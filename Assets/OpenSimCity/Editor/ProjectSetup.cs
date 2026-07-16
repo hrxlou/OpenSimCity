@@ -51,6 +51,10 @@ namespace OpenSimCity.Editor
             var cameraInputActions = IsometricCameraRigSetup.EnsureInputActionsAsset();
             IsometricCameraRigSetup.ConfigureCityPrototype(cameraInputActions);
 
+            // Runs after the camera rig because the UI boundary relay binds to the
+            // GridSelectionTool the rig setup creates.
+            UiFoundationSetup.ConfigureCityPrototype(UiFoundationSetup.EnsurePanelSettings());
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("OpenSimCity project setup completed. Run 'OpenSimCity/Setup/Validate Project' to confirm.");
@@ -85,6 +89,7 @@ namespace OpenSimCity.Editor
             ValidateUrp(issues);
             ValidateInputSystem(issues);
             IsometricCameraRigSetup.Validate(issues);
+            UiFoundationSetup.Validate(issues);
             ValidateScenesAndBuildSettings(issues);
             ValidateLightingAndQualityDefaults(issues);
             return issues;

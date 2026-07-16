@@ -45,3 +45,7 @@ Thumbs.db
 # Unity license files (never commit)
 *.alf
 *.ulf
+
+# Unity PlayMode test runner leaves a temporary init scene in Assets/
+/Assets/InitTestScene*.unity
+/Assets/InitTestScene*.unity.meta
