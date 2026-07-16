@@ -55,6 +55,10 @@ namespace OpenSimCity.Editor
             // GridSelectionTool the rig setup creates.
             UiFoundationSetup.ConfigureCityPrototype(UiFoundationSetup.EnsurePanelSettings());
 
+            // Runs last: the placement fixture binds to the camera rig, the world
+            // bounds source and the UI foundation the previous steps created.
+            PlacementSetup.ConfigureCityPrototype();
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("OpenSimCity project setup completed. Run 'OpenSimCity/Setup/Validate Project' to confirm.");
@@ -90,6 +94,7 @@ namespace OpenSimCity.Editor
             ValidateInputSystem(issues);
             IsometricCameraRigSetup.Validate(issues);
             UiFoundationSetup.Validate(issues);
+            PlacementSetup.Validate(issues);
             ValidateScenesAndBuildSettings(issues);
             ValidateLightingAndQualityStructure(issues);
             return issues;

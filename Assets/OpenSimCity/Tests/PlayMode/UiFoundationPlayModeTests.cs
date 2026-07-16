@@ -220,8 +220,16 @@ namespace OpenSimCity.Tests.PlayMode
         {
             yield return LoadCityPrototype();
 
+            // Give the placement binder a frame to inject its interactive content.
+            yield return null;
+
             var bootstrap = Object.FindAnyObjectByType<UiFoundationBootstrap>();
-            var item = bootstrap.ToolRail.GetFixture(UiComponentState.Default);
+
+            // Focus a real tool button. P2-05 replaces the P2-00 debug fixtures with
+            // interactive buttons (the fixtures stay in the tree but hidden), so the
+            // boundary capture is exercised through the actual rail control.
+            var item = bootstrap.ToolRail.Q<Button>();
+            Assert.That(item, Is.Not.Null, "The Tool Rail has no tool button to focus.");
 
             item.Focus();
             yield return null;
