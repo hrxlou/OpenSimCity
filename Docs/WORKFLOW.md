@@ -142,6 +142,24 @@ Blender/Source
 ./Tools/CI/run-unity-tests.sh all
 ```
 
+Unity가 macOS·Windows별 live ProjectSettings 값을 다시 저장하더라도, 커밋 기준값 검사는
+Git index 내용을 기준으로 별도 실행한다. Unity 테스트 runner에도 guard가 포함되어 있으므로
+테스트 전에 자동으로 실행된다.
+
+```bash
+./Tools/CI/validate-projectsettings-baseline.sh
+```
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\validate-projectsettings-baseline.ps1
+```
+
+Guard는 `GraphicsSettings.asset`의 `m_LightsUseColorTemperature=0`과
+`QualitySettings.asset`의 quality level별 `antiAliasing=[0, 0, 0, 0, 2, 2]`를 Git index에서
+검사한다. 작업 트리의 unstaged Unity drift는 로컬 검증을 방해하지 않지만, 의도적으로
+스테이징한 ProjectSettings 변경은 실패한다. 정확한 baseline 변경은 이 검사를 통과하도록
+Windows·macOS 양쪽에서 검토한 뒤 커밋한다.
+
 다른 Unity 설치 경로를 사용할 때는 `UNITY_EDITOR` 환경 변수에 실행 파일 경로를 지정한다.
 
 ## 8. Codex 작업 요청 형식

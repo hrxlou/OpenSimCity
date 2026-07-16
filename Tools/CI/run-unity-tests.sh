@@ -31,6 +31,8 @@ if [[ ! "${UNITY_TEST_TIMEOUT_SECONDS}" =~ ^[1-9][0-9]*$ ]]; then
   exit 2
 fi
 
+"${SCRIPT_DIR}/validate-projectsettings-baseline.sh"
+
 mkdir -p "${RESULTS_DIR}"
 
 find_unity_fatal_error() {

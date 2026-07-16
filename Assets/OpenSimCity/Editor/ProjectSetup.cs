@@ -91,7 +91,7 @@ namespace OpenSimCity.Editor
             IsometricCameraRigSetup.Validate(issues);
             UiFoundationSetup.Validate(issues);
             ValidateScenesAndBuildSettings(issues);
-            ValidateLightingAndQualityDefaults(issues);
+            ValidateLightingAndQualityStructure(issues);
             return issues;
         }
 
@@ -205,28 +205,24 @@ namespace OpenSimCity.Editor
             }
         }
 
-        // 커밋된 baseline 값. 어느 플랫폼에서 Editor를 열어도 이 값에서 벗어나면 안 된다.
-        // Quality 레벨 순서: Very Low, Low, Medium, High, Very High, Ultra.
-        private static readonly int[] ExpectedAntiAliasingByQualityLevel = { 0, 0, 0, 0, 2, 2 };
-
-        private static void ValidateLightingAndQualityDefaults(ICollection<string> issues)
+        // Unity can normalize these live values differently per platform, GPU, or Editor session.
+        // Validate only the serialized shape here. The exact committed baseline is checked by
+        // Tools/CI/validate-projectsettings-baseline.* against the Git index.
+        private static void ValidateLightingAndQualityStructure(ICollection<string> issues)
         {
             var graphicsSettings = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/GraphicsSettings.asset")
                 .FirstOrDefault();
             if (graphicsSettings == null)
             {
-                issues.Add("Could not read GraphicsSettings.asset to verify lighting defaults.");
+                issues.Add("Could not read GraphicsSettings.asset to verify the serialized lighting settings shape.");
             }
             else
             {
                 var colorTemperatureProperty =
                     new SerializedObject(graphicsSettings).FindProperty("m_LightsUseColorTemperature");
-                if (colorTemperatureProperty != null && colorTemperatureProperty.boolValue)
+                if (colorTemperatureProperty == null)
                 {
-                    issues.Add(
-                        "Graphics Settings 'Lights Use Linear Intensity/Color Temperature' was toggled on, " +
-                        "diverging from the committed baseline (off). Some Editor sessions flip this on their " +
-                        "own when opening scenes; revert it in Project Settings > Graphics before committing.");
+                    issues.Add("GraphicsSettings.asset is missing m_LightsUseColorTemperature; cannot verify the serialized lighting settings shape.");
                 }
             }
 
@@ -234,30 +230,28 @@ namespace OpenSimCity.Editor
                 .FirstOrDefault();
             if (qualitySettings == null)
             {
-                issues.Add("Could not read QualitySettings.asset to verify anti-aliasing defaults.");
+                issues.Add("Could not read QualitySettings.asset to verify the serialized quality settings shape.");
                 return;
             }
 
             var levels = new SerializedObject(qualitySettings).FindProperty("m_QualitySettings");
-            if (levels == null || levels.arraySize != ExpectedAntiAliasingByQualityLevel.Length)
+            const int expectedQualityLevelCount = 6;
+            if (levels == null || levels.arraySize != expectedQualityLevelCount)
             {
                 issues.Add(
                     $"QualitySettings has {(levels == null ? "an unreadable" : levels.arraySize.ToString())} " +
-                    $"quality level(s) but {ExpectedAntiAliasingByQualityLevel.Length} were expected.");
+                    $"quality level(s) but {expectedQualityLevelCount} were expected.");
                 return;
             }
 
-            for (var i = 0; i < ExpectedAntiAliasingByQualityLevel.Length; i++)
+            for (var i = 0; i < expectedQualityLevelCount; i++)
             {
                 var level = levels.GetArrayElementAtIndex(i);
                 var levelName = level.FindPropertyRelative("name")?.stringValue ?? $"index {i}";
                 var antiAliasing = level.FindPropertyRelative("antiAliasing");
-                if (antiAliasing != null && antiAliasing.intValue != ExpectedAntiAliasingByQualityLevel[i])
+                if (antiAliasing == null)
                 {
-                    issues.Add(
-                        $"Quality level '{levelName}' has antiAliasing={antiAliasing.intValue} but the committed " +
-                        $"baseline is {ExpectedAntiAliasingByQualityLevel[i]}. Some Editor sessions reset MSAA " +
-                        "support per platform; revert it in Project Settings > Quality before committing.");
+                    issues.Add($"Quality level '{levelName}' is missing the antiAliasing property.");
                 }
             }
         }

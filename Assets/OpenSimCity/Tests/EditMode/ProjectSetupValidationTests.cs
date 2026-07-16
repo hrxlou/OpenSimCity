@@ -6,13 +6,14 @@ using OpenSimCity.Editor;
 namespace OpenSimCity.Tests.EditMode
 {
     /// <summary>
-    /// 커밋된 프로젝트가 ProjectSetup의 검증 규칙을 통과하는지 회귀 검사한다.
+    /// 플랫폼에 관계없이 유지되어야 하는 ProjectSetup 구조 검증을 회귀 검사한다.
+    /// Git index의 정확한 ProjectSettings baseline은 Tools/CI guard가 별도로 검사한다.
     /// EditMode에서 아무것도 변경하지 않으므로 Windows·Mac 양쪽에서 동일하게 실행된다.
     /// </summary>
     public sealed class ProjectSetupValidationTests
     {
         [Test]
-        public void CommittedProjectPassesValidation()
+        public void ProjectSetupPassesPlatformNeutralValidation()
         {
             IReadOnlyList<string> issues = ProjectSetup.Validate();
 
