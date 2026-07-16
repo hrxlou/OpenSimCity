@@ -323,6 +323,18 @@ P2 도로 명령은 이 결과를 `RoadCommandResult` DTO로 제공하며, previ
 검증·비용·변경 셀 집합을 공유한다. Application dispatcher의 상세 payload는 UI가 실패
 사유와 비용을 다시 계산하지 않고 표시할 수 있도록 전달된다.
 
+P2-03의 `ZoneType`은 `None=0`, `ResidentialLow=1`, `CommercialLow=2`,
+`IndustrialLow=3`의 안정 enum이며 각 셀은 zone type과 stable definition ID를 함께 가진다.
+`ZoneAreaCommand`/`ZonePathCommand`와 `ClearZoneCommand`는 brush 셀을 중복 제거한 뒤
+row-major(`Y`, `X`) 순서로 정규화한다. zone 칠하기는 도로 셀·범위 밖·다른 zone 덮어쓰기를
+원자적으로 거부하고, 같은 zone 재적용과 clear는 멱등이다. P2에서는 zone 비용을 무료로
+고정해 `ZoneCommandResult.Cost`를 `0`으로 반환한다.
+
+`ZoneCommandResult`는 preview와 commit의 requested/changed/rejected 셀과 실패 사유를
+공개하고, `ZoneReadModel`은 `ZoneNetworkState.Version`을 기준으로 전체 셀 snapshot과
+마지막 refresh의 정확한 변경 셀을 Application 소유 DTO로 복사한다. Presentation과 UI는
+이 read model을 소비하며 zone 규칙이나 색/material을 재계산하지 않는다.
+
 P2-02의 `RoadConnectivityGraph`는 `RoadNetworkState`에서 다시 만들 수 있는 cardinal
 연결 그래프와 외부 road gate 거리 cache다. 그래프 version은 성공한 도로 batch의
 `RoadNetworkState.Version`을 따르고, 각 rebuild는 이전 공개 query와 비교해 실제 값이

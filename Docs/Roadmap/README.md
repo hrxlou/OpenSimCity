@@ -66,6 +66,10 @@ P2-02가 후속 이슈에 넘기는 접근성 계약은 cardinal edge 비용 `1`
 external gate에서 재구축하며 저장하지 않는다. P2-05 overlay와 P3-05 성장 입력은
 Simulation 값을 재계산하지 않고 versioned Application read model을 소비한다.
 
+P2-03은 `ZoneType`/stable definition ID, 정규화된 path·area brush, 무료 R/C/I·clear command와
+`ZoneCommandResult`/`ZoneReadModel` 변경 집합을 제공한다. 도로 셀·범위 밖·다른 zone 덮어쓰기는
+원자적으로 거부하고, Presentation은 zone state를 소유하지 않는다.
+
 ## 디자인·아트 단계 적용
 
 | 시점 | 제품 화면에 적용 | 준비 작업 |

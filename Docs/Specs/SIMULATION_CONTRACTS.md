@@ -42,6 +42,20 @@ P2 접근성 query의 고정 단위와 sentinel은 다음과 같다.
 - queue 우선순위는 거리, gate stable ID, row-major cell index 순서이며 이 순서를 플랫폼별 결과 계약으로 사용한다.
 - component label은 재구축 가능한 로컬 값이며 저장하거나 entity ID로 참조하지 않는다.
 
+### P2 저밀도 구역 명령
+
+- `ZoneType`의 저장 값은 `None=0`, `ResidentialLow=1`, `CommercialLow=2`,
+  `IndustrialLow=3`으로 고정한다. 색, material, overlay 표현은 이 계약에 포함하지 않는다.
+- zone definition은 stable ID와 zone type의 정적 매핑이며, 셀 runtime state는 zone type과
+  definition ID를 보관한다. P2 zone 명령은 무료 정책을 사용한다.
+- path/area brush는 중복 셀을 제거하고 `Y` 오름차순 후 `X` 오름차순으로 정렬한다. 같은
+  ordered command stream은 같은 requested/changed 셀 순서를 내야 한다.
+- `ZoneAreaCommand`와 `ClearZoneCommand`는 Application command 경계를 통해서만 상태를
+  변경한다. 칠하기는 도로 점유 셀, 범위 밖 셀, 다른 zone type을 포함한 batch를 부분 적용
+  없이 거부한다. 같은 zone 재적용과 이미 비어 있는 clear는 상태를 바꾸지 않는 성공 명령이다.
+- `ZoneReadModel`은 전체 셀 snapshot과 version당 변경 셀 집합을 Application DTO로 제공하며,
+  Presentation은 simulation 배열을 직접 읽거나 zone 규칙을 재계산하지 않는다.
+
 ### 개발 실행 가능성
 
 도시 수요, 입지 적합도, 비어 있는 적법한 필지, 전력·수도, 성장 cap, 건설 중인 공급을 함께 확인한다. 후보는 안정적으로 정렬한 뒤 시스템 전용 RNG로 제한 수만 샘플링한다.

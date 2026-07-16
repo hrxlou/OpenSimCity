@@ -44,10 +44,26 @@ Residential, Commercial, Industrial 저밀도 구역 칠하기와 해제를 명�
 
 ## Done when
 
-- [ ] 세 용도 구역과 해제가 command를 통해 동작한다.
-- [ ] 도로 위와 범위 밖 구역 지정이 명시적으로 거부된다.
+- [x] 세 용도 구역과 해제가 command를 통해 동작한다.
+- [x] 도로 위와 범위 밖 구역 지정이 명시적으로 거부된다.
 - [ ] Mac 규칙 테스트와 Windows interaction smoke가 통과한다.
-- [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+- [x] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+
+## Mac implementation evidence
+
+- Date: `2026-07-16`
+- OS: `macOS 26.5.2 (25F84), Apple Silicon arm64`
+- Unity: `6000.5.3f1 (c2eb47b3a2a9)`
+- Stacked branch: `feature/p2-02-road-connectivity` → `feature/p2-03-zoning`
+- Commit/PR: local implementation branch; commit, PR, and Windows handoff pending
+- Test: `./Tools/CI/run-unity-tests.sh edit` → EditMode `88/88` passed
+- Result XML/log: `TestResults/editmode.xml`, `TestResults/editmode.log` (local generated artifacts)
+- Covered fixtures: stable R/C/I values and IDs, duplicate brush normalization, path/area ordering,
+  free-cost preview/commit parity, atomic road overlap and bounds rejection, other-zone overwrite
+  rejection, idempotent reapply/clear, versioned changed-cell read model, ordered command stream
+  determinism
+- Remaining verify: Windows preview/commit cell parity, R/C/I/clear tool switch and camera input
+  smoke, and large-brush no-per-cell-GameObject check
 
 ## Out of scope
 
