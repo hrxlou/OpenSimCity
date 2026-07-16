@@ -80,26 +80,39 @@ namespace OpenSimCity.Application.Commands
 
     public readonly struct CommandValidationResult
     {
-        private CommandValidationResult(CommandValidationStatus status, string message)
+        private readonly object _details;
+
+        private CommandValidationResult(
+            CommandValidationStatus status,
+            string message,
+            object details)
         {
             Status = status;
             Message = message ?? string.Empty;
+            _details = details;
         }
 
         public CommandValidationStatus Status { get; }
 
         public string Message { get; }
 
+        public object Details => _details;
+
+        public bool HasDetails => _details != null;
+
         public bool IsValid => Status == CommandValidationStatus.Valid;
 
         public static CommandValidationResult Valid =>
-            new CommandValidationResult(CommandValidationStatus.Valid, string.Empty);
+            new CommandValidationResult(CommandValidationStatus.Valid, string.Empty, null);
 
         public static CommandValidationResult Invalid(string message) =>
-            new CommandValidationResult(CommandValidationStatus.Invalid, message);
+            new CommandValidationResult(CommandValidationStatus.Invalid, message, null);
+
+        public static CommandValidationResult Invalid(string message, object details) =>
+            new CommandValidationResult(CommandValidationStatus.Invalid, message, details);
 
         public static CommandValidationResult Unsupported(string message) =>
-            new CommandValidationResult(CommandValidationStatus.Unsupported, message);
+            new CommandValidationResult(CommandValidationStatus.Unsupported, message, null);
     }
 
     public enum CommandExecutionStatus
@@ -112,14 +125,18 @@ namespace OpenSimCity.Application.Commands
 
     public readonly struct CommandExecutionResult
     {
+        private readonly object _details;
+
         private CommandExecutionResult(
             CommandExecutionStatus status,
             CommandStamp stamp,
-            string message)
+            string message,
+            object details)
         {
             Status = status;
             Stamp = stamp;
             Message = message ?? string.Empty;
+            _details = details;
         }
 
         public CommandExecutionStatus Status { get; }
@@ -128,35 +145,60 @@ namespace OpenSimCity.Application.Commands
 
         public string Message { get; }
 
+        /// <summary>
+        /// Optional application result DTO. The generic command contract keeps
+        /// this untyped so each command family can expose its own read model
+        /// without coupling every dispatcher result to one simulation system.
+        /// </summary>
+        public object Details => _details;
+
+        public bool HasDetails => _details != null;
+
         public bool IsApplied => Status == CommandExecutionStatus.Applied;
 
         public static CommandExecutionResult Applied() =>
             new CommandExecutionResult(
                 CommandExecutionStatus.Applied,
                 default(CommandStamp),
-                string.Empty);
+                string.Empty,
+                null);
+
+        public static CommandExecutionResult Applied(object details) =>
+            new CommandExecutionResult(
+                CommandExecutionStatus.Applied,
+                default(CommandStamp),
+                string.Empty,
+                details);
 
         public static CommandExecutionResult Rejected(string message) =>
             new CommandExecutionResult(
                 CommandExecutionStatus.Rejected,
                 default(CommandStamp),
-                message);
+                message,
+                null);
 
         public static CommandExecutionResult Unsupported(string message) =>
             new CommandExecutionResult(
                 CommandExecutionStatus.Unsupported,
                 default(CommandStamp),
-                message);
+                message,
+                null);
 
         public static CommandExecutionResult Failed(string message) =>
             new CommandExecutionResult(
                 CommandExecutionStatus.Failed,
                 default(CommandStamp),
-                message);
+                message,
+                null);
+
+        public CommandExecutionResult WithDetails(object details)
+        {
+            return new CommandExecutionResult(Status, Stamp, Message, details);
+        }
 
         public CommandExecutionResult WithStamp(CommandStamp stamp)
         {
-            return new CommandExecutionResult(Status, stamp, Message);
+            return new CommandExecutionResult(Status, stamp, Message, Details);
         }
     }
 }

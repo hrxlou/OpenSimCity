@@ -319,6 +319,10 @@ SetDistrictPolicyCommand
 
 명령 처리 결과는 성공/실패와 비용, 영향을 받은 영역을 반환한다. 성공한 변경은 도메인 이벤트와 Dirty Flag를 발생시킨다.
 
+P2 도로 명령은 이 결과를 `RoadCommandResult` DTO로 제공하며, preview와 commit이 같은
+검증·비용·변경 셀 집합을 공유한다. Application dispatcher의 상세 payload는 UI가 실패
+사유와 비용을 다시 계산하지 않고 표시할 수 있도록 전달된다.
+
 일시정지, 배속, 저장 요청은 도시 상태를 변경하는 명령과 분리된 Application control이다. 배속이 달라도 같은 수의 시뮬레이션 틱과 같은 도시 명령을 적용했다면 도시 결과는 같아야 한다.
 
 모든 도시 명령에는 적용할 `SimulationTick`과 해당 틱 안에서 단조 증가하는 `CommandSequence`를 붙인다. 시뮬레이션은 이 두 값을 기준으로 명령을 정렬한다.
