@@ -117,12 +117,21 @@ namespace OpenSimCity.UI.Foundation
             var centre = new VisualElement { name = "osc-world-view-spacer" };
             centre.pickingMode = PickingMode.Ignore;
             centre.style.flexGrow = 1f;
-            centre.style.justifyContent = Justify.FlexEnd;
-            centre.Add(DataOverlayLegend);
+
+            // Inspector and Legend share the right edge: Inspector at the top, the
+            // overlay Legend anchored at the bottom. The legend is not a fixed slot
+            // (Docs/DESIGN.md 3.3), so this keeps it hugging the screen edge instead
+            // of floating inside the World View.
+            var rightColumn = new VisualElement { name = "osc-right-column" };
+            rightColumn.pickingMode = PickingMode.Ignore;
+            rightColumn.style.flexDirection = FlexDirection.Column;
+            rightColumn.style.justifyContent = Justify.SpaceBetween;
+            rightColumn.Add(ContextInspector);
+            rightColumn.Add(DataOverlayLegend);
 
             middle.Add(ToolRail);
             middle.Add(centre);
-            middle.Add(ContextInspector);
+            middle.Add(rightColumn);
 
             Root.Add(middle);
             Root.Add(BuildPalette);

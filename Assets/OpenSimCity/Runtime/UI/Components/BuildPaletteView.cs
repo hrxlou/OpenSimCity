@@ -13,7 +13,8 @@ namespace OpenSimCity.UI.Components
                 UiFoundationNames.BuildPaletteName,
                 UiFoundationNames.BuildPaletteClass,
                 "Build",
-                "배치 항목과 비용은 P2-01에서 연결됩니다.")
+                "배치 항목과 비용은 P2-01에서 연결됩니다.",
+                horizontalFixtures: true)
         {
         }
     }

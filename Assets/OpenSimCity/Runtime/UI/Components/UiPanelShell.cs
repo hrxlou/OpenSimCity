@@ -15,7 +15,12 @@ namespace OpenSimCity.UI.Components
         private readonly Dictionary<UiComponentState, VisualElement> _fixtures =
             new Dictionary<UiComponentState, VisualElement>();
 
-        protected UiPanelShell(string elementName, string slotClass, string title, string emptyNote)
+        protected UiPanelShell(
+            string elementName,
+            string slotClass,
+            string title,
+            string emptyNote,
+            bool horizontalFixtures = false)
         {
             name = elementName;
             AddToClassList(UiFoundationNames.PanelClass);
@@ -29,7 +34,14 @@ namespace OpenSimCity.UI.Components
             note.AddToClassList(UiFoundationNames.EmptyNoteClass);
             Add(note);
 
+            // The panel itself always stacks title, note and fixtures vertically.
+            // Only the fixture container flips to a row (the Build Palette lays its
+            // items out horizontally), so the row direction never lands on the
+            // title and note.
             _fixtureContainer = new VisualElement { name = elementName + "__fixtures" };
+            _fixtureContainer.AddToClassList(UiFoundationNames.FixturesClass);
+            if (horizontalFixtures)
+                _fixtureContainer.AddToClassList(UiFoundationNames.FixturesRowClass);
             Add(_fixtureContainer);
 
             BuildFixtures();

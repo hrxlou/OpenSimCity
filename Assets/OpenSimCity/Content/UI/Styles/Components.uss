@@ -21,6 +21,8 @@
 
 .osc-panel {
     background-color: var(--osc-color-panel);
+    /* Nothing inside a panel may spill past its edge and off the screen. */
+    overflow: hidden;
     border-left-color: var(--osc-color-border);
     border-right-color: var(--osc-color-border);
     border-top-color: var(--osc-color-border);
@@ -144,24 +146,45 @@
  * Slot shells
  * ------------------------------------------------------------------------ */
 
+/*
+ * The rail is a narrow icon strip once P2-01 supplies real tools. During the
+ * shell phase it holds labeled state fixtures, so min-width (not a fixed width)
+ * lets it grow just enough to show them without clipping off-screen.
+ */
 .osc-tool-rail {
-    width: var(--osc-tool-rail-width);
+    min-width: var(--osc-tool-rail-width);
     align-self: flex-start;
+    flex-shrink: 0;
 }
 
 .osc-build-palette {
     min-height: var(--osc-build-palette-height);
     align-self: stretch;
-    flex-direction: row;
 }
 
 .osc-context-inspector {
     width: var(--osc-context-inspector-width);
     align-self: flex-start;
+    flex-shrink: 0;
 }
 
+/*
+ * The legend is not a fixed slot (Docs/DESIGN.md 3.3) — it only makes sense while
+ * a data overlay is active, and P2-00 wires no overlays, so it stays hidden by
+ * default. P2-05 owns showing it (and deciding its position relative to whichever
+ * overlay it explains). It still lives in the tree so the shell smoke covers its
+ * seven states. When shown, it hugs the lower-right under the Inspector.
+ */
 .osc-data-overlay-legend {
-    align-self: flex-start;
+    display: none;
+    align-self: flex-end;
+    margin: var(--osc-space-2);
+}
+
+/* Fixture container: vertical by default, horizontal for the Build Palette. */
+.osc-fixtures--row {
+    flex-direction: row;
+    flex-wrap: wrap;
 }
 
 /*

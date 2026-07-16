@@ -26,6 +26,9 @@ namespace OpenSimCity.UI.Foundation
 
         public const string EmptyNoteClass = "osc-empty-note";
 
+        public const string FixturesClass = "osc-fixtures";
+        public const string FixturesRowClass = "osc-fixtures--row";
+
         public const string ToolRailClass = "osc-tool-rail";
         public const string BuildPaletteClass = "osc-build-palette";
         public const string ContextInspectorClass = "osc-context-inspector";

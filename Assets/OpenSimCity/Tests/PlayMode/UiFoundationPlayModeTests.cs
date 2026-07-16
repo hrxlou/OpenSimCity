@@ -66,6 +66,32 @@ namespace OpenSimCity.Tests.PlayMode
             }
         }
 
+        /// <summary>
+        /// P2-00 wires no overlays, so the legend is hidden by default (its
+        /// position and visibility are P2-05's decision). It must still exist in
+        /// the tree with its full state fixtures so the shell smoke covers it.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator DataOverlayLegendIsHiddenByDefaultButKeepsItsFixtures()
+        {
+            yield return LoadCityPrototype();
+
+            var legend = Object.FindAnyObjectByType<UiFoundationBootstrap>().DataOverlayLegend;
+
+            Assert.That(
+                legend.resolvedStyle.display,
+                Is.EqualTo(DisplayStyle.None),
+                "The legend must stay hidden until an overlay is active (P2-05).");
+
+            foreach (UiComponentState state in System.Enum.GetValues(typeof(UiComponentState)))
+            {
+                Assert.That(
+                    legend.GetFixture(state),
+                    Is.Not.Null,
+                    $"Hidden legend still needs a {state} fixture for the shell smoke.");
+            }
+        }
+
         [UnityTest]
         public IEnumerator WarningAndErrorFixturesCarryANonColorMarker()
         {
