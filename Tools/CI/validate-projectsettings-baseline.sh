@@ -15,7 +15,7 @@ get_indexed_file() {
   local relative_path="$1"
   local content
 
-  if ! content="$(git -C "${REPO_ROOT}" show ":${relative_path}" 2>/dev/null)"; then
+  if ! content="$(git -c "safe.directory=${REPO_ROOT}" -C "${REPO_ROOT}" show ":${relative_path}" 2>/dev/null)"; then
     fail "Git index does not contain ${relative_path}."
   fi
 

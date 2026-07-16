@@ -14,7 +14,7 @@ function Get-IndexedFile {
     )
 
     $gitSpec = ":$RelativePath"
-    $content = & git -C $RepoRoot show $gitSpec 2>$null
+    $content = & git -c "safe.directory=$RepoRoot" -C $RepoRoot show $gitSpec 2>$null
     if ($LASTEXITCODE -ne 0) {
         throw "Git index does not contain $RelativePath."
     }
