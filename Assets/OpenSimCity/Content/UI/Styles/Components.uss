@@ -1,0 +1,198 @@
+/*
+ * Shared component classes for OpenSimCity runtime UI.
+ *
+ * Every rule here resolves through Tokens.uss variables. Screen-specific USS may
+ * compose these classes but must not introduce its own colors or spacing.
+ */
+
+.osc-root {
+    flex-grow: 1;
+    font-size: var(--osc-font-size-body);
+    color: var(--osc-color-text-primary);
+}
+
+/*
+ * The root only paints its slots. Leaving it transparent and non-picking keeps
+ * the World View clickable everywhere a panel is not actually drawn.
+ */
+.osc-root--transparent {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.osc-panel {
+    background-color: var(--osc-color-panel);
+    /* Nothing inside a panel may spill past its edge and off the screen. */
+    overflow: hidden;
+    border-left-color: var(--osc-color-border);
+    border-right-color: var(--osc-color-border);
+    border-top-color: var(--osc-color-border);
+    border-bottom-color: var(--osc-color-border);
+    border-left-width: var(--osc-border-width);
+    border-right-width: var(--osc-border-width);
+    border-top-width: var(--osc-border-width);
+    border-bottom-width: var(--osc-border-width);
+    border-top-left-radius: var(--osc-radius-md);
+    border-top-right-radius: var(--osc-radius-md);
+    border-bottom-left-radius: var(--osc-radius-md);
+    border-bottom-right-radius: var(--osc-radius-md);
+    padding-left: var(--osc-space-2);
+    padding-right: var(--osc-space-2);
+    padding-top: var(--osc-space-2);
+    padding-bottom: var(--osc-space-2);
+}
+
+.osc-panel--elevated {
+    background-color: var(--osc-color-elevated);
+}
+
+.osc-panel__title {
+    font-size: var(--osc-font-size-body-strong);
+    color: var(--osc-color-text-primary);
+    margin-bottom: var(--osc-space-2);
+    -unity-font-style: bold;
+}
+
+.osc-panel__caption {
+    font-size: var(--osc-font-size-caption);
+    color: var(--osc-color-text-secondary);
+}
+
+/* ---------------------------------------------------------------------------
+ * Interactive item and its seven required states
+ * (Docs/DESIGN.md section 3.4: default, hover, focus, selected, disabled,
+ * warning, error).
+ * ------------------------------------------------------------------------ */
+
+.osc-item {
+    background-color: rgba(0, 0, 0, 0);
+    border-left-color: rgba(0, 0, 0, 0);
+    border-right-color: rgba(0, 0, 0, 0);
+    border-top-color: rgba(0, 0, 0, 0);
+    border-bottom-color: rgba(0, 0, 0, 0);
+    border-left-width: var(--osc-state-focus-ring-width);
+    border-right-width: var(--osc-state-focus-ring-width);
+    border-top-width: var(--osc-state-focus-ring-width);
+    border-bottom-width: var(--osc-state-focus-ring-width);
+    border-top-left-radius: var(--osc-radius-md);
+    border-top-right-radius: var(--osc-radius-md);
+    border-bottom-left-radius: var(--osc-radius-md);
+    border-bottom-right-radius: var(--osc-radius-md);
+    padding-left: var(--osc-space-2);
+    padding-right: var(--osc-space-2);
+    padding-top: var(--osc-space-1);
+    padding-bottom: var(--osc-space-1);
+    color: var(--osc-color-text-primary);
+    font-size: var(--osc-font-size-body);
+}
+
+.osc-item:hover {
+    background-color: var(--osc-state-hover);
+}
+
+/*
+ * Focus is drawn as a ring rather than a fill so it stays distinguishable when
+ * an item is focused and selected at the same time.
+ */
+.osc-item:focus {
+    border-left-color: var(--osc-state-focus-ring);
+    border-right-color: var(--osc-state-focus-ring);
+    border-top-color: var(--osc-state-focus-ring);
+    border-bottom-color: var(--osc-state-focus-ring);
+}
+
+.osc-item--selected {
+    background-color: var(--osc-state-selected);
+    color: var(--osc-color-accent);
+}
+
+.osc-item--disabled {
+    opacity: var(--osc-state-disabled-opacity);
+}
+
+.osc-item--warning {
+    color: var(--osc-color-warning);
+}
+
+.osc-item--error {
+    color: var(--osc-color-danger);
+}
+
+/*
+ * Color alone must never carry state (Docs/DESIGN.md section 3.1). Warning and
+ * error items pair the color with a visible glyph slot; the shells fill it with
+ * text so screen state stays readable without hue discrimination.
+ */
+.osc-item__marker {
+    display: none;
+    font-size: var(--osc-font-size-caption);
+    margin-right: var(--osc-space-1);
+    -unity-font-style: bold;
+}
+
+.osc-item--warning .osc-item__marker,
+.osc-item--error .osc-item__marker {
+    display: flex;
+}
+
+.osc-item--warning .osc-item__marker {
+    color: var(--osc-color-warning);
+}
+
+.osc-item--error .osc-item__marker {
+    color: var(--osc-color-danger);
+}
+
+/* ---------------------------------------------------------------------------
+ * Slot shells
+ * ------------------------------------------------------------------------ */
+
+/*
+ * The rail is a narrow icon strip once P2-01 supplies real tools. During the
+ * shell phase it holds labeled state fixtures, so min-width (not a fixed width)
+ * lets it grow just enough to show them without clipping off-screen.
+ */
+.osc-tool-rail {
+    min-width: var(--osc-tool-rail-width);
+    align-self: flex-start;
+    flex-shrink: 0;
+}
+
+.osc-build-palette {
+    min-height: var(--osc-build-palette-height);
+    align-self: stretch;
+}
+
+.osc-context-inspector {
+    width: var(--osc-context-inspector-width);
+    align-self: flex-start;
+    flex-shrink: 0;
+}
+
+/*
+ * The legend is not a fixed slot (Docs/DESIGN.md 3.3) — it only makes sense while
+ * a data overlay is active, and P2-00 wires no overlays, so it stays hidden by
+ * default. P2-05 owns showing it (and deciding its position relative to whichever
+ * overlay it explains). It still lives in the tree so the shell smoke covers its
+ * seven states. When shown, it hugs the lower-right under the Inspector.
+ */
+.osc-data-overlay-legend {
+    display: none;
+    align-self: flex-end;
+    margin: var(--osc-space-2);
+}
+
+/* Fixture container: vertical by default, horizontal for the Build Palette. */
+.osc-fixtures--row {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+/*
+ * Empty shells state plainly that they hold no data yet. P2-00 ships no growth,
+ * finance, traffic or service values, and a blank panel would read as a bug.
+ */
+.osc-empty-note {
+    font-size: var(--osc-font-size-caption);
+    color: var(--osc-color-text-secondary);
+    white-space: normal;
+}

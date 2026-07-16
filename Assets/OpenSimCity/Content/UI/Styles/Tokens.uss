@@ -1,0 +1,69 @@
+/*
+ * OpenSimCity design tokens.
+ *
+ * Colors mirror Docs/DESIGN.md section 3.2 and are the single source for runtime
+ * UI. Screens must consume these variables instead of literal colors, spacing or
+ * font sizes; UiTokenValidator fails the build when a token is missing or defined
+ * twice.
+ */
+
+:root {
+    /* Surfaces */
+    --osc-color-canvas: #08131D;
+    --osc-color-panel: #0D1D2A;
+    --osc-color-elevated: #132838;
+    --osc-color-border: #244253;
+
+    /* Text */
+    --osc-color-text-primary: #F2F5F3;
+    --osc-color-text-secondary: #AAB8C2;
+
+    /* Status and emphasis */
+    --osc-color-accent: #31C7D5;
+    --osc-color-info: #66B3FF;
+    --osc-color-success: #83CD52;
+    --osc-color-warning: #F2C14E;
+    --osc-color-danger: #F07171;
+    --osc-color-special: #B095F5;
+
+    /*
+     * State layers composited over the surface tokens. Kept separate from the
+     * status colors so hover/selected feedback never reads as a warning.
+     */
+    --osc-state-hover: rgba(49, 199, 213, 0.12);
+    --osc-state-selected: rgba(49, 199, 213, 0.22);
+    --osc-state-disabled-opacity: 0.38;
+    --osc-state-focus-ring: var(--osc-color-accent);
+    --osc-state-focus-ring-width: 2px;
+
+    /* Spacing scale, 4px base */
+    --osc-space-0: 0;
+    --osc-space-1: 4px;
+    --osc-space-2: 8px;
+    --osc-space-3: 12px;
+    --osc-space-4: 16px;
+    --osc-space-5: 24px;
+    --osc-space-6: 32px;
+
+    /* Border and radius */
+    --osc-border-width: 1px;
+    --osc-radius-sm: 2px;
+    --osc-radius-md: 4px;
+    --osc-radius-lg: 8px;
+
+    /*
+     * Type scale. Values are the 100% UI scale baseline; PanelSettings scales
+     * them for 125% and 150%. Final Korean font asset lands in P3-06, so only the
+     * scale and fallback behaviour are fixed here.
+     */
+    --osc-font-size-caption: 11px;
+    --osc-font-size-body: 13px;
+    --osc-font-size-body-strong: 14px;
+    --osc-font-size-title: 18px;
+    --osc-font-size-display: 24px;
+
+    /* Layout slots from Docs/DESIGN.md section 3.3 */
+    --osc-tool-rail-width: 56px;
+    --osc-build-palette-height: 96px;
+    --osc-context-inspector-width: 280px;
+}
