@@ -48,6 +48,8 @@ namespace OpenSimCity.Editor
             ConfigureEditorSettings();
             ConfigureUrp();
             CreateScenes();
+            var cameraInputActions = IsometricCameraRigSetup.EnsureInputActionsAsset();
+            IsometricCameraRigSetup.ConfigureCityPrototype(cameraInputActions);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -82,6 +84,7 @@ namespace OpenSimCity.Editor
             ValidateEditorSettings(issues);
             ValidateUrp(issues);
             ValidateInputSystem(issues);
+            IsometricCameraRigSetup.Validate(issues);
             ValidateScenesAndBuildSettings(issues);
             ValidateLightingAndQualityDefaults(issues);
             return issues;
