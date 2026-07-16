@@ -1,4 +1,5 @@
 using System;
+using OpenSimCity.Gameplay.Selection;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -23,6 +24,7 @@ namespace OpenSimCity.Gameplay.Camera
             var asset = ScriptableObject.CreateInstance<InputActionAsset>();
             asset.name = "IsometricCamera";
             ConfigureAsset(asset);
+            GridSelectionInputActions.ConfigureAsset(asset);
             return asset;
         }
 
@@ -49,6 +51,10 @@ namespace OpenSimCity.Gameplay.Camera
             EnsureBinding(rotateRight, "<Keyboard>/e");
             EnsureBinding(pointerPosition, "<Pointer>/position");
             EnsureBinding(pointerPress, "<Mouse>/middleButton");
+
+            // P1-05 keeps selection in its own map so camera gestures and tools
+            // can be independently enabled without sharing button state.
+            GridSelectionInputActions.ConfigureAsset(asset);
         }
 
         public static bool HasRequiredActions(InputActionAsset asset)
