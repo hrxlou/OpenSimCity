@@ -47,6 +47,13 @@ if ($env:UNITY_TEST_TIMEOUT_SECONDS) {
     $TimeoutSeconds = $parsedTimeout
 }
 
+$BaselineGuard = Join-Path $PSScriptRoot 'validate-projectsettings-baseline.ps1'
+if (-not (Test-Path $BaselineGuard)) {
+    Write-Error "ProjectSettings baseline guard를 찾지 못했다: $BaselineGuard"
+    exit 1
+}
+& $BaselineGuard
+
 function Wait-ForUnityLockRelease {
     param(
         [int]$TimeoutSeconds = 60
