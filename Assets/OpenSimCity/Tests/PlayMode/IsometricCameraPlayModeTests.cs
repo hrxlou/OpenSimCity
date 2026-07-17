@@ -28,6 +28,16 @@ namespace OpenSimCity.Tests.PlayMode
             rig.SetOrthographicSize(100f);
             Assert.That(rig.OrthographicSize, Is.EqualTo(32f).Within(0.001f));
 
+            rig.SetOrthographicSize(18f);
+            rig.ApplyZoomDelta(0.05f);
+            Assert.That(rig.OrthographicSize, Is.EqualTo(17.8f).Within(0.001f),
+                "Smooth-scroll input should use the responsive 4x zoom sensitivity.");
+
+            rig.SetOrthographicSize(18f);
+            rig.ApplyZoomDelta(6f);
+            Assert.That(rig.OrthographicSize, Is.EqualTo(12f).Within(0.001f),
+                "A large wheel delta should be capped to one six-unit zoom step.");
+
             for (var i = 0; i < 4; i++)
             {
                 rig.SetQuarterTurn(i);

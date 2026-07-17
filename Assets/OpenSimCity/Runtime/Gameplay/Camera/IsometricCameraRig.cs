@@ -14,6 +14,8 @@ namespace OpenSimCity.Gameplay.Camera
     public sealed class IsometricCameraRig : MonoBehaviour
     {
         private const float DefaultFallbackAspect = 16f / 9f;
+        public const float DefaultZoomSensitivity = 4f;
+        public const float DefaultMaximumZoomStep = 6f;
 
         [Header("References")]
         [SerializeField] private UnityCamera controlledCamera;
@@ -31,6 +33,8 @@ namespace OpenSimCity.Gameplay.Camera
 
         [Header("Input")]
         [SerializeField, Min(0f)] private float movementSpeed = 20f;
+        [SerializeField, Min(0f)] private float zoomSensitivity = DefaultZoomSensitivity;
+        [SerializeField, Min(0.1f)] private float maximumZoomStep = DefaultMaximumZoomStep;
         [SerializeField, Min(0f)] private float dragSensitivity = 1f;
         [SerializeField, Min(0f)] private float dragThresholdPixels = 6f;
         [SerializeField] private bool enableInput = true;
@@ -183,6 +187,8 @@ namespace OpenSimCity.Gameplay.Camera
             maxOrthographicSize = Mathf.Max(minOrthographicSize, maxOrthographicSize);
             initialOrthographicSize = Mathf.Clamp(initialOrthographicSize, minOrthographicSize, maxOrthographicSize);
             movementSpeed = Mathf.Max(0f, movementSpeed);
+            zoomSensitivity = Mathf.Max(0f, zoomSensitivity);
+            maximumZoomStep = Mathf.Max(0.1f, maximumZoomStep);
             dragSensitivity = Mathf.Max(0f, dragSensitivity);
             dragThresholdPixels = Mathf.Max(0f, dragThresholdPixels);
         }
@@ -255,8 +261,14 @@ namespace OpenSimCity.Gameplay.Camera
             if (float.IsNaN(input) || float.IsInfinity(input))
                 throw new ArgumentOutOfRangeException(nameof(input), "Zoom input must be finite.");
 
-            // Positive wheel input means zoom in.
-            SetOrthographicSize(_orthographicSize - input);
+            // Positive wheel input means zoom in. macOS smooth-scroll devices
+            // report much smaller deltas than a Windows wheel notch, so amplify
+            // small inputs while capping a single update for cross-device safety.
+            var zoomDelta = Mathf.Clamp(
+                input * zoomSensitivity,
+                -maximumZoomStep,
+                maximumZoomStep);
+            SetOrthographicSize(_orthographicSize - zoomDelta);
         }
 
         public void SetQuarterTurn(int quarterTurn)
