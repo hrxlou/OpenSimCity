@@ -138,6 +138,10 @@ namespace OpenSimCity.Gameplay.Construction
                 SelectTool(ConstructionToolMode.ZoneClear);
             else if (keyboard.digit6Key.wasPressedThisFrame)
                 SelectTool(ConstructionToolMode.Demolish);
+            else if (keyboard.digit7Key.wasPressedThisFrame)
+                SelectTool(ConstructionToolMode.PowerPlant);
+            else if (keyboard.digit8Key.wasPressedThisFrame)
+                SelectTool(ConstructionToolMode.RemovePowerPlant);
         }
 
         private void HandlePointer()

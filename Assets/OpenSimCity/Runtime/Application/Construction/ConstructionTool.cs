@@ -1,6 +1,7 @@
 using System;
 using OpenSimCity.Application.Commands;
 using OpenSimCity.Application.World;
+using OpenSimCity.Core;
 using OpenSimCity.Core.Mathematics;
 
 namespace OpenSimCity.Application.Construction
@@ -155,6 +156,13 @@ namespace OpenSimCity.Application.Construction
                     return new ZoneAreaCommand(mode.ToZoneType(), start, end);
                 case ConstructionToolMode.ZoneClear:
                     return new ClearZoneCommand(start, end);
+                case ConstructionToolMode.PowerPlant:
+                    return new PlacePowerProducerCommand(
+                        _runtime.PowerProducerIdFor(start), _runtime.DefaultPowerPlantDefinitionId, start);
+                case ConstructionToolMode.RemovePowerPlant:
+                    return _runtime.PowerProducers.TryGetAt(start, out var producer)
+                        ? new RemovePowerProducerCommand(producer.Id)
+                        : new RemovePowerProducerCommand(StableId.Invalid);
                 default:
                     return null;
             }
@@ -176,6 +184,10 @@ namespace OpenSimCity.Application.Construction
                     return FromZone(mode, _runtime.Preview(paint));
                 case ClearZoneCommand clear:
                     return FromZone(mode, _runtime.Preview(clear));
+                case PlacePowerProducerCommand placePower:
+                    return FromPower(mode, _runtime.Preview(placePower));
+                case RemovePowerProducerCommand removePower:
+                    return FromPower(mode, _runtime.Preview(removePower));
                 default:
                     return ConstructionPreview.Empty;
             }
@@ -220,6 +232,16 @@ namespace OpenSimCity.Application.Construction
                 rejectedCells: result.RejectedCells,
                 failureCode: result.IsValid ? string.Empty : result.FailureReason.ToString(),
                 failureReason: result.Message);
+        }
+
+        private ConstructionPreview FromPower(ConstructionToolMode mode, PowerCommandResult result)
+        {
+            var requested = new[] { StartCell };
+            return new ConstructionPreview(mode, mode.ToOperation(), true, result.IsValid, 0,
+                _runtime.Funds, _runtime.Funds, StartCell, StartCell, requested,
+                result.IsValid ? requested : Array.Empty<CellCoord>(),
+                result.IsValid ? Array.Empty<CellCoord>() : requested,
+                result.IsValid ? string.Empty : result.FailureReason.ToString(), result.Message);
         }
 
         private static ConstructionCommitResult BuildCommitResult(

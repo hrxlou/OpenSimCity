@@ -59,6 +59,7 @@ namespace OpenSimCity.Editor
             // bounds source and the UI foundation the previous steps created.
             PlacementSetup.ConfigureCityPrototype();
             BuildingDefinitionSetup.ConfigureDefinitions();
+            UtilityDefinitionSetup.ConfigureDefinitions();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -97,6 +98,8 @@ namespace OpenSimCity.Editor
             UiFoundationSetup.Validate(issues);
             PlacementSetup.Validate(issues);
             foreach (var issue in BuildingDefinitionSetup.Validate())
+                issues.Add(issue);
+            foreach (var issue in UtilityDefinitionSetup.Validate())
                 issues.Add(issue);
             ValidateScenesAndBuildSettings(issues);
             ValidateLightingAndQualityStructure(issues);

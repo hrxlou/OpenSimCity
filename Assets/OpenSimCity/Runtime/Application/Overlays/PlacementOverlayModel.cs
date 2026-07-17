@@ -5,6 +5,7 @@ using OpenSimCity.Application.World;
 using OpenSimCity.Simulation.Parcels;
 using OpenSimCity.Simulation.Roads;
 using OpenSimCity.Simulation.Zones;
+using OpenSimCity.Simulation.Utilities;
 
 namespace OpenSimCity.Application.Overlays
 {
@@ -18,23 +19,27 @@ namespace OpenSimCity.Application.Overlays
         private readonly RoadAccessibilityReadModel _roads;
         private readonly ZoneReadModel _zones;
         private readonly ParcelReadModel _parcels;
+        private readonly PowerReadModel _power;
 
         public PlacementOverlayModel(CityRuntime runtime)
             : this(
                 (runtime ?? throw new ArgumentNullException(nameof(runtime))).RoadAccessibility,
                 runtime.ZoneModel,
-                runtime.ParcelModel)
+                runtime.ParcelModel,
+                runtime.PowerModel)
         {
         }
 
         public PlacementOverlayModel(
             RoadAccessibilityReadModel roads,
             ZoneReadModel zones,
-            ParcelReadModel parcels)
+            ParcelReadModel parcels,
+            PowerReadModel power = null)
         {
             _roads = roads ?? throw new ArgumentNullException(nameof(roads));
             _zones = zones ?? throw new ArgumentNullException(nameof(zones));
             _parcels = parcels ?? throw new ArgumentNullException(nameof(parcels));
+            _power = power;
         }
 
         public PlacementOverlaySnapshot Build(PlacementOverlayKind kind)
@@ -49,6 +54,8 @@ namespace OpenSimCity.Application.Overlays
                     return BuildZone();
                 case PlacementOverlayKind.Parcel:
                     return BuildParcel();
+                case PlacementOverlayKind.Power:
+                    return BuildPower();
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown overlay kind.");
             }
@@ -150,6 +157,25 @@ namespace OpenSimCity.Application.Overlays
                     PlacementOverlayCategory.ParcelReachableFar,
                     PlacementOverlayCategory.ParcelNoExternalConnection,
                     PlacementOverlayCategory.ParcelNoFrontage));
+        }
+
+        public PlacementOverlaySnapshot BuildPower()
+        {
+            if (_power == null) throw new InvalidOperationException("A power read model is required for the power overlay.");
+            _power.RefreshIfNeeded();
+            var cells = new List<PlacementOverlayCell>();
+            foreach (var producer in _power.Producers)
+                cells.Add(MakeCell(producer.Cell, producer.IsConnected
+                    ? PlacementOverlayCategory.PowerProducerConnected
+                    : PlacementOverlayCategory.PowerProducerDisconnected, producer.IsConnected ? "+" : "!"));
+            foreach (var building in _power.Buildings)
+                cells.Add(MakeCell(building.Cell, building.IsPowered
+                    ? PlacementOverlayCategory.BuildingPowered
+                    : PlacementOverlayCategory.BuildingUnpowered, building.IsPowered ? string.Empty : "X"));
+            return new PlacementOverlaySnapshot(PlacementOverlayKind.Power, "전력",
+                cells.AsReadOnly(), Legend(PlacementOverlayCategory.PowerProducerConnected,
+                    PlacementOverlayCategory.PowerProducerDisconnected, PlacementOverlayCategory.BuildingPowered,
+                    PlacementOverlayCategory.BuildingUnpowered));
         }
 
         /// <summary>
@@ -290,7 +316,15 @@ namespace OpenSimCity.Application.Overlays
                 [PlacementOverlayCategory.ParcelNoExternalConnection] = new OverlayCategoryDescriptor(
                     OverlayColorRole.Warning, OverlayPattern.Hatch, "!", "외부 연결 없음"),
                 [PlacementOverlayCategory.ParcelNoFrontage] = new OverlayCategoryDescriptor(
-                    OverlayColorRole.Danger, OverlayPattern.CrossHatch, "X", "도로 접면 없음")
+                    OverlayColorRole.Danger, OverlayPattern.CrossHatch, "X", "도로 접면 없음"),
+                [PlacementOverlayCategory.PowerProducerConnected] = new OverlayCategoryDescriptor(
+                    OverlayColorRole.Special, OverlayPattern.Solid, "+", "도로망에 연결된 발전소"),
+                [PlacementOverlayCategory.PowerProducerDisconnected] = new OverlayCategoryDescriptor(
+                    OverlayColorRole.Warning, OverlayPattern.Hatch, "!", "도로망에 연결되지 않은 발전소"),
+                [PlacementOverlayCategory.BuildingPowered] = new OverlayCategoryDescriptor(
+                    OverlayColorRole.Success, OverlayPattern.Solid, string.Empty, "전력 공급됨"),
+                [PlacementOverlayCategory.BuildingUnpowered] = new OverlayCategoryDescriptor(
+                    OverlayColorRole.Danger, OverlayPattern.CrossHatch, "X", "전력 공급 안 됨")
             };
     }
 

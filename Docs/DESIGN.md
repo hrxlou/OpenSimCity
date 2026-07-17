@@ -137,6 +137,11 @@ component의 상태는 최소 `default`, `hover`, `focus`, `selected`, `disabled
 
 아트 inventory, 라이선스 확인, importer 실험 같은 읽기 전용 준비는 이전 Phase에도 할 수 있다. 다만 해당 Phase의 제품 화면과 prefab을 production 에셋으로 교체했다는 뜻은 아니다.
 
+P3-02에서는 Tool Rail에 발전소 설치·철거와 전력 overlay만 추가한다. 발전소는 CityPrototype의
+pooled primitive placeholder로 표시하고, 연결 발전소/미연결 발전소/공급 건물/미공급 건물은
+색과 함께 solid/hatch/cross-hatch 및 `+`, `!`, `X` marker로 구분한다. 수도, 예산별 효율,
+송전선 상세, 후속 수요·경제 지표는 노출하지 않는다.
+
 ## 6. Downtown City MegaKit Standard 검증 기준선
 
 검토한 무료 파일은 `Downtown City MegaKit[Standard].zip`이며 SHA-256은 `499dc648a2451686baa11d4519192f07339fdf66c8bd23739c931ca4667ef1f2`다. ZIP 내부 라이선스는 CC0 1.0으로 확인했다. 실제 import 전에 acquisition manifest에 원본 URL, 취득일, 배포 tier, hash와 라이선스 파일을 함께 기록한다.

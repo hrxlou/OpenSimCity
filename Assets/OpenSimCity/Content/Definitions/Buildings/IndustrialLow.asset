@@ -18,4 +18,5 @@ MonoBehaviour:
   footprintHeight: 2
   occupancyCapacity: 0
   jobCapacity: 8
+  powerDemand: 8
   presentationKey: building.industrial.low.placeholder

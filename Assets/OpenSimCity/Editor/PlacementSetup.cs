@@ -4,6 +4,7 @@ using System.Linq;
 using OpenSimCity.Gameplay.Camera;
 using OpenSimCity.Gameplay.Construction;
 using OpenSimCity.Presentation.Overlays;
+using OpenSimCity.Presentation.Utilities;
 using OpenSimCity.UI.Foundation;
 using OpenSimCity.UI.Placement;
 using UnityEditor;
@@ -23,6 +24,7 @@ namespace OpenSimCity.Editor
     {
         public const string RuntimeRootName = "CityRuntime";
         public const string OverlayRendererName = "PlacementOverlay";
+        public const string PowerRendererName = "PowerProducerViews";
 
         [MenuItem("OpenSimCity/Setup/Configure Placement")]
         public static void ConfigurePlacementMenu()
@@ -61,6 +63,9 @@ namespace OpenSimCity.Editor
 
                 var overlayObject = EnsureChild(root.transform, OverlayRendererName, ref sceneChanged);
                 EnsureComponent<PlacementOverlayRenderer>(overlayObject, ref sceneChanged);
+
+                var powerObject = EnsureChild(root.transform, PowerRendererName, ref sceneChanged);
+                EnsureComponent<PowerProducerViewRenderer>(powerObject, ref sceneChanged);
 
                 ConfigureUiBinder(root, ref sceneChanged);
 
@@ -124,6 +129,10 @@ namespace OpenSimCity.Editor
                     issues.Add(
                         $"CityPrototype is missing '{OverlayRendererName}' with a PlacementOverlayRenderer.");
                 }
+
+                var powerRenderer = root.transform.Find(PowerRendererName)?.GetComponent<PowerProducerViewRenderer>();
+                if (powerRenderer == null)
+                    issues.Add($"CityPrototype is missing '{PowerRendererName}' with a PowerProducerViewRenderer.");
 
                 var uiRoot = root.transform.Find(UiFoundationSetup.UiRootName);
                 var document = uiRoot?.Find(UiFoundationSetup.UiDocumentName)?.gameObject;

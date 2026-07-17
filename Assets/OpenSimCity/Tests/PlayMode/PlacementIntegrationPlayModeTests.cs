@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Linq;
 using NUnit.Framework;
 using OpenSimCity.Application.Construction;
 using OpenSimCity.Application.Input;
@@ -9,6 +10,7 @@ using OpenSimCity.Gameplay.Camera;
 using OpenSimCity.Gameplay.Construction;
 using OpenSimCity.Gameplay.Selection;
 using OpenSimCity.Presentation.Overlays;
+using OpenSimCity.Presentation.Utilities;
 using OpenSimCity.UI.Placement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -123,6 +125,7 @@ namespace OpenSimCity.Tests.PlayMode
             Assert.That(Object.FindAnyObjectByType<ConstructionInputDriver>(), Is.Not.Null);
             Assert.That(Object.FindAnyObjectByType<PlacementOverlayRenderer>(), Is.Not.Null);
             Assert.That(Object.FindAnyObjectByType<PlacementUiBinder>(), Is.Not.Null);
+            Assert.That(Object.FindAnyObjectByType<PowerProducerViewRenderer>(), Is.Not.Null);
             Assert.That(CityRuntimeContext.Current, Is.Not.Null);
         }
 
@@ -169,6 +172,36 @@ namespace OpenSimCity.Tests.PlayMode
             yield return null;
 
             Assert.That(legend.resolvedStyle.display, Is.EqualTo(DisplayStyle.Flex));
+        }
+
+        [UnityTest]
+        public IEnumerator PowerPlantToolUpdatesPlaceholderAndOverlayWithoutStaleView()
+        {
+            yield return LoadCityPrototype();
+            var context = CityRuntimeContext.Current;
+            var renderer = Object.FindAnyObjectByType<PowerProducerViewRenderer>();
+
+            context.SelectTool(ConstructionToolMode.Road);
+            context.Tool.BeginDrag(new CellCoord(0, 32));
+            context.Tool.UpdateDrag(new CellCoord(2, 32));
+            Assert.That(context.Tool.CommitDrag().Committed, Is.True);
+
+            var plantCell = new CellCoord(0, 31);
+            context.SelectTool(ConstructionToolMode.PowerPlant);
+            context.Tool.BeginDrag(plantCell);
+            Assert.That(context.Tool.CommitDrag().Committed, Is.True);
+            context.SetOverlay(PlacementOverlayKind.Power);
+            yield return null;
+
+            Assert.That(renderer.ActiveViewCount, Is.EqualTo(1));
+            Assert.That(context.ActiveOverlaySnapshot.Cells.Any(cell => cell.Cell == plantCell), Is.True);
+
+            context.SelectTool(ConstructionToolMode.RemovePowerPlant);
+            context.Tool.BeginDrag(plantCell);
+            Assert.That(context.Tool.CommitDrag().Committed, Is.True);
+            yield return null;
+            Assert.That(renderer.ActiveViewCount, Is.Zero);
+            Assert.That(context.ActiveOverlaySnapshot.Cells.Any(cell => cell.Cell == plantCell), Is.False);
         }
     }
 }

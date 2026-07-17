@@ -154,6 +154,7 @@ namespace OpenSimCity.Editor
             serialized.FindProperty("footprintHeight").intValue = seed.Height;
             serialized.FindProperty("occupancyCapacity").intValue = seed.OccupancyCapacity;
             serialized.FindProperty("jobCapacity").intValue = seed.JobCapacity;
+            serialized.FindProperty("powerDemand").intValue = Math.Max(1, seed.OccupancyCapacity + seed.JobCapacity);
             serialized.FindProperty("presentationKey").stringValue = seed.PresentationKey;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }

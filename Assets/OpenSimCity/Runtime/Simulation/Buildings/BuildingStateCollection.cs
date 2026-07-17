@@ -25,6 +25,9 @@ namespace OpenSimCity.Simulation.Buildings
 
         public int Count => _ordered.Count;
 
+        /// <summary>Increments once for each successful add or remove.</summary>
+        public int Version { get; private set; }
+
         public IReadOnlyList<BuildingState> Buildings => _readOnlyOrdered;
 
         public BuildingState Create(
@@ -52,6 +55,7 @@ namespace OpenSimCity.Simulation.Buildings
             if (insertionIndex < 0)
                 insertionIndex = ~insertionIndex;
             _ordered.Insert(insertionIndex, state);
+            Version = checked(Version + 1);
         }
 
         public bool TryGet(StableId id, out BuildingState state) => _byId.TryGetValue(id, out state);
@@ -70,6 +74,7 @@ namespace OpenSimCity.Simulation.Buildings
 
             _byId.Remove(id);
             _ordered.Remove(state);
+            Version = checked(Version + 1);
             return true;
         }
 

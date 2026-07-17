@@ -100,6 +100,8 @@ namespace OpenSimCity.UI.Placement
             AddToolButton(content, ConstructionToolMode.ZoneIndustrial, "공업 I", "4");
             AddToolButton(content, ConstructionToolMode.ZoneClear, "구역 해제", "5");
             AddToolButton(content, ConstructionToolMode.Demolish, "철거", "6");
+            AddToolButton(content, ConstructionToolMode.PowerPlant, "발전소", "7");
+            AddToolButton(content, ConstructionToolMode.RemovePowerPlant, "발전소 철거", "8");
 
             var overlayHeader = new Label("오버레이");
             overlayHeader.AddToClassList(UiFoundationNames.PanelCaptionClass);
@@ -109,6 +111,7 @@ namespace OpenSimCity.UI.Placement
             AddOverlayButton(content, PlacementOverlayKind.Accessibility, "접근성");
             AddOverlayButton(content, PlacementOverlayKind.Zone, "구역맵");
             AddOverlayButton(content, PlacementOverlayKind.Parcel, "필지");
+            AddOverlayButton(content, PlacementOverlayKind.Power, "전력");
         }
 
         private void AddToolButton(VisualElement parent, ConstructionToolMode mode, string label, string shortcut)
@@ -410,6 +413,10 @@ namespace OpenSimCity.UI.Placement
                     return "구역 해제";
                 case ConstructionToolMode.Demolish:
                     return "도로 철거";
+                case ConstructionToolMode.PowerPlant:
+                    return "발전소";
+                case ConstructionToolMode.RemovePowerPlant:
+                    return "발전소 철거";
                 default:
                     return "도구를 선택하세요";
             }
@@ -431,6 +438,10 @@ namespace OpenSimCity.UI.Placement
                     return "5";
                 case ConstructionToolMode.Demolish:
                     return "6";
+                case ConstructionToolMode.PowerPlant:
+                    return "7";
+                case ConstructionToolMode.RemovePowerPlant:
+                    return "8";
                 default:
                     return string.Empty;
             }
@@ -448,6 +459,10 @@ namespace OpenSimCity.UI.Placement
                     return "구역 지정";
                 case ConstructionOperation.ClearZone:
                     return "구역 해제";
+                case ConstructionOperation.PlacePowerProducer:
+                    return "발전소 설치";
+                case ConstructionOperation.RemovePowerProducer:
+                    return "발전소 철거";
                 default:
                     return "없음";
             }

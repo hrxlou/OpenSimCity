@@ -13,7 +13,8 @@ namespace OpenSimCity.Application.Overlays
         RoadConnectivity,
         Accessibility,
         Zone,
-        Parcel
+        Parcel,
+        Power
     }
 
     /// <summary>
@@ -66,7 +67,11 @@ namespace OpenSimCity.Application.Overlays
         ParcelEligible,
         ParcelReachableFar,
         ParcelNoExternalConnection,
-        ParcelNoFrontage
+        ParcelNoFrontage,
+        PowerProducerConnected,
+        PowerProducerDisconnected,
+        BuildingPowered,
+        BuildingUnpowered
     }
 
     public readonly struct PlacementOverlayCell : IEquatable<PlacementOverlayCell>

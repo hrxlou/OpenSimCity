@@ -35,6 +35,9 @@ namespace OpenSimCity.Definitions.Buildings
         [SerializeField, Min(0)]
         private int jobCapacity;
 
+        [SerializeField, Min(1)]
+        private int powerDemand = 1;
+
         [SerializeField]
         private string presentationKey = string.Empty;
 
@@ -52,6 +55,8 @@ namespace OpenSimCity.Definitions.Buildings
 
         public int JobCapacity => jobCapacity;
 
+        public int PowerDemand => powerDemand;
+
         public string PresentationKey => presentationKey ?? string.Empty;
 
         public BuildingDefinitionData ToData()
@@ -62,7 +67,8 @@ namespace OpenSimCity.Definitions.Buildings
                 new BuildingFootprint(footprintWidth, footprintHeight),
                 occupancyCapacity,
                 jobCapacity,
-                presentationKey);
+                presentationKey,
+                powerDemand);
         }
     }
 }

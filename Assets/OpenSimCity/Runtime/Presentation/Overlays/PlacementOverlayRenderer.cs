@@ -139,7 +139,8 @@ namespace OpenSimCity.Presentation.Overlays
             var bounds = _boundContext.WorldBounds;
             var validColor = PlacementOverlayColors.Resolve(
                 _previewSnapshot.Operation == ConstructionOperation.DemolishRoad ||
-                _previewSnapshot.Operation == ConstructionOperation.ClearZone
+                _previewSnapshot.Operation == ConstructionOperation.ClearZone ||
+                _previewSnapshot.Operation == ConstructionOperation.RemovePowerProducer
                     ? OverlayColorRole.Warning
                     : OverlayColorRole.Accent,
                 0.75f);
