@@ -175,6 +175,7 @@ GameObject:
   - component: {fileID: 154218318}
   - component: {fileID: 154218320}
   - component: {fileID: 154218319}
+  - component: {fileID: 154218321}
   m_Layer: 0
   m_Name: UIDocument
   m_TagString: Untagged
@@ -235,6 +236,19 @@ MonoBehaviour:
   m_PivotReferenceSize: 0
   m_Pivot: 0
   m_WorldSpaceCollider: {fileID: 0}
+--- !u!114 &154218321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 154218317}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 995401c6609d6ae418fe73845cef5138, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: OpenSimCity.UI::OpenSimCity.UI.Placement.PlacementUiBinder
+  bootstrap: {fileID: 154218319}
 --- !u!1 &157361170
 GameObject:
   m_ObjectHideFlags: 0
@@ -309,6 +323,68 @@ MonoBehaviour:
   m_EditorClassIdentifier: OpenSimCity.Gameplay::OpenSimCity.Gameplay.Camera.WorldBoundsReadModelSource
   width: 64
   height: 64
+  cellSize: 1
+--- !u!1 &294122724
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 294122725}
+  - component: {fileID: 294122727}
+  - component: {fileID: 294122726}
+  m_Layer: 0
+  m_Name: CityRuntime
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &294122725
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 294122724}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1384901247}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &294122726
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 294122724}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8acf55c12812a43479ac78c1d42d7ff1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: OpenSimCity.Gameplay::OpenSimCity.Gameplay.Construction.ConstructionInputDriver
+  cameraRig: {fileID: 157361172}
+  enableInput: 1
+--- !u!114 &294122727
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 294122724}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3657f37ec9579ff47b8d802be65eb8bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: OpenSimCity.Gameplay::OpenSimCity.Gameplay.Construction.CityRuntimeHost
+  worldBoundsSource: {fileID: 157361173}
+  cameraRig: {fileID: 157361172}
   cellSize: 1
 --- !u!1 &839554728
 GameObject:
@@ -648,6 +724,8 @@ Transform:
   - {fileID: 157361171}
   - {fileID: 839554729}
   - {fileID: 1715852329}
+  - {fileID: 294122725}
+  - {fileID: 2123667864}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1673108138
@@ -881,6 +959,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 157361171}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2123667863
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2123667864}
+  - component: {fileID: 2123667865}
+  m_Layer: 0
+  m_Name: PlacementOverlay
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2123667864
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2123667863}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1384901247}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2123667865
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2123667863}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7d2a883a68f36140be36cd467382a4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: OpenSimCity.Presentation::OpenSimCity.Presentation.Overlays.PlacementOverlayRenderer
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

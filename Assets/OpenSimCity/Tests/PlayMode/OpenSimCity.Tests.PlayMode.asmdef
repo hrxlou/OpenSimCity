@@ -3,6 +3,7 @@
   "rootNamespace": "OpenSimCity.Tests.PlayMode",
   "references": [
     "OpenSimCity.Core",
+    "OpenSimCity.Simulation",
     "OpenSimCity.Application",
     "OpenSimCity.Gameplay",
     "OpenSimCity.Presentation",
