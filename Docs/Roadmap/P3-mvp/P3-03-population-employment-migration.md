@@ -46,10 +46,29 @@
 
 ## Done when
 
-- [ ] 인구, 취업자, 실업자, 빈 일자리가 일관되게 집계된다.
-- [ ] 외부 연결과 주택/일자리 조건이 월별 이주에 반영된다.
+- [x] 인구, 취업자, 실업자, 빈 일자리가 일관되게 집계된다.
+- [x] 외부 연결과 주택/일자리 조건이 월별 이주에 반영된다.
 - [ ] 양쪽에서 동일 command log의 snapshot이 같다.
-- [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+- [x] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+
+## Mac implementation evidence
+
+- Date: `2026-07-17`
+- OS: `macOS 26.5.2 (25F84), Apple Silicon arm64`
+- Unity: `6000.5.3f1`
+- Branch: `codex/p3-03-population-employment-migration`
+- Commit/PR: this implementation commit; PR pending Windows verification
+- Narrow test: filtered P3-03 EditMode run → `7/7` passed
+- Narrow result/log: `TestResults/p3-03-editmode.xml`, `TestResults/p3-03-editmode.log`
+- Regression test: `./Tools/CI/run-unity-tests.sh edit` → EditMode `140/140` passed
+- Regression result/log: `TestResults/editmode.xml`, `TestResults/editmode.log`
+- PlayMode regression: `./Tools/CI/run-unity-tests.sh play` → PlayMode `23/23` passed
+- PlayMode result/log: `TestResults/playmode.xml`, `TestResults/playmode.log`
+- Covered contracts: stable building-order job matching, population/employment invariants, enabled/blocked
+  external connection migration, empty city, capacity reduction, monthly boundary across speed/pause,
+  DTO serialization, deterministic snapshot across insertion orders
+- Remaining verify: Windows import/compile, debug read-model inspection, speed/pause smoke, same command-log
+  snapshot comparison, and commit/PR handoff evidence
 
 ## Out of scope
 

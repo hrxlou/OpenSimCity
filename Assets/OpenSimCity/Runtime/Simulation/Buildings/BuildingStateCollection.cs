@@ -78,6 +78,19 @@ namespace OpenSimCity.Simulation.Buildings
             return true;
         }
 
+        public void Replace(BuildingState state)
+        {
+            if (state == null)
+                throw new ArgumentNullException(nameof(state));
+            if (!_byId.TryGetValue(state.Id, out var existing))
+                throw new KeyNotFoundException($"Building {state.Id} is not registered.");
+
+            _byId[state.Id] = state;
+            var index = _ordered.IndexOf(existing);
+            _ordered[index] = state;
+            Version = checked(Version + 1);
+        }
+
         public BuildingStateCollectionDto ToDto()
         {
             var buildings = new BuildingStateDto[_ordered.Count];
