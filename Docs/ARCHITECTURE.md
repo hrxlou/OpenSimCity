@@ -57,7 +57,9 @@ P1 카메라는 Gameplay 안에서 별도의 view state로 동작한다. `Isomet
 계산하며 Simulation의 셀 배열이나 Scene 이름을 조회하지 않는다. 카메라가 소비한 중클릭 drag는
 `CameraPointerInteractionState.ShouldSuppressClick`으로 노출해 선택 도구의 click 경로와 분리한다.
 WASD, 휠, Q/E action은 `IsometricCamera.inputactions`에 고정하고 Editor 생성 도구가
-`CityPrototype`의 rig·camera·read-model source 참조를 재현 가능하게 구성한다.
+`CityPrototype`의 rig·camera·read-model source 참조를 재현 가능하게 구성한다. 휠 입력은
+macOS smooth-scroll의 작은 delta를 4배 증폭하되 한 update의 zoom 변화는 6으로 제한해
+Windows wheel notch가 과도하게 확대·축소되지 않도록 한다.
 
 P1-05의 `GridSelectionTool`은 별도 `Selection` action map에서 좌클릭을 받아 화면 ray를
 ground plane으로 투영한 뒤 `GridSelectionMath`로 `CellCoord` 조회 결과만 만든다. 선택은
