@@ -460,6 +460,15 @@ field만 사용한다. Application 참조 validator는 각 state의 definition I
 catalog·parcel 집합에서 해석되는지 결정적 building ID 순서로 검사한다. 건물 성장, 점유율 계산,
 전력 상태와 prefab 생성은 이 계약에 포함하지 않는다.
 
+P3-02의 `PowerNetwork`는 P2 도로 component를 재구축 가능한 전력 전달 cache로 사용한다.
+발전소와 건물 footprint가 인접한 도로 중 row-major 최소 셀 하나를 선택하고, component별 생산량을
+건물 stable ID 순서로 전량 배분한다. `BuildingDefinition`의 수요와 `UtilityDefinition`의 최대 용량은
+정적이며, `PowerProducerState`의 현재 생산량만 runtime state다. component label과 공급 결과는 DTO에
+저장하지 않고 road/building/producer version에서 다시 만든다. Application의 `PowerReadModel`과
+`DevelopmentPowerEligibilityQuery`가 Presentation overlay 및 후속 성장 시스템의 유일한 읽기 경계다.
+CityPrototype의 발전소 primitive는 중앙 `PowerProducerViewRenderer`가 pool로 동기화하며 view 수와
+material은 Simulation 결과에 영향을 주지 않는다.
+
 ## 9. 성능 예산
 
 프로토타입 목표:

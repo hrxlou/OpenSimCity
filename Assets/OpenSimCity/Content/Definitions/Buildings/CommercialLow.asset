@@ -18,4 +18,5 @@ MonoBehaviour:
   footprintHeight: 2
   occupancyCapacity: 0
   jobCapacity: 6
+  powerDemand: 6
   presentationKey: building.commercial.low.placeholder

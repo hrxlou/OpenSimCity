@@ -19,7 +19,9 @@ namespace OpenSimCity.Application.Construction
         ZoneResidential,
         ZoneCommercial,
         ZoneIndustrial,
-        ZoneClear
+        ZoneClear,
+        PowerPlant,
+        RemovePowerPlant
     }
 
     public enum ConstructionOperation
@@ -28,7 +30,9 @@ namespace OpenSimCity.Application.Construction
         PlaceRoad,
         DemolishRoad,
         PaintZone,
-        ClearZone
+        ClearZone,
+        PlacePowerProducer,
+        RemovePowerProducer
     }
 
     public enum ConstructionDragPhase
@@ -68,6 +72,10 @@ namespace OpenSimCity.Application.Construction
                     return ConstructionOperation.PaintZone;
                 case ConstructionToolMode.ZoneClear:
                     return ConstructionOperation.ClearZone;
+                case ConstructionToolMode.PowerPlant:
+                    return ConstructionOperation.PlacePowerProducer;
+                case ConstructionToolMode.RemovePowerPlant:
+                    return ConstructionOperation.RemovePowerProducer;
                 default:
                     return ConstructionOperation.None;
             }

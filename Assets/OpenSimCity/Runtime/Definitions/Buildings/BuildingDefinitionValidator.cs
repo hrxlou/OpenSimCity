@@ -14,7 +14,8 @@ namespace OpenSimCity.Definitions.Buildings
         UnsupportedZone = 4,
         InvalidFootprint = 5,
         InvalidCapacity = 6,
-        MissingPresentationKey = 7
+        MissingPresentationKey = 7,
+        InvalidPowerDemand = 8
     }
 
     public readonly struct BuildingDefinitionIssue
@@ -109,6 +110,12 @@ namespace OpenSimCity.Definitions.Buildings
                 }
 
                 ValidateCapacity(definition, assetName, id, issues);
+
+                if (definition.PowerDemand <= 0)
+                {
+                    issues.Add(new BuildingDefinitionIssue(BuildingDefinitionIssueKind.InvalidPowerDemand,
+                        assetName, id, $"Building definition '{assetName}' requires positive power demand."));
+                }
 
                 if (string.IsNullOrWhiteSpace(definition.PresentationKey))
                 {

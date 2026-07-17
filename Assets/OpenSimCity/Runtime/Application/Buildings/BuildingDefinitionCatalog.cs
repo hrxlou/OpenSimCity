@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using OpenSimCity.Core;
 using OpenSimCity.Simulation.Buildings;
+using OpenSimCity.Simulation.Utilities;
 
 namespace OpenSimCity.Application.Buildings
 {
@@ -9,7 +10,7 @@ namespace OpenSimCity.Application.Buildings
     /// Application boundary between Unity-authored definition assets and pure
     /// simulation state. Catalog enumeration is deterministic by stable ID.
     /// </summary>
-    public sealed class BuildingDefinitionCatalog
+    public sealed class BuildingDefinitionCatalog : IBuildingPowerProfileResolver
     {
         private readonly Dictionary<StableId, BuildingDefinitionData> _byId;
         private readonly IReadOnlyList<BuildingDefinitionData> _definitions;
@@ -65,6 +66,18 @@ namespace OpenSimCity.Application.Buildings
             }
 
             return TryGet(state.DefinitionId, out definition);
+        }
+
+        public bool TryGetPowerProfile(StableId definitionId, out BuildingPowerProfile profile)
+        {
+            if (TryGet(definitionId, out var definition))
+            {
+                profile = new BuildingPowerProfile(definition.Id, definition.Footprint, definition.PowerDemand);
+                return true;
+            }
+
+            profile = default;
+            return false;
         }
     }
 }

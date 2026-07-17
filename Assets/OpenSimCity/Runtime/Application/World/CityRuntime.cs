@@ -1,16 +1,20 @@
 using System;
 using System.Collections.Generic;
 using OpenSimCity.Application.Commands;
+using OpenSimCity.Application.Buildings;
 using OpenSimCity.Application.Queries;
+using OpenSimCity.Application.Utilities;
 using OpenSimCity.Core;
 using OpenSimCity.Core.Determinism;
 using OpenSimCity.Core.Mathematics;
 using OpenSimCity.Core.Time;
 using OpenSimCity.Simulation.ExternalConnections;
+using OpenSimCity.Simulation.Buildings;
 using OpenSimCity.Simulation.Parcels;
 using OpenSimCity.Simulation.Roads;
 using OpenSimCity.Simulation.World;
 using OpenSimCity.Simulation.Zones;
+using OpenSimCity.Simulation.Utilities;
 
 namespace OpenSimCity.Application.World
 {
@@ -48,22 +52,33 @@ namespace OpenSimCity.Application.World
             RoadGraph = new RoadConnectivityGraph(Roads, gates);
             Parcels = new ParcelNetworkState(Zones, RoadGraph);
 
+            Buildings = new BuildingStateCollection();
+            BuildingDefinitions = new BuildingDefinitionCatalog(options.CreateBuildingDefinitions());
+            PowerProducers = new PowerProducerCollection();
+            UtilityDefinitions = new UtilityDefinitionCatalog(options.CreateUtilityDefinitions());
+            Power = new PowerNetwork(RoadGraph, Buildings, PowerProducers, BuildingDefinitions, UtilityDefinitions);
+
             RoadDefinitions = new RoadDefinitionCatalog(options.CreateRoadDefinitions());
             ZoneDefinitions = ZoneDefinitionCatalog.CreateDefault();
             Budget = new RoadConstructionBudget(options.InitialFunds);
             DefaultRoadDefinitionId = options.DefaultRoadDefinitionId;
+            DefaultPowerPlantDefinitionId = options.PowerPlantDefinitionId;
 
             RoadCommands = new RoadCommandHandler(Roads, RoadDefinitions, Budget);
             ZoneCommands = new ZoneCommandHandler(Zones, Roads, ZoneDefinitions);
+            PowerCommands = new PowerCommandHandler(PowerProducers, UtilityDefinitions, Roads);
             _dispatcher = new CommandDispatcher(new ICityCommandHandler[]
             {
                 RoadCommands,
-                ZoneCommands
+                ZoneCommands,
+                PowerCommands
             });
 
             RoadAccessibility = new RoadAccessibilityReadModel(RoadGraph);
             ZoneModel = new ZoneReadModel(Zones);
             ParcelModel = new ParcelReadModel(Parcels);
+            PowerModel = new PowerReadModel(Power);
+            DevelopmentPowerEligibility = new DevelopmentPowerEligibilityQuery(ParcelModel, BuildingDefinitions, Power);
         }
 
         public WorldState World { get; }
@@ -75,6 +90,11 @@ namespace OpenSimCity.Application.World
         public RoadConnectivityGraph RoadGraph { get; }
 
         public ParcelNetworkState Parcels { get; }
+        public BuildingStateCollection Buildings { get; }
+        public BuildingDefinitionCatalog BuildingDefinitions { get; }
+        public PowerProducerCollection PowerProducers { get; }
+        public UtilityDefinitionCatalog UtilityDefinitions { get; }
+        public PowerNetwork Power { get; }
 
         public RoadDefinitionCatalog RoadDefinitions { get; }
 
@@ -85,14 +105,25 @@ namespace OpenSimCity.Application.World
         public RoadCommandHandler RoadCommands { get; }
 
         public ZoneCommandHandler ZoneCommands { get; }
+        public PowerCommandHandler PowerCommands { get; }
 
         public RoadAccessibilityReadModel RoadAccessibility { get; }
 
         public ZoneReadModel ZoneModel { get; }
 
         public ParcelReadModel ParcelModel { get; }
+        public PowerReadModel PowerModel { get; }
+        public DevelopmentPowerEligibilityQuery DevelopmentPowerEligibility { get; }
 
         public StableId DefaultRoadDefinitionId { get; }
+        public StableId DefaultPowerPlantDefinitionId { get; }
+
+        public StableId PowerProducerIdFor(CellCoord anchor)
+        {
+            if (!World.IsInBounds(anchor))
+                throw new ArgumentOutOfRangeException(nameof(anchor));
+            return new StableId(0xD100_0000_0000_0000UL | (ulong)(uint)(Roads.GetIndex(anchor) + 1));
+        }
 
         public int Funds => Budget.Funds;
 
@@ -121,6 +152,9 @@ namespace OpenSimCity.Application.World
         {
             return ZoneCommands.Preview(command);
         }
+
+        public PowerCommandResult Preview(PlacePowerProducerCommand command) => PowerCommands.Preview(command);
+        public PowerCommandResult Preview(RemovePowerProducerCommand command) => PowerCommands.Preview(command);
 
         // --- Commit through the application dispatcher ---
 
@@ -153,6 +187,8 @@ namespace OpenSimCity.Application.World
             RoadAccessibility.RefreshIfNeeded();
             ZoneModel.RefreshIfNeeded();
             ParcelModel.RefreshIfNeeded();
+            Power.RefreshIfNeeded();
+            PowerModel.RefreshIfNeeded();
         }
     }
 
@@ -167,9 +203,14 @@ namespace OpenSimCity.Application.World
 
         private const ulong RoadDefinitionNamespace = 0x0100_0000_0000_0000UL;
         private const ulong ExternalGateNamespace = 0x0200_0000_0000_0000UL;
+        private const ulong BuildingDefinitionNamespace = 0xB100_0000_0000_0000UL;
+        private const ulong UtilityDefinitionNamespace = 0xC100_0000_0000_0000UL;
 
         public static readonly StableId StreetDefinitionId =
             new StableId(RoadDefinitionNamespace | 0x01UL);
+
+        public static readonly StableId DefaultPowerPlantDefinitionId =
+            new StableId(UtilityDefinitionNamespace | 0x01UL);
 
         public int Width { get; set; } = WorldState.DefaultWidth;
 
@@ -182,6 +223,8 @@ namespace OpenSimCity.Application.World
         public int RoadBuildCost { get; set; } = DefaultRoadBuildCost;
 
         public StableId DefaultRoadDefinitionId { get; set; } = StreetDefinitionId;
+        public StableId PowerPlantDefinitionId { get; set; } = DefaultPowerPlantDefinitionId;
+        public int PowerPlantCapacity { get; set; } = 100;
 
         public static CityRuntimeOptions Default => new CityRuntimeOptions();
 
@@ -191,6 +234,24 @@ namespace OpenSimCity.Application.World
             {
                 new RoadDefinition(DefaultRoadDefinitionId, RoadBuildCost, "road.street")
             };
+        }
+
+        public IReadOnlyList<BuildingDefinitionData> CreateBuildingDefinitions()
+        {
+            return new[]
+            {
+                new BuildingDefinitionData(new StableId(BuildingDefinitionNamespace | 1UL), ZoneType.ResidentialLow,
+                    new BuildingFootprint(2, 2), 4, 0, "building.residential.low.placeholder", 4),
+                new BuildingDefinitionData(new StableId(BuildingDefinitionNamespace | 2UL), ZoneType.CommercialLow,
+                    new BuildingFootprint(2, 2), 0, 6, "building.commercial.low.placeholder", 6),
+                new BuildingDefinitionData(new StableId(BuildingDefinitionNamespace | 3UL), ZoneType.IndustrialLow,
+                    new BuildingFootprint(2, 2), 0, 8, "building.industrial.low.placeholder", 8)
+            };
+        }
+
+        public IReadOnlyList<UtilityDefinitionData> CreateUtilityDefinitions()
+        {
+            return new[] { new UtilityDefinitionData(PowerPlantDefinitionId, PowerPlantCapacity, "utility.power.plant.placeholder") };
         }
 
         /// <summary>

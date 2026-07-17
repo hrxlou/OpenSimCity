@@ -82,6 +82,11 @@ P3-01은 Unity `BuildingDefinition` asset을 stable ID, 저밀도 R/C/I, `1x1~2x
 일자리를 field-only DTO로 왕복하며, collection lifecycle과 참조 검증은 building ID 순서로
 결정적이다. 성장·점유율 계산·전력·prefab 배치는 후속 이슈가 이 계약을 소비해 구현한다.
 
+P3-02는 도로 component를 초기 전력 전달 요소로 사용한다. 발전소/건물은 인접한 row-major 최소
+도로 셀 하나에 연결되고, component 용량은 건물 stable ID 순서로 전량 배분된다. 공급 cache와
+component label은 저장하지 않으며 road/building/producer version에서 재구축한다. 전력 overlay는
+같은 `PowerReadModel` snapshot을 표시하고, 성장용 query는 P2 도로 자격과 남은 전력 용량을 모두 요구한다.
+
 ## 디자인·아트 단계 적용
 
 | 시점 | 제품 화면에 적용 | 준비 작업 |

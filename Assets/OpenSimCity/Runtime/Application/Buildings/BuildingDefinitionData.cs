@@ -20,7 +20,8 @@ namespace OpenSimCity.Application.Buildings
             BuildingFootprint footprint,
             int occupancyCapacity,
             int jobCapacity,
-            string presentationKey)
+            string presentationKey,
+            int powerDemand = 1)
         {
             if (!id.IsValid)
                 throw new ArgumentException("A building definition must have a valid stable ID.", nameof(id));
@@ -48,6 +49,8 @@ namespace OpenSimCity.Application.Buildings
             }
             if (string.IsNullOrWhiteSpace(presentationKey))
                 throw new ArgumentException("A building definition must have a presentation key.", nameof(presentationKey));
+            if (powerDemand <= 0)
+                throw new ArgumentOutOfRangeException(nameof(powerDemand), "Building power demand must be positive.");
 
             Id = id;
             ZoneType = zoneType;
@@ -55,6 +58,7 @@ namespace OpenSimCity.Application.Buildings
             OccupancyCapacity = occupancyCapacity;
             JobCapacity = jobCapacity;
             PresentationKey = presentationKey;
+            PowerDemand = powerDemand;
         }
 
         public StableId Id { get; }
@@ -69,11 +73,14 @@ namespace OpenSimCity.Application.Buildings
 
         public string PresentationKey { get; }
 
+        public int PowerDemand { get; }
+
         public bool Equals(BuildingDefinitionData other)
         {
             return other != null && Id == other.Id && ZoneType == other.ZoneType &&
                    Footprint == other.Footprint && OccupancyCapacity == other.OccupancyCapacity &&
                    JobCapacity == other.JobCapacity &&
+                   PowerDemand == other.PowerDemand &&
                    string.Equals(PresentationKey, other.PresentationKey, StringComparison.Ordinal);
         }
 

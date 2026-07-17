@@ -80,6 +80,15 @@ P2 접근성 query의 고정 단위와 sentinel은 다음과 같다.
 
 도시 수요, 입지 적합도, 비어 있는 적법한 필지, 전력·수도, 성장 cap, 건설 중인 공급을 함께 확인한다. 후보는 안정적으로 정렬한 뒤 시스템 전용 RNG로 제한 수만 샘플링한다.
 
+### P3 도로 component 기반 전력
+
+- 점유 도로의 cardinal component가 P3의 전력 전달 요소다. 별도 송전선, 반경 감쇠, 화면 cable은 결과 입력이 아니다.
+- 발전소 anchor와 건물 footprint는 cardinally 인접한 도로 중 row-major index가 가장 작은 셀 하나에 연결된다. 건물이나 발전소 자체가 서로 다른 도로 component를 연결하지 않는다.
+- 발전소의 정적 최대 용량은 `UtilityDefinition`, 현재 생산량은 `PowerProducerState`에 둔다. 정의를 찾지 못한 발전소의 생산량은 사용하지 않는다.
+- component의 현재 생산량을 합산한 뒤 건물 stable ID 오름차순으로 각 건물의 정적 수요 전량을 배분한다. 부분 공급은 없으며 부족하면 `NoPowerProducer` 또는 `InsufficientCapacity`를 구분한다.
+- 도로·건물·발전소 version 중 하나가 바뀌면 `PowerNetwork`를 재구축한다. component ID, 배분 결과, dirty 목록은 파생 cache이며 저장하지 않는다. 발전소 runtime state만 stable ID DTO로 저장 가능하다.
+- `DevelopmentPowerEligibilityQuery`는 P2 필지의 외부 도로 연결 자격을 먼저 확인하고, 같은 정의의 footprint·수요에 대해 남은 component 용량을 확인한다. 둘 중 하나라도 없으면 성장 후보가 아니다.
+
 ## 3. 인구·고용·이주
 
 MVP는 개별 시민 대신 건물 또는 권역 단위 코호트를 사용한다.
