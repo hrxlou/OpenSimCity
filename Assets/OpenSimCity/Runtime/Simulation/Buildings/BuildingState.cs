@@ -51,6 +51,11 @@ namespace OpenSimCity.Simulation.Buildings
 
         public int FilledJobs { get; }
 
+        public BuildingState WithCounts(int occupancy, int filledJobs)
+        {
+            return new BuildingState(Id, DefinitionId, ParcelId, Anchor, occupancy, filledJobs);
+        }
+
         public BuildingStateDto ToDto()
         {
             return new BuildingStateDto

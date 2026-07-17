@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using OpenSimCity.Application.Commands;
 using OpenSimCity.Application.Buildings;
+using OpenSimCity.Application.Bootstrap;
 using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.Utilities;
 using OpenSimCity.Core;
@@ -11,6 +12,7 @@ using OpenSimCity.Core.Time;
 using OpenSimCity.Simulation.ExternalConnections;
 using OpenSimCity.Simulation.Buildings;
 using OpenSimCity.Simulation.Parcels;
+using OpenSimCity.Simulation.Population;
 using OpenSimCity.Simulation.Roads;
 using OpenSimCity.Simulation.World;
 using OpenSimCity.Simulation.Zones;
@@ -49,6 +51,7 @@ namespace OpenSimCity.Application.World
             Zones = new ZoneNetworkState(World);
 
             var gates = options.CreateExternalConnections(World.Width, World.Height);
+            ExternalConnections = gates;
             RoadGraph = new RoadConnectivityGraph(Roads, gates);
             Parcels = new ParcelNetworkState(Zones, RoadGraph);
 
@@ -79,6 +82,15 @@ namespace OpenSimCity.Application.World
             ParcelModel = new ParcelReadModel(Parcels);
             PowerModel = new PowerReadModel(Power);
             DevelopmentPowerEligibility = new DevelopmentPowerEligibilityQuery(ParcelModel, BuildingDefinitions, Power);
+            PopulationSystem = new PopulationEmploymentMigrationSystem(
+                Buildings,
+                BuildingDefinitions,
+                ExternalConnections);
+            MonthlyScheduler = new MonthlySimulationScheduler(
+                PopulationSystem,
+                options.TicksPerMonth,
+                options.FirstSimulationMonth);
+            PopulationEmploymentModel = new PopulationEmploymentReadModel(PopulationSystem);
         }
 
         public WorldState World { get; }
@@ -90,6 +102,7 @@ namespace OpenSimCity.Application.World
         public RoadConnectivityGraph RoadGraph { get; }
 
         public ParcelNetworkState Parcels { get; }
+        public IReadOnlyList<ExternalConnectionState> ExternalConnections { get; }
         public BuildingStateCollection Buildings { get; }
         public BuildingDefinitionCatalog BuildingDefinitions { get; }
         public PowerProducerCollection PowerProducers { get; }
@@ -114,6 +127,9 @@ namespace OpenSimCity.Application.World
         public ParcelReadModel ParcelModel { get; }
         public PowerReadModel PowerModel { get; }
         public DevelopmentPowerEligibilityQuery DevelopmentPowerEligibility { get; }
+        public PopulationEmploymentMigrationSystem PopulationSystem { get; }
+        public MonthlySimulationScheduler MonthlyScheduler { get; }
+        public PopulationEmploymentReadModel PopulationEmploymentModel { get; }
 
         public StableId DefaultRoadDefinitionId { get; }
         public StableId DefaultPowerPlantDefinitionId { get; }
@@ -225,6 +241,8 @@ namespace OpenSimCity.Application.World
         public StableId DefaultRoadDefinitionId { get; set; } = StreetDefinitionId;
         public StableId PowerPlantDefinitionId { get; set; } = DefaultPowerPlantDefinitionId;
         public int PowerPlantCapacity { get; set; } = 100;
+        public int TicksPerMonth { get; set; } = MonthlySimulationScheduler.DefaultTicksPerMonth;
+        public SimulationDate FirstSimulationMonth { get; set; } = new SimulationDate(1, 1);
 
         public static CityRuntimeOptions Default => new CityRuntimeOptions();
 

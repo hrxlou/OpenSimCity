@@ -272,6 +272,20 @@ OpenSimCity/
 
 MonoBehaviour가 이 데이터의 진실 원천이 되어서는 안 된다.
 
+### 월별 인구·고용·이주 계약
+
+P3-03의 `PopulationEmploymentMigrationSystem`은 `BuildingStateCollection`과 Unity object 없는
+definition profile을 입력으로 사용한다. 현재 단계에서는 연령·교육 cohort를 만들지 않고 모든
+거주자를 노동 가능 인구로 간주한다. 주거 점유와 일자리 충원은 건물 stable ID 순서로 처리하며,
+각 값은 definition capacity의 `0..capacity` 범위를 벗어나지 않는다.
+
+월별 순서는 Application의 `MonthlySimulationScheduler`가 소유한다. 같은 tick의 command를 먼저
+처리한 뒤 인구 정규화, 고용 matching, 이주 압력 적용, 최종 고용 재계산 순으로 한 번 실행한다.
+활성 Road/Rail/Sea/Air 외부 연결이 있을 때만 주택 여유와 빈 일자리의 최소값만큼 유입되고,
+실업자 수만큼 유출된다. capacity 감소로 이미 상한을 넘은 점유는 강제 이탈로 정규화한다.
+HUD나 inspector는 simulation collection 대신 versioned `PopulationEmploymentReadModel` snapshot을
+소비한다. 시민·통근자 GameObject와 표시 차량 수는 이 계산에 참여하지 않는다.
+
 ### WorldState/grid 저장 계약
 
 `WorldState`의 기본 맵은 64x64 셀과 16x16 청크다. 생성 DTO에서 width, height,
