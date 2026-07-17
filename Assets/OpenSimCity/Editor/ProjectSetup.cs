@@ -58,6 +58,7 @@ namespace OpenSimCity.Editor
             // Runs last: the placement fixture binds to the camera rig, the world
             // bounds source and the UI foundation the previous steps created.
             PlacementSetup.ConfigureCityPrototype();
+            BuildingDefinitionSetup.ConfigureDefinitions();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -95,6 +96,8 @@ namespace OpenSimCity.Editor
             IsometricCameraRigSetup.Validate(issues);
             UiFoundationSetup.Validate(issues);
             PlacementSetup.Validate(issues);
+            foreach (var issue in BuildingDefinitionSetup.Validate())
+                issues.Add(issue);
             ValidateScenesAndBuildSettings(issues);
             ValidateLightingAndQualityStructure(issues);
             return issues;
