@@ -253,7 +253,7 @@ OpenSimCity/
 배열 또는 조밀한 컬렉션으로 관리하는 저장 가능한 데이터다.
 
 - `WorldState`: 맵 크기, 시드, 셀/청크
-- `RoadNetworkState`: 노드, 간선, 용량, 교통량, 버전
+- `RoadNetworkState`: row-major 도로 셀 점유와 변경 batch version
 - `TransitState`: stable 정류장·노선 ID, 정렬된 정류장 순서, 예산, 집계 승객·용량
 - `DistrictState`: stable 지구 ID, 셀 membership, 이름, 활성 정책과 적용 기간
 - `BuildingState`: definition ID, 위치, 점유율, 상태, 공급 여부
@@ -322,6 +322,32 @@ SetDistrictPolicyCommand
 P2 도로 명령은 이 결과를 `RoadCommandResult` DTO로 제공하며, preview와 commit이 같은
 검증·비용·변경 셀 집합을 공유한다. Application dispatcher의 상세 payload는 UI가 실패
 사유와 비용을 다시 계산하지 않고 표시할 수 있도록 전달된다.
+
+P2-03의 `ZoneType`은 `None=0`, `ResidentialLow=1`, `CommercialLow=2`,
+`IndustrialLow=3`의 안정 enum이며 각 셀은 zone type과 stable definition ID를 함께 가진다.
+`ZoneAreaCommand`/`ZonePathCommand`와 `ClearZoneCommand`는 brush 셀을 중복 제거한 뒤
+row-major(`Y`, `X`) 순서로 정규화한다. zone 칠하기는 도로 셀·범위 밖·다른 zone 덮어쓰기를
+원자적으로 거부하고, 같은 zone 재적용과 clear는 멱등이다. P2에서는 zone 비용을 무료로
+고정해 `ZoneCommandResult.Cost`를 `0`으로 반환한다.
+
+`ZoneCommandResult`는 preview와 commit의 requested/changed/rejected 셀과 실패 사유를
+공개하고, `ZoneReadModel`은 `ZoneNetworkState.Version`을 기준으로 전체 셀 snapshot과
+마지막 refresh의 정확한 변경 셀을 Application 소유 DTO로 복사한다. Presentation과 UI는
+이 read model을 소비하며 zone 규칙이나 색/material을 재계산하지 않는다.
+
+P2-02의 `RoadConnectivityGraph`는 `RoadNetworkState`에서 다시 만들 수 있는 cardinal
+연결 그래프와 외부 road gate 거리 cache다. 그래프 version은 성공한 도로 batch의
+`RoadNetworkState.Version`을 따르고, 각 rebuild는 이전 공개 query와 비교해 실제 값이
+달라진 row-major 셀 목록과 그 bounding dirty region을 남긴다. component label은 component의
+최소 row-major cell index를 사용해 무관한 component가 지역 편집 때문에 다시 번호 매겨지지
+않게 하지만, stable entity ID나 저장 계약은 아니다. 저장에는 도로 셀과 stable external gate
+ID만 필요하며 graph, component, 거리 cache는 load 뒤 재구축한다.
+
+외부 접근성은 활성 `Road` gate가 지도 경계의 점유 도로 셀에 있을 때만 시작한다. gate 셀은
+거리 0, cardinal edge는 비용 1이며 동일 거리 gate가 여럿이면 가장 작은 stable gate ID를
+선택한다. `RoadAccessibilityReadModel`은 이 결과를 Application 소유 DTO로 version당 한 번
+복사한다. Presentation과 UI는 이 read model의 connection mask, 거리, band, reason을 그대로
+표시하고 road view에서 다시 계산하지 않는다.
 
 일시정지, 배속, 저장 요청은 도시 상태를 변경하는 명령과 분리된 Application control이다. 배속이 달라도 같은 수의 시뮬레이션 틱과 같은 도시 명령을 적용했다면 도시 결과는 같아야 한다.
 
@@ -400,6 +426,20 @@ BudgetSettled
 | Traffic | OD 통행·도로 | 교통량·통근시간 | 청크 집계 + 경로 캐시 |
 | Services | 시설·예산 | 셀별 서비스 효과 | 거리 감쇠 필드 |
 | Persistence | 전체 런타임 상태 | 버전 스냅샷 | JSON 디버그 후 바이너리 검토 |
+
+P2 필지는 zone 셀을 row-major anchor부터 같은 용도의 최대 `2x2` 직사각형으로 탐욕 분할한다.
+가능한 크기는 `1x1`, `2x1`, `1x2`, `2x2`이며 비정형 결합이나 건물 prefab footprint 기반 분할은
+하지 않는다. `ParcelState`의 stable ID는 parcel namespace, anchor의 world row-major index, zone
+type을 충돌 없이 조합한다. 따라서 같은 크기의 world에서 anchor와 zone이 유지되는 필지는 도로
+접근성만 바뀌어도 ID가 유지된다.
+
+`ParcelNetworkState`는 zone version과 road graph version을 관찰한다. 재계산 후보가 이전 공개
+값과 같으면 기존 `ParcelState` 객체를 재사용하고, 추가·삭제·자격 또는 frontage가 달라진 필지만
+`ChangedParcelIds`와 row-major `DirtyCells`에 포함한다. 개발 자격은 같은 zone으로 구성된 필지에
+하나 이상의 도로 frontage가 있고 그중 하나가 external road gate에 도달할 때 얻는다. 여러
+frontage는 최소 정수 네트워크 거리, 동일 거리에서는 최소 gate stable ID를 선택한다. 거리 band는
+진단·P3 입지 factor이며 도달 가능한 먼 필지의 자격을 P2에서 박탈하지 않는다. Application의
+`ParcelReadModel`이 이 값과 변경 집합을 복사해 Presentation에 제공한다.
 
 ## 9. 성능 예산
 
