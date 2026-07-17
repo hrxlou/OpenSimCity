@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using OpenSimCity.Core;
 using OpenSimCity.Simulation.Buildings;
+using OpenSimCity.Simulation.Population;
 using OpenSimCity.Simulation.Utilities;
 
 namespace OpenSimCity.Application.Buildings
@@ -10,7 +11,7 @@ namespace OpenSimCity.Application.Buildings
     /// Application boundary between Unity-authored definition assets and pure
     /// simulation state. Catalog enumeration is deterministic by stable ID.
     /// </summary>
-    public sealed class BuildingDefinitionCatalog : IBuildingPowerProfileResolver
+    public sealed class BuildingDefinitionCatalog : IBuildingPowerProfileResolver, IPopulationEmploymentProfileResolver
     {
         private readonly Dictionary<StableId, BuildingDefinitionData> _byId;
         private readonly IReadOnlyList<BuildingDefinitionData> _definitions;
@@ -73,6 +74,23 @@ namespace OpenSimCity.Application.Buildings
             if (TryGet(definitionId, out var definition))
             {
                 profile = new BuildingPowerProfile(definition.Id, definition.Footprint, definition.PowerDemand);
+                return true;
+            }
+
+            profile = default;
+            return false;
+        }
+
+        public bool TryGetPopulationEmploymentProfile(
+            StableId definitionId,
+            out PopulationEmploymentProfile profile)
+        {
+            if (TryGet(definitionId, out var definition))
+            {
+                profile = new PopulationEmploymentProfile(
+                    definition.Id,
+                    definition.OccupancyCapacity,
+                    definition.JobCapacity);
                 return true;
             }
 

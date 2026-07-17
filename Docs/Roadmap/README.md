@@ -87,6 +87,12 @@ P3-02는 도로 component를 초기 전력 전달 요소로 사용한다. 발전
 component label은 저장하지 않으며 road/building/producer version에서 재구축한다. 전력 overlay는
 같은 `PowerReadModel` snapshot을 표시하고, 성장용 query는 P2 도로 자격과 남은 전력 용량을 모두 요구한다.
 
+P3-03은 모든 거주자를 현재 단계의 노동 가능 인구로 집계하고, 건물 stable ID 순서로 job capacity에
+matching한다. Application scheduler가 command 처리 뒤 월 경계마다 인구 정규화, 고용, 이주, 최종 고용을
+실행한다. 활성 교통 외부 연결이 있을 때 주택 여유와 빈 일자리의 최소값만큼 유입되고 실업자만큼
+유출되며, capacity 감소 초과분은 강제 이탈로 정규화된다. 공개 수치는 versioned
+`PopulationEmploymentReadModel` snapshot에서 읽고 시민·통근·표시 차량은 집계에 관여하지 않는다.
+
 ## 디자인·아트 단계 적용
 
 | 시점 | 제품 화면에 적용 | 준비 작업 |
