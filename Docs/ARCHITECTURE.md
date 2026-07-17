@@ -88,6 +88,7 @@ Scene·Prefab·정의 데이터 생성, 검증, 벤치마크, EditMode/PlayMode 
 | `OpenSimCity.Core` | 공통 값 타입, ID, 시간, 유틸리티 | 없음 |
 | `OpenSimCity.Simulation` | 도시 상태와 순수 규칙 | Core |
 | `OpenSimCity.Application` | 명령, 틱 조율, 저장 포트 | Core, Simulation |
+| `OpenSimCity.Definitions` | Unity ScriptableObject 정적 정의 schema와 순수 catalog data 변환 | Core, Simulation, Application, UnityEngine |
 | `OpenSimCity.Gameplay` | 입력과 건설 도구 | Core, Application |
 | `OpenSimCity.Presentation` | 월드 렌더링과 뷰 동기화 | Core, Application |
 | `OpenSimCity.UI` | 화면 UI | Core, Application |
@@ -98,6 +99,7 @@ Scene·Prefab·정의 데이터 생성, 검증, 벤치마크, EditMode/PlayMode 
 금지되는 참조 방향:
 
 - Simulation -> Presentation/UI/Gameplay/Editor
+- Simulation/Application -> Definitions
 - Core -> 다른 모든 계층
 - Runtime -> Editor
 - UI -> 구체적인 렌더러 또는 Scene 오브젝트
@@ -143,6 +145,8 @@ OpenSimCity/
 │  │  │  │  ├─ Queries/
 │  │  │  │  ├─ Persistence/
 │  │  │  │  └─ Bootstrap/
+│  │  │  ├─ Definitions/
+│  │  │  │  └─ Buildings/
 │  │  │  ├─ Gameplay/
 │  │  │  │  ├─ Camera/
 │  │  │  │  ├─ Selection/
@@ -440,6 +444,21 @@ type을 충돌 없이 조합한다. 따라서 같은 크기의 world에서 ancho
 frontage는 최소 정수 네트워크 거리, 동일 거리에서는 최소 gate stable ID를 선택한다. 거리 band는
 진단·P3 입지 factor이며 도달 가능한 먼 필지의 자격을 P2에서 박탈하지 않는다. Application의
 `ParcelReadModel`이 이 값과 변경 집합을 복사해 Presentation에 제공한다.
+
+P3-01의 `BuildingDefinition` ScriptableObject는 stable definition ID, 저밀도 R/C/I 용도,
+`1x1~2x2` footprint, 주거 점유 수용량 또는 일자리 수용량, 문자열 presentation key만 가진다.
+현재 점유율, 채워진 일자리, 전력 공급, 건설 진행도와 prefab/GameObject reference는 definition
+asset에 저장하지 않는다. `OpenSimCity.Definitions`가 이 asset을 Unity object가 없는
+`BuildingDefinitionData`로 변환하고, `OpenSimCity.Application`의 `BuildingDefinitionCatalog`가
+stable ID 순서의 조회와 중복 검증을 제공한다. Simulation과 Application은 Definitions assembly를
+역참조하지 않으므로 Simulation이 ScriptableObject를 소유하지 않는다.
+
+`BuildingState`는 stable building ID, definition ID, parcel ID, row-major 기준 anchor, 현재
+점유 수와 채워진 일자리만 저장한다. `BuildingStateCollection`의 생성·조회·제거와 열거 순서는
+building stable ID 오름차순이며, `BuildingStateDto`/`BuildingStateCollectionDto`는 primitive
+field만 사용한다. Application 참조 validator는 각 state의 definition ID와 parcel ID가 알려진
+catalog·parcel 집합에서 해석되는지 결정적 building ID 순서로 검사한다. 건물 성장, 점유율 계산,
+전력 상태와 prefab 생성은 이 계약에 포함하지 않는다.
 
 ## 9. 성능 예산
 

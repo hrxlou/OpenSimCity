@@ -45,10 +45,29 @@
 
 ## Done when
 
-- [ ] 정적 정의와 런타임 상태가 명확히 분리된다.
-- [ ] 모든 BuildingState가 stable definition ID로 해석된다.
-- [ ] 향후 저장 DTO에 Unity object가 들어가지 않는다.
+- [x] 정적 정의와 런타임 상태가 명확히 분리된다.
+- [x] 모든 BuildingState가 stable definition ID로 해석된다.
+- [x] 향후 저장 DTO에 Unity object가 들어가지 않는다.
 - [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+
+## Mac implementation evidence
+
+- Date: `2026-07-17`
+- OS: `macOS 26.5.2 (25F84), Apple Silicon arm64`
+- Unity: `6000.5.3f1 (c2eb47b3a2a9)`
+- Branch: `feature/p3-01-building-contracts`
+- Commit/PR: this implementation commit; PR pending Windows verification
+- Narrow test: filtered P3-01 EditMode run → `11/11` passed
+- Narrow result/log: `TestResults/p3-01-editmode.xml`, `TestResults/p3-01-editmode.log`
+- Regression test: `./Tools/CI/run-unity-tests.sh edit` → EditMode `126/126` passed
+- Regression result/log: `TestResults/editmode.xml`, `TestResults/editmode.log`
+- Covered contracts: definition missing/duplicate ID, footprint/presentation key/capacity schema,
+  deterministic catalog lookup, BuildingState lifecycle and stable ordering, field-only JSON DTO
+  round-trip, unknown definition/parcel references, Simulation/Application/Definitions assembly boundary
+- Generated assets: minimum `ResidentialLow`, `CommercialLow`, `IndustrialLow` definitions created by
+  `BuildingDefinitionSetup`; no prefab/GameObject reference is required
+- Remaining verify: Windows import/compile, asset validator, placeholder-free simulation test, and
+  commit/PR handoff evidence
 
 ## Out of scope
 

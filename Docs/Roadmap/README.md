@@ -75,6 +75,13 @@ P2-04는 같은 zone 셀을 row-major 기준 `1x1~2x2` 직사각형 parcel로 �
 version 변경 뒤 실제 공개 값이 바뀐 필지만 dirty로 전달하며, P2-05 overlay와 P3-05 개발 시스템은
 `ParcelReadModel`을 통해 이 결과를 소비한다.
 
+P3-01은 Unity `BuildingDefinition` asset을 stable ID, 저밀도 R/C/I, `1x1~2x2` footprint,
+점유/일자리 수용량과 문자열 presentation key만 가진 정적 schema로 제한한다. Definitions assembly가
+이를 Unity object 없는 Application catalog data로 변환하고 Simulation은 stable definition ID만
+저장한다. `BuildingState`는 stable building/definition/parcel ID, anchor, 현재 점유 수와 채워진
+일자리를 field-only DTO로 왕복하며, collection lifecycle과 참조 검증은 building ID 순서로
+결정적이다. 성장·점유율 계산·전력·prefab 배치는 후속 이슈가 이 계약을 소비해 구현한다.
+
 ## 디자인·아트 단계 적용
 
 | 시점 | 제품 화면에 적용 | 준비 작업 |
