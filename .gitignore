@@ -49,3 +49,13 @@ Thumbs.db
 # Unity PlayMode test runner leaves a temporary init scene in Assets/
 /Assets/InitTestScene*.unity
 /Assets/InitTestScene*.unity.meta
+
+# Blender local working outputs and backup files
+Blender/output/checkpoints/
+Blender/output/review/
+Blender/output/*.blend1
+Blender/Source/**/*.blend1
+Blender/Scripts/__pycache__/
+Blender/References/
+Blender/assets/
+Blender/output/*.blend

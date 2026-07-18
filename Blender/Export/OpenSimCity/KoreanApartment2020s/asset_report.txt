@@ -1,0 +1,112 @@
+{
+  "asset_id": "bld-r-high-korean-apartment-2020s-a",
+  "asset_name": "KoreanApartment2020s",
+  "blender_version": "5.1.2",
+  "dimensions_m": {
+    "x": 39.0,
+    "y": 29.5,
+    "z": 96.0
+  },
+  "object_count": 588,
+  "material_count": 6,
+  "materials": [
+    "MAT_WALL_IVORY",
+    "MAT_WALL_LIGHT_GRAY",
+    "MAT_ACCENT_CHARCOAL",
+    "MAT_ACCENT_BRONZE",
+    "MAT_GLASS_BLUEGRAY",
+    "MAT_BASE_STONE"
+  ],
+  "lods": {
+    "LOD0": {
+      "object_count": 458,
+      "triangles": 28324,
+      "min": [
+        -19.5,
+        -16.5,
+        0.0
+      ],
+      "max": [
+        19.5,
+        13.0,
+        96.0
+      ],
+      "dimensions": [
+        39.0,
+        29.5,
+        96.0
+      ]
+    },
+    "LOD1": {
+      "object_count": 103,
+      "triangles": 1236,
+      "min": [
+        -19.5,
+        -16.5,
+        0.0
+      ],
+      "max": [
+        19.5,
+        13.0,
+        96.0
+      ],
+      "dimensions": [
+        39.0,
+        29.5,
+        96.0
+      ]
+    },
+    "LOD2": {
+      "object_count": 27,
+      "triangles": 324,
+      "min": [
+        -19.5,
+        -16.5,
+        0.0
+      ],
+      "max": [
+        19.5,
+        13.0,
+        96.0
+      ],
+      "dimensions": [
+        39.0,
+        29.5,
+        96.0
+      ]
+    }
+  },
+  "checks": {
+    "applied_scale": true,
+    "ground_at_or_above_z0": true,
+    "origin_is_ground_center": true,
+    "non_zero_normals": true,
+    "materials_present": true,
+    "lods_same_dimensions": true,
+    "lod0_under_30000_triangles": true,
+    "lod1_under_8000_triangles": true,
+    "lod2_under_1500_triangles": true
+  },
+  "warnings": [],
+  "runtime_asset_files": [
+    "D:\\project\\OpenSimCity\\Assets\\OpenSimCity\\Content\\Art\\Buildings\\KoreanApartment2020s\\korean_apartment_2020s.fbx",
+    "D:\\project\\OpenSimCity\\Assets\\OpenSimCity\\Content\\Art\\Buildings\\KoreanApartment2020s\\korean_apartment_2020s.glb",
+    "D:\\project\\OpenSimCity\\Assets\\OpenSimCity\\Content\\Art\\Buildings\\KoreanApartment2020s\\korean_apartment_2020s_LOD1.fbx",
+    "D:\\project\\OpenSimCity\\Assets\\OpenSimCity\\Content\\Art\\Buildings\\KoreanApartment2020s\\korean_apartment_2020s_LOD2.fbx"
+  ],
+  "output_files": [
+    "D:\\project\\OpenSimCity\\Blender\\Export\\OpenSimCity\\KoreanApartment2020s\\korean_apartment_2020s.fbx",
+    "D:\\project\\OpenSimCity\\Blender\\Export\\OpenSimCity\\KoreanApartment2020s\\korean_apartment_2020s.glb",
+    "D:\\project\\OpenSimCity\\Blender\\Export\\OpenSimCity\\KoreanApartment2020s\\korean_apartment_2020s_LOD1.fbx",
+    "D:\\project\\OpenSimCity\\Blender\\Export\\OpenSimCity\\KoreanApartment2020s\\korean_apartment_2020s_LOD2.fbx"
+  ],
+  "preview_files": [
+    "D:\\project\\OpenSimCity\\Artifacts\\Art\\korean-apartment-test\\preview_perspective.png",
+    "D:\\project\\OpenSimCity\\Artifacts\\Art\\korean-apartment-test\\preview_front.png",
+    "D:\\project\\OpenSimCity\\Artifacts\\Art\\korean-apartment-test\\preview_back.png",
+    "D:\\project\\OpenSimCity\\Artifacts\\Art\\korean-apartment-test\\preview_side.png",
+    "D:\\project\\OpenSimCity\\Artifacts\\Art\\korean-apartment-test\\preview_top_perspective.png"
+  ],
+  "export_success": true,
+  "render_success": true
+}
