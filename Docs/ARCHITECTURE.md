@@ -485,6 +485,20 @@ P3-02의 `PowerNetwork`는 P2 도로 component를 재구축 가능한 전력 전
 CityPrototype의 발전소 primitive는 중앙 `PowerProducerViewRenderer`가 pool로 동기화하며 view 수와
 material은 Simulation 결과에 영향을 주지 않는다.
 
+P3-05의 `GrowthDevelopmentSystem`은 월별 스케줄러가 인구·경제 다음 세 번째로 실행하는
+`IMonthlySimulationSystem`이다. 후보 필지는 P2 도로 자격, P3-02 남은 전력 용량, P3-04
+평활화 수요가 모두 있을 때만 성립하고, 하나라도 없으면 `DevelopmentBlockReason`으로 제외
+사유를 남긴다. 후보는 parcel stable ID 순서로 모으고 `"growth"` subsystem으로 분리한
+`DeterministicRandom` stream에서만 추첨하므로 다른 시스템의 호출 추가가 성장 결과를 흔들지
+않는다. 용도별 `NetworkDistanceToExternalGate` band는 약한 suitability 가중치일 뿐이며 도달
+가능한 먼 필지의 자격이나 definition 선택을 단독으로 결정하지 않는다. 선택된 필지는 월별 cap과
+건설 기간을 거쳐 `ConstructionSite`로 시작·진행·완료 event를 내고, 완료 시에만
+`BuildingStateCollection`에 `BuildingState`가 생성된다. 활성 site는 component별 전력을 예약해
+같은 달 안에서 용량을 초과 배정하지 않는다. `DevelopmentState`(진행 중 site)만 stable-ID DTO로
+왕복하고, 도시 수요와 필지별 실행 가능성은 각각 `UrbanEconomyReadModel`과
+`GrowthDevelopmentReadModel`(공개 per-parcel `DevelopmentFeasibility` 포함)로 분리해 조회한다.
+prefab 존재 여부와 view frame rate는 이 계약에 도달하지 않는다.
+
 ## 9. 성능 예산
 
 프로토타입 목표:

@@ -61,12 +61,38 @@
 
 ## Done when
 
-- [ ] 도로·전력·수요가 모두 있을 때만 성장한다.
-- [ ] 도시 수요와 필지별 개발 실행 가능성을 별도로 조회할 수 있다.
-- [ ] 접근성 factor가 위치 차이를 만들지만 단일 정답 배치를 강제하지 않는다.
-- [ ] 성장 결과가 같은 seed와 command stream에서 재현된다.
+- [x] 도로·전력·수요가 모두 있을 때만 성장한다.
+- [x] 도시 수요와 필지별 개발 실행 가능성을 별도로 조회할 수 있다.
+- [x] 접근성 factor가 위치 차이를 만들지만 단일 정답 배치를 강제하지 않는다.
+- [x] 성장 결과가 같은 seed와 command stream에서 재현된다.
 - [ ] Windows에서 view와 simulation state가 event 기반으로 동기화된다.
 - [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+
+## Mac implementation evidence
+
+- Date: `2026-07-18`
+- OS: `macOS 25.5.0 (Darwin 25.5.0), Apple Silicon arm64`
+- Unity: `6000.5.3f1`
+- Branch: `feature/p3-05-growth-development`
+- Commit/PR: this implementation commit; PR pending Windows verification
+- New tests: `GrowthDevelopmentTests` adds `10` EditMode cases (`150 → 160` total)
+- Regression test: `./Tools/CI/run-unity-tests.sh edit` → EditMode `160/160` passed
+- Regression result/log: `TestResults/editmode.xml`, `TestResults/editmode.log`
+- PlayMode regression: `./Tools/CI/run-unity-tests.sh play` → PlayMode `23/23` passed
+- PlayMode result/log: `TestResults/playmode.xml`, `TestResults/playmode.log`
+- Covered contracts: per-requirement growth block (road/power/demand) with separate
+  `DevelopmentBlockReason`; accessibility band suitability weights that never gate
+  development or definition selection; per-use accessibility weight differences; high
+  demand vs. no-feasible-parcel separation via `DevelopmentSectorSummary.HasUnmetDemand`;
+  monthly cap and construction time; separated start/progress/completion events with
+  `BuildingState` created only at completion; deterministic monthly building list for the
+  same seed/command stream; identical simulation with or without a read model observing
+  it; `DevelopmentState`/snapshot DTO round-trip; completed parcels are not redeveloped
+- Remaining verify: Windows import/compile, construction placeholder + growth-event view
+  create/recycle without per-building `Update`, power-cut/demand-drop/time-scale growth
+  start/stop smoke, and two-road-layout basic loop; commit/PR handoff evidence
+- Blocked: Windows view sync and commit/PR evidence cannot be completed from the macOS
+  work tree
 
 ## Out of scope
 

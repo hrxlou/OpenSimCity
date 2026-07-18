@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using OpenSimCity.Core;
 using OpenSimCity.Simulation.Buildings;
+using OpenSimCity.Simulation.Development;
 using OpenSimCity.Simulation.Economy;
 using OpenSimCity.Simulation.Population;
 using OpenSimCity.Simulation.Utilities;
@@ -16,10 +17,13 @@ namespace OpenSimCity.Application.Buildings
     public sealed class BuildingDefinitionCatalog :
         IBuildingPowerProfileResolver,
         IPopulationEmploymentProfileResolver,
-        IUrbanEconomyProfileResolver
+        IUrbanEconomyProfileResolver,
+        IDevelopmentDefinitionResolver
     {
         private readonly Dictionary<StableId, BuildingDefinitionData> _byId;
         private readonly IReadOnlyList<BuildingDefinitionData> _definitions;
+        private readonly Dictionary<StableId, DevelopmentBuildingProfile> _developmentById;
+        private readonly Dictionary<EconomicSector, IReadOnlyList<DevelopmentBuildingProfile>> _developmentBySector;
 
         public BuildingDefinitionCatalog(IEnumerable<BuildingDefinitionData> definitions)
         {
@@ -45,6 +49,28 @@ namespace OpenSimCity.Application.Buildings
 
             ordered.Sort((left, right) => left.Id.CompareTo(right.Id));
             _definitions = ordered.AsReadOnly();
+
+            _developmentById = new Dictionary<StableId, DevelopmentBuildingProfile>();
+            var bySector = new Dictionary<EconomicSector, List<DevelopmentBuildingProfile>>();
+            for (var index = 0; index < ordered.Count; index++)
+            {
+                var definition = ordered[index];
+                var sector = ToSector(definition.ZoneType);
+                var profile = new DevelopmentBuildingProfile(
+                    definition.Id, sector, definition.Footprint, definition.PowerDemand);
+                _developmentById.Add(definition.Id, profile);
+                if (!bySector.TryGetValue(sector, out var list))
+                {
+                    list = new List<DevelopmentBuildingProfile>();
+                    bySector.Add(sector, list);
+                }
+
+                list.Add(profile);
+            }
+
+            _developmentBySector = new Dictionary<EconomicSector, IReadOnlyList<DevelopmentBuildingProfile>>();
+            foreach (var pair in bySector)
+                _developmentBySector.Add(pair.Key, pair.Value.AsReadOnly());
         }
 
         public int Count => _byId.Count;
@@ -117,6 +143,18 @@ namespace OpenSimCity.Application.Buildings
 
             profile = default;
             return false;
+        }
+
+        public IReadOnlyList<DevelopmentBuildingProfile> DefinitionsForSector(EconomicSector sector)
+        {
+            return _developmentBySector.TryGetValue(sector, out var list)
+                ? list
+                : Array.Empty<DevelopmentBuildingProfile>();
+        }
+
+        public bool TryGetProfile(StableId definitionId, out DevelopmentBuildingProfile profile)
+        {
+            return _developmentById.TryGetValue(definitionId, out profile);
         }
 
         private static EconomicSector ToSector(ZoneType zoneType)
