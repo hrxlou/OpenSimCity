@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using OpenSimCity.Core;
 using OpenSimCity.Simulation.Buildings;
+using OpenSimCity.Simulation.Economy;
 using OpenSimCity.Simulation.Population;
 using OpenSimCity.Simulation.Utilities;
+using OpenSimCity.Simulation.Zones;
 
 namespace OpenSimCity.Application.Buildings
 {
@@ -11,7 +13,10 @@ namespace OpenSimCity.Application.Buildings
     /// Application boundary between Unity-authored definition assets and pure
     /// simulation state. Catalog enumeration is deterministic by stable ID.
     /// </summary>
-    public sealed class BuildingDefinitionCatalog : IBuildingPowerProfileResolver, IPopulationEmploymentProfileResolver
+    public sealed class BuildingDefinitionCatalog :
+        IBuildingPowerProfileResolver,
+        IPopulationEmploymentProfileResolver,
+        IUrbanEconomyProfileResolver
     {
         private readonly Dictionary<StableId, BuildingDefinitionData> _byId;
         private readonly IReadOnlyList<BuildingDefinitionData> _definitions;
@@ -96,6 +101,39 @@ namespace OpenSimCity.Application.Buildings
 
             profile = default;
             return false;
+        }
+
+        public bool TryGetUrbanEconomyProfile(StableId definitionId, out UrbanEconomyProfile profile)
+        {
+            if (TryGet(definitionId, out var definition))
+            {
+                profile = new UrbanEconomyProfile(
+                    definition.Id,
+                    ToSector(definition.ZoneType),
+                    definition.OccupancyCapacity,
+                    definition.JobCapacity);
+                return true;
+            }
+
+            profile = default;
+            return false;
+        }
+
+        private static EconomicSector ToSector(ZoneType zoneType)
+        {
+            switch (zoneType)
+            {
+                case ZoneType.ResidentialLow:
+                    return EconomicSector.Residential;
+                case ZoneType.CommercialLow:
+                    return EconomicSector.Commercial;
+                case ZoneType.IndustrialLow:
+                    return EconomicSector.Industrial;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(zoneType),
+                        $"Zone type {zoneType} has no economic sector.");
+            }
         }
     }
 }
