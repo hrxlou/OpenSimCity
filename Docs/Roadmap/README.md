@@ -93,6 +93,15 @@ matching한다. Application scheduler가 command 처리 뒤 월 경계마다 인
 유출되며, capacity 감소 초과분은 강제 이탈로 정규화된다. 공개 수치는 versioned
 `PopulationEmploymentReadModel` snapshot에서 읽고 시민·통근·표시 차량은 집계에 관여하지 않는다.
 
+P3-05는 `GrowthDevelopmentSystem`을 월별 스케줄러의 세 번째 시스템으로 실행한다. 후보 필지는 P2 도로
+자격·P3-02 남은 전력 용량·P3-04 평활화 수요가 모두 있을 때만 성립하고, 누락 조건은
+`DevelopmentBlockReason`으로 조회된다. 후보는 parcel stable ID 순서로 모으고 `"growth"` subsystem으로
+분리한 `DeterministicRandom` stream에서만 추첨한다. 용도별 접근성 band는 약한 suitability 가중치이며
+도달 가능한 먼 필지의 자격이나 definition 선택을 단독으로 정하지 않는다. 선택 필지는 월별 cap과 건설
+기간을 거쳐 시작·진행·완료 event를 내고, 완료 시에만 `BuildingState`가 생성된다. 도시 수요와 필지별
+실행 가능성은 각각 `UrbanEconomyReadModel`과 `GrowthDevelopmentReadModel`로 분리 조회하며,
+진행 중 `DevelopmentState`만 DTO로 왕복한다. prefab·view는 이 계약에 관여하지 않는다.
+
 ## 디자인·아트 단계 적용
 
 | 시점 | 제품 화면에 적용 | 준비 작업 |

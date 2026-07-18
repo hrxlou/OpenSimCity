@@ -4,6 +4,16 @@ using System.Collections.Generic;
 namespace OpenSimCity.Simulation.Economy
 {
     /// <summary>
+    /// Read-only access to the smoothed demand the growth system consumes. Keeping this
+    /// a narrow port lets growth depend on the demand value without coupling to the whole
+    /// economy pipeline, and keeps the RNG stream isolated from economy internals.
+    /// </summary>
+    public interface IRciDemandProvider
+    {
+        int SmoothedDemand(EconomicSector sector);
+    }
+
+    /// <summary>
     /// One signed diagnostic contribution to a sector's raw RCI pressure. The name
     /// is a stable diagnostic key (never a presentation string) so a HUD or
     /// inspector can attribute a demand change to the factor that caused it.
@@ -86,7 +96,7 @@ namespace OpenSimCity.Simulation.Economy
     /// across months so demand carries inertia and does not spike instantly.
     /// </summary>
     [Serializable]
-    public sealed class RciDemandState
+    public sealed class RciDemandState : IRciDemandProvider
     {
         public RciDemandState()
         {
@@ -98,6 +108,8 @@ namespace OpenSimCity.Simulation.Economy
         public RciSectorDemand Residential { get; }
         public RciSectorDemand Commercial { get; }
         public RciSectorDemand Industrial { get; }
+
+        public int SmoothedDemand(EconomicSector sector) => ForSector(sector).SmoothedDemand;
 
         public RciSectorDemand ForSector(EconomicSector sector)
         {
