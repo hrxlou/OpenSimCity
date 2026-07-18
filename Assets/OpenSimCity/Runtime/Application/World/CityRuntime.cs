@@ -9,6 +9,7 @@ using OpenSimCity.Core;
 using OpenSimCity.Core.Determinism;
 using OpenSimCity.Core.Mathematics;
 using OpenSimCity.Core.Time;
+using OpenSimCity.Simulation.Economy;
 using OpenSimCity.Simulation.ExternalConnections;
 using OpenSimCity.Simulation.Buildings;
 using OpenSimCity.Simulation.Parcels;
@@ -86,11 +87,16 @@ namespace OpenSimCity.Application.World
                 Buildings,
                 BuildingDefinitions,
                 ExternalConnections);
+            UrbanEconomySystem = new UrbanEconomySystem(
+                Buildings,
+                BuildingDefinitions,
+                options.UrbanEconomyParameters);
             MonthlyScheduler = new MonthlySimulationScheduler(
-                PopulationSystem,
+                new IMonthlySimulationSystem[] { PopulationSystem, UrbanEconomySystem },
                 options.TicksPerMonth,
                 options.FirstSimulationMonth);
             PopulationEmploymentModel = new PopulationEmploymentReadModel(PopulationSystem);
+            UrbanEconomyModel = new UrbanEconomyReadModel(UrbanEconomySystem);
         }
 
         public WorldState World { get; }
@@ -128,8 +134,10 @@ namespace OpenSimCity.Application.World
         public PowerReadModel PowerModel { get; }
         public DevelopmentPowerEligibilityQuery DevelopmentPowerEligibility { get; }
         public PopulationEmploymentMigrationSystem PopulationSystem { get; }
+        public UrbanEconomySystem UrbanEconomySystem { get; }
         public MonthlySimulationScheduler MonthlyScheduler { get; }
         public PopulationEmploymentReadModel PopulationEmploymentModel { get; }
+        public UrbanEconomyReadModel UrbanEconomyModel { get; }
 
         public StableId DefaultRoadDefinitionId { get; }
         public StableId DefaultPowerPlantDefinitionId { get; }
@@ -243,6 +251,7 @@ namespace OpenSimCity.Application.World
         public int PowerPlantCapacity { get; set; } = 100;
         public int TicksPerMonth { get; set; } = MonthlySimulationScheduler.DefaultTicksPerMonth;
         public SimulationDate FirstSimulationMonth { get; set; } = new SimulationDate(1, 1);
+        public UrbanEconomyParameters UrbanEconomyParameters { get; set; } = UrbanEconomyParameters.Default;
 
         public static CityRuntimeOptions Default => new CityRuntimeOptions();
 

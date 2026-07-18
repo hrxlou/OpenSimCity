@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using OpenSimCity.Core.Time;
 using OpenSimCity.Simulation.Buildings;
+using OpenSimCity.Simulation.Economy;
 using OpenSimCity.Simulation.Employment;
 using OpenSimCity.Simulation.ExternalConnections;
 using OpenSimCity.Simulation.Migration;
@@ -14,7 +15,7 @@ namespace OpenSimCity.Simulation.Population
     /// are intentionally deferred. Building and job allocation always follows stable
     /// building-ID order supplied by BuildingStateCollection.
     /// </summary>
-    public sealed class PopulationEmploymentMigrationSystem
+    public sealed class PopulationEmploymentMigrationSystem : IMonthlySimulationSystem
     {
         private readonly BuildingStateCollection _buildings;
         private readonly IPopulationEmploymentProfileResolver _profiles;
