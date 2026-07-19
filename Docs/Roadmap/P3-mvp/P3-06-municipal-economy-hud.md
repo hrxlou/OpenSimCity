@@ -72,14 +72,14 @@
 - [x] HUD가 날짜·재정·인구·RCI·개발 실행 가능성을 정확히 표시한다.
 - [x] 플레이어가 성장 차단 상위 원인과 값의 적용 기간을 debug 도구 없이 확인한다.
 - [ ] 양쪽에서 재정 scenario 결과가 같다.
-- [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+- [x] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
 
 ## Windows implementation evidence (2026-07-19)
 
 - OS: Windows 11 Enterprise `10.0.26200` (build `26200`)
 - Unity: `6000.5.3f1` (`c2eb47b3a2a9`)
 - Branch: `feature/p3-06-finance-hud` (from `main` `2912bd8`)
-- Commit/PR: publish 뒤 실제 값으로 갱신
+- Commit/PR: implementation `b57a335`; [Draft PR #88](https://github.com/hrxlou/OpenSimCity/pull/88)
 - EditMode: `powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\run-unity-tests.ps1 edit`
   - P3-06 원장 불변식·serialization, 세율의 다음 월 적용, road/power 공사비·유지비,
     수요/전력 차단과 다음 월 회복 시나리오를 포함한다.
