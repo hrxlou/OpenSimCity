@@ -181,6 +181,49 @@
     margin: var(--osc-space-2);
 }
 
+/* P3 Global HUD and lower-right simulation controls reuse the P2 token panel. */
+.osc-global-hud {
+    align-self: stretch;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: var(--osc-space-2);
+}
+
+.osc-simulation-controls {
+    align-self: flex-end;
+    flex-direction: row;
+    margin: var(--osc-space-2);
+}
+
+.osc-hud-group {
+    flex-direction: column;
+    margin-right: var(--osc-space-3);
+    margin-bottom: var(--osc-space-1);
+}
+
+.osc-hud-value {
+    font-size: var(--osc-font-size-body-strong);
+    color: var(--osc-color-text-primary);
+    -unity-font-style: bold;
+}
+
+.osc-hud-status {
+    color: var(--osc-color-success);
+}
+
+.osc-hud-status--warning {
+    color: var(--osc-color-warning);
+}
+
+.osc-hud-reason {
+    color: var(--osc-color-danger);
+}
+
+.osc-hud-feedback {
+    color: var(--osc-color-info);
+    margin-left: var(--osc-space-2);
+}
+
 /* Fixture container: vertical by default, horizontal for the Build Palette. */
 .osc-fixtures--row {
     flex-direction: row;

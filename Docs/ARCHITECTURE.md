@@ -499,6 +499,20 @@ P3-05의 `GrowthDevelopmentSystem`은 월별 스케줄러가 인구·경제 다�
 `GrowthDevelopmentReadModel`(공개 per-parcel `DevelopmentFeasibility` 포함)로 분리해 조회한다.
 prefab 존재 여부와 view frame rate는 이 계약에 도달하지 않는다.
 
+P3-06에서 `MunicipalFinanceState`는 민간 `UrbanEconomyState`와 별도의 시 소유 잔액,
+활성·예약 세율, 공사비와 유지비를 가진 결정적 월간 ledger를 소유한다. 도로와 발전소 command는
+공통 `IConstructionFunds` port를 통해 승인 때 잔액을 차감하고 category별 공사비를 같은 월에
+누적한다. 월 정산 entry는 `opening + 세금 수입 - 공사비 - 유지비 = closing` 불변식을 검증한다.
+`SetMunicipalTaxRatesCommand`는 진행 중인 월을 변경하지 않고 다음 월에만 예약하며, 월간 조합은
+`PopulationEmploymentMigrationSystem` 뒤에서 예약 세율 적용 → RCI/성장 → 시 원장 정산 순으로 실행한다.
+따라서 민간 시장의 RCI 계산과 공공 잔액은 서로 다른 state와 system으로 유지된다.
+
+`MunicipalFinanceReadModel`, `DevelopmentStatusViewModel`, `MunicipalHudViewModel`은 Application
+소유 DTO만 제공한다. 개발 상태는 같은 월의 RCI 압력, 실행 가능 필지 수, 상위 세 개 차단 reason
+(count 내림차순·stable enum code 오름차순), 접근성 및 직전 월 대비 변화만 복사한다. UI는 이 순서나
+factor를 다시 계산하지 않으며 primitive/Application DTO만 소비하므로 Simulation assembly를 참조하지
+않는다. `CityRuntimeHost`의 중앙 clock만 시뮬레이션을 전진시키고 HUD refresh·배속은 월간 결과를 바꾸지 않는다.
+
 ## 9. 성능 예산
 
 프로토타입 목표:

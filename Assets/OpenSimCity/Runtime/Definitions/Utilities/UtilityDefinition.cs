@@ -9,10 +9,15 @@ namespace OpenSimCity.Definitions.Utilities
     {
         [SerializeField] private ulong definitionId;
         [SerializeField, Min(1)] private int powerCapacity = 100;
+        [SerializeField, Min(0)] private int constructionCost = 100;
+        [SerializeField, Min(0)] private int monthlyMaintenanceCost = 5;
         [SerializeField] private string presentationKey = string.Empty;
         public StableId DefinitionId => definitionId == 0 ? StableId.Invalid : new StableId(definitionId);
         public int PowerCapacity => powerCapacity;
+        public int ConstructionCost => constructionCost;
+        public int MonthlyMaintenanceCost => monthlyMaintenanceCost;
         public string PresentationKey => presentationKey ?? string.Empty;
-        public UtilityDefinitionData ToData() => new UtilityDefinitionData(new StableId(definitionId), powerCapacity, presentationKey);
+        public UtilityDefinitionData ToData() => new UtilityDefinitionData(
+            new StableId(definitionId), powerCapacity, presentationKey, constructionCost, monthlyMaintenanceCost);
     }
 }

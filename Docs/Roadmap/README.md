@@ -102,6 +102,13 @@ P3-05는 `GrowthDevelopmentSystem`을 월별 스케줄러의 세 번째 시스�
 실행 가능성은 각각 `UrbanEconomyReadModel`과 `GrowthDevelopmentReadModel`로 분리 조회하며,
 진행 중 `DevelopmentState`만 DTO로 왕복한다. prefab·view는 이 계약에 관여하지 않는다.
 
+P3-06은 `MunicipalFinanceState`를 민간 `UrbanEconomyState`와 분리한다. 도로·발전소 command의
+공사비와 정의의 월 유지비는 시 잔액과 결정적 월간 ledger에만 기록되며, entry는
+`opening + 세금 - 공사비 - 유지비 = closing`을 만족한다. 세율 command는 현재 진행 월을 바꾸지 않고
+다음 월 RCI·세금 정산 전에 적용된다. `DevelopmentStatusViewModel`과 `MunicipalHudViewModel`은
+기간, RCI, 실행 가능 필지, 결정적 상위 3개 차단 reason, 접근성·직전 기간 변화를 Application DTO로
+공개하고, UI는 이를 다시 계산하지 않는다.
+
 ## 디자인·아트 단계 적용
 
 | 시점 | 제품 화면에 적용 | 준비 작업 |

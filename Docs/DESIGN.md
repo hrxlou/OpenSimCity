@@ -109,6 +109,17 @@ component의 상태는 최소 `default`, `hover`, `focus`, `selected`, `disabled
 
 아이콘도 같은 시점에 라이선스와 source를 기록한다. 아이콘만으로 기능을 설명하지 않고 tooltip 또는 label을 제공한다.
 
+#### P3-06 구현 기록 (2026-07-19)
+
+- 새 font 또는 icon asset은 import·배포하지 않았다. 현재 UI Toolkit은 PanelSettings의 기본 동적
+  system fallback을 사용하며, 번들 글꼴/아이콘 라이선스와 provenance는 해당 asset이 없으므로 `N/A`다.
+- 한글 glyph/fallback의 실제 game-render 검증은 Windows와 macOS에서 각각 필요하다. 현재 token의
+  100% 기준 최소 크기는 caption `11px`, 본문 `13px`, 주요 값 `14px`이고 PanelSettings scale이
+  125%/150%를 적용한다.
+- HUD의 숫자 값은 별도 value label과 `N0` 형식으로 정렬한다. 기본 fallback의 tabular figure는 보장하지
+  않으므로, 추후 실제 font asset을 추가하려면 glyph 범위, tabular figure 또는 대체 정렬 방식, 배포·임베딩·수정
+  라이선스와 source를 asset provenance에 함께 기록해야 한다.
+
 ## 4. 제공된 시안의 사용 범위
 
 제공된 네 장의 AI 시안은 레이아웃과 분위기 참고 자료이며, 게임 데이터·실제 렌더 품질·출시 기능 목록의 증거가 아니다.
@@ -250,7 +261,7 @@ AI 시안이나 Blender viewport만으로 완료를 판정하지 않는다. UI�
 
 ## 9. 확정 전 결정 항목
 
-- P3-06 이전: 한글 font, icon source와 라이선스, 최소 type scale
+- P3-06 후속 font asset import 전: 한글 font, icon source와 라이선스, tabular figure 보장 여부
 - P9-01 이전: Standard만 사용할지 Source tier가 필요한지, 파생 에셋 배포 방식
 - P8-02 이후: 모델별 triangle/material/LOD 기준과 target quality tier
 - P9-02 이전: 제품 로고, 메인 메뉴 배경, 지원 언어와 현지화 범위

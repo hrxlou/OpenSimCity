@@ -22,25 +22,40 @@ namespace OpenSimCity.Application.Commands
     public enum PowerCommandFailureReason
     {
         None, InvalidCommand, InvalidId, UnknownDefinition, OutOfBounds,
-        RoadOccupiesCell, ProducerOccupiesCell, ProducerNotFound, StateChangedBeforeCommit
+        RoadOccupiesCell, ProducerOccupiesCell, ProducerNotFound, InsufficientFunds, StateChangedBeforeCommit
     }
 
     [Serializable]
     public sealed class PowerCommandResult
     {
         internal PowerCommandResult(bool isValid, bool isApplied, PowerCommandFailureReason reason,
-            StableId producerId, CellCoord anchor, string message)
-        { IsValid = isValid; IsApplied = isApplied; FailureReason = reason; ProducerId = producerId; Anchor = anchor; Message = message ?? string.Empty; }
+            StableId producerId, CellCoord anchor, int cost, int fundsBefore, int fundsAfter, string message)
+        {
+            IsValid = isValid;
+            IsApplied = isApplied;
+            FailureReason = reason;
+            ProducerId = producerId;
+            Anchor = anchor;
+            Cost = cost;
+            FundsBefore = fundsBefore;
+            FundsAfter = fundsAfter;
+            Message = message ?? string.Empty;
+        }
         public bool IsValid { get; }
         public bool IsApplied { get; }
         public PowerCommandFailureReason FailureReason { get; }
         public StableId ProducerId { get; }
         public CellCoord Anchor { get; }
+        public int Cost { get; }
+        public int FundsBefore { get; }
+        public int FundsAfter { get; }
         public string Message { get; }
-        internal static PowerCommandResult Valid(StableId id, CellCoord anchor) => new PowerCommandResult(true, false, PowerCommandFailureReason.None, id, anchor, string.Empty);
-        internal static PowerCommandResult Applied(StableId id, CellCoord anchor) => new PowerCommandResult(true, true, PowerCommandFailureReason.None, id, anchor, string.Empty);
-        internal static PowerCommandResult Rejected(PowerCommandFailureReason reason, StableId id, CellCoord anchor) =>
-            new PowerCommandResult(false, false, reason, id, anchor, MessageFor(reason));
+        internal static PowerCommandResult Valid(StableId id, CellCoord anchor, int cost, int fundsBefore) =>
+            new PowerCommandResult(true, false, PowerCommandFailureReason.None, id, anchor, cost, fundsBefore, fundsBefore - cost, string.Empty);
+        internal static PowerCommandResult Applied(StableId id, CellCoord anchor, int cost, int fundsBefore, int fundsAfter) =>
+            new PowerCommandResult(true, true, PowerCommandFailureReason.None, id, anchor, cost, fundsBefore, fundsAfter, string.Empty);
+        internal static PowerCommandResult Rejected(PowerCommandFailureReason reason, StableId id, CellCoord anchor, int funds = 0, int cost = 0) =>
+            new PowerCommandResult(false, false, reason, id, anchor, cost, funds, funds, MessageFor(reason));
         private static string MessageFor(PowerCommandFailureReason reason)
         {
             switch (reason)
@@ -52,6 +67,7 @@ namespace OpenSimCity.Application.Commands
                 case PowerCommandFailureReason.RoadOccupiesCell: return "A power producer cannot occupy a road cell.";
                 case PowerCommandFailureReason.ProducerOccupiesCell: return "A power producer already occupies this cell.";
                 case PowerCommandFailureReason.ProducerNotFound: return "The power producer does not exist.";
+                case PowerCommandFailureReason.InsufficientFunds: return "The city balance cannot cover this power producer.";
                 default: return "The power producer state changed before commit.";
             }
         }

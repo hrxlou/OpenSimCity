@@ -237,8 +237,8 @@ namespace OpenSimCity.Application.Construction
         private ConstructionPreview FromPower(ConstructionToolMode mode, PowerCommandResult result)
         {
             var requested = new[] { StartCell };
-            return new ConstructionPreview(mode, mode.ToOperation(), true, result.IsValid, 0,
-                _runtime.Funds, _runtime.Funds, StartCell, StartCell, requested,
+            return new ConstructionPreview(mode, mode.ToOperation(), true, result.IsValid, result.Cost,
+                result.FundsBefore, result.FundsAfter, StartCell, StartCell, requested,
                 result.IsValid ? requested : Array.Empty<CellCoord>(),
                 result.IsValid ? Array.Empty<CellCoord>() : requested,
                 result.IsValid ? string.Empty : result.FailureReason.ToString(), result.Message);

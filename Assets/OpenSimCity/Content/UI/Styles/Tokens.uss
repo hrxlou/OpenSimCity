@@ -53,8 +53,8 @@
 
     /*
      * Type scale. Values are the 100% UI scale baseline; PanelSettings scales
-     * them for 125% and 150%. Final Korean font asset lands in P3-06, so only the
-     * scale and fallback behaviour are fixed here.
+     * them for 125% and 150%. P3-06 records the default Korean fallback without
+     * bundling a font asset, so only the scale and fallback behaviour are fixed here.
      */
     --osc-font-size-caption: 11px;
     --osc-font-size-body: 13px;

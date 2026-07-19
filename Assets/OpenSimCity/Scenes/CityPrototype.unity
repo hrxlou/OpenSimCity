@@ -176,6 +176,7 @@ GameObject:
   - component: {fileID: 154218320}
   - component: {fileID: 154218319}
   - component: {fileID: 154218321}
+  - component: {fileID: 154218322}
   m_Layer: 0
   m_Name: UIDocument
   m_TagString: Untagged
@@ -248,6 +249,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 995401c6609d6ae418fe73845cef5138, type: 3}
   m_Name: 
   m_EditorClassIdentifier: OpenSimCity.UI::OpenSimCity.UI.Placement.PlacementUiBinder
+  bootstrap: {fileID: 154218319}
+--- !u!114 &154218322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 154218317}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e6b264e830d4599a2a209fcf5ec570d, type: 3}
+  m_Name: ''
+  m_EditorClassIdentifier: OpenSimCity.UI::OpenSimCity.UI.HUD.MunicipalHudBinder
   bootstrap: {fileID: 154218319}
 --- !u!1 &157361170
 GameObject:

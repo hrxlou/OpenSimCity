@@ -6,6 +6,7 @@ using OpenSimCity.Gameplay.Construction;
 using OpenSimCity.Presentation.Overlays;
 using OpenSimCity.Presentation.Utilities;
 using OpenSimCity.UI.Foundation;
+using OpenSimCity.UI.HUD;
 using OpenSimCity.UI.Placement;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -93,6 +94,10 @@ namespace OpenSimCity.Editor
             var binder = EnsureComponent<PlacementUiBinder>(documentObject, ref sceneChanged);
             binder.ConfigureReferences(bootstrap);
             ApplyReferences(binder, ("bootstrap", bootstrap));
+
+            var municipalHud = EnsureComponent<MunicipalHudBinder>(documentObject, ref sceneChanged);
+            municipalHud.ConfigureReferences(bootstrap);
+            ApplyReferences(municipalHud, ("bootstrap", bootstrap));
         }
 
         public static void Validate(ICollection<string> issues)
@@ -138,6 +143,8 @@ namespace OpenSimCity.Editor
                 var document = uiRoot?.Find(UiFoundationSetup.UiDocumentName)?.gameObject;
                 if (document == null || document.GetComponent<PlacementUiBinder>() == null)
                     issues.Add("CityPrototype UIDocument has no PlacementUiBinder.");
+                else if (document.GetComponent<MunicipalHudBinder>() == null)
+                    issues.Add("CityPrototype UIDocument has no MunicipalHudBinder.");
             }
             finally
             {
