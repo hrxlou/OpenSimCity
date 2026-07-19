@@ -114,9 +114,13 @@ namespace OpenSimCity.Tests.PlayMode
                 yield return null;
                 yield return null;
                 Assert.That(bootstrap.GlobalHud.resolvedStyle.height, Is.GreaterThan(0f));
+                Assert.That(bootstrap.GlobalHud.resolvedStyle.height, Is.LessThanOrEqualTo(96f),
+                    "The Global HUD must remain a compact two-row information bar.");
                 Assert.That(bootstrap.SimulationControls.resolvedStyle.width, Is.GreaterThan(0f));
                 Assert.That(bootstrap.GlobalHud.Q<Label>("osc-hud-date"), Is.Not.Null);
                 Assert.That(bootstrap.GlobalHud.Q<Label>("osc-hud-development-status"), Is.Not.Null);
+                Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-summary"), Is.Not.Null);
+                Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-details"), Is.Not.Null);
             }
         }
 

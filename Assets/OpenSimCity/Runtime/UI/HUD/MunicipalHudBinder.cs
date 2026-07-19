@@ -96,34 +96,47 @@ namespace OpenSimCity.UI.HUD
                 return;
 
             hud.Clear();
-            _date = AddGroup(hud, "날짜", "osc-hud-date");
-            _period = AddGroup(hud, "적용 기간", "osc-hud-period");
-            _balance = AddGroup(hud, "시 잔액", "osc-hud-balance");
-            _income = AddGroup(hud, "월 수입", "osc-hud-income");
-            _expense = AddGroup(hud, "월 지출", "osc-hud-expense");
-            _population = AddGroup(hud, "인구", "osc-hud-population");
-            _rci = AddGroup(hud, "RCI", "osc-hud-rci");
-            _development = AddGroup(hud, "개발", "osc-hud-development-status");
-            _reasons = AddGroup(hud, "상위 차단 원인", "osc-hud-development-reasons");
-            _taxRates = AddGroup(hud, "세율", "osc-hud-tax-rates");
+
+            // Keep the high-frequency city readout at a glance. The second row
+            // holds diagnostics and actions so one vertical action stack can
+            // never turn the GlobalHud into a dashboard that obscures the world.
+            var summary = new VisualElement { name = "osc-hud-summary" };
+            summary.AddToClassList("osc-hud-summary-row");
+            _date = AddMetric(summary, "날짜", "osc-hud-date");
+            _balance = AddMetric(summary, "잔액", "osc-hud-balance");
+            _income = AddMetric(summary, "수입", "osc-hud-income");
+            _expense = AddMetric(summary, "지출", "osc-hud-expense");
+            _population = AddMetric(summary, "인구", "osc-hud-population");
+            _rci = AddMetric(summary, "RCI", "osc-hud-rci");
+            _development = AddMetric(summary, "개발", "osc-hud-development-status");
+            hud.Add(summary);
+
+            var details = new VisualElement { name = "osc-hud-details" };
+            details.AddToClassList("osc-hud-details-row");
+            _period = AddMetric(details, "적용", "osc-hud-period");
+            _reasons = AddMetric(details, "원인", "osc-hud-development-reasons");
+            _taxRates = AddMetric(details, "세율", "osc-hud-tax-rates");
 
             var taxActions = new VisualElement { name = "osc-hud-tax-actions" };
-            taxActions.AddToClassList("osc-hud-group");
-            AddTaxButton(taxActions, "osc-tax-residential-increase", "주거 세율 +1%", TaxSector.Residential);
-            AddTaxButton(taxActions, "osc-tax-commercial-increase", "상업 세율 +1%", TaxSector.Commercial);
-            AddTaxButton(taxActions, "osc-tax-industrial-increase", "공업 세율 +1%", TaxSector.Industrial);
-            var details = new Button(() => CityRuntimeContext.Current?.SetOverlay(PlacementOverlayKind.Parcel))
+            taxActions.AddToClassList("osc-hud-tax-actions");
+            AddTaxButton(taxActions, "osc-tax-residential-increase", "주거+1", TaxSector.Residential);
+            AddTaxButton(taxActions, "osc-tax-commercial-increase", "상업+1", TaxSector.Commercial);
+            AddTaxButton(taxActions, "osc-tax-industrial-increase", "공업+1", TaxSector.Industrial);
+            var parcelDetails = new Button(() => CityRuntimeContext.Current?.SetOverlay(PlacementOverlayKind.Parcel))
             {
                 name = "osc-hud-parcel-overlay",
-                text = "필지/원인 보기"
+                text = "원인 보기",
+                tooltip = "필지/원인 보기"
             };
-            details.AddToClassList(UiFoundationNames.ItemClass);
-            taxActions.Add(details);
-            hud.Add(taxActions);
+            parcelDetails.AddToClassList(UiFoundationNames.ItemClass);
+            parcelDetails.AddToClassList("osc-hud-action");
+            taxActions.Add(parcelDetails);
+            details.Add(taxActions);
 
             _feedback = new Label { name = "osc-hud-command-feedback" };
             _feedback.AddToClassList("osc-hud-feedback");
-            hud.Add(_feedback);
+            details.Add(_feedback);
+            hud.Add(details);
         }
 
         private void BuildSimulationControls()
@@ -260,8 +273,14 @@ namespace OpenSimCity.UI.HUD
 
         private void AddTaxButton(VisualElement parent, string name, string text, TaxSector sector)
         {
-            var button = new Button(() => RequestTaxIncrease(sector)) { name = name, text = text };
+            var button = new Button(() => RequestTaxIncrease(sector))
+            {
+                name = name,
+                text = text,
+                tooltip = $"{text.Replace("+", " 세율 +")}%"
+            };
             button.AddToClassList(UiFoundationNames.ItemClass);
+            button.AddToClassList("osc-hud-action");
             parent.Add(button);
         }
 
@@ -341,10 +360,10 @@ namespace OpenSimCity.UI.HUD
             element?.EnableInClassList(UiFoundationNames.ItemSelectedClass, selected);
         }
 
-        private static Label AddGroup(VisualElement parent, string title, string valueName)
+        private static Label AddMetric(VisualElement parent, string title, string valueName)
         {
             var group = new VisualElement();
-            group.AddToClassList("osc-hud-group");
+            group.AddToClassList("osc-hud-metric");
             var caption = new Label(title);
             caption.AddToClassList(UiFoundationNames.PanelCaptionClass);
             group.Add(caption);

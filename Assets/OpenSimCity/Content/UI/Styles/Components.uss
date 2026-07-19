@@ -184,9 +184,10 @@
 /* P3 Global HUD and lower-right simulation controls reuse the P2 token panel. */
 .osc-global-hud {
     align-self: stretch;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin-bottom: var(--osc-space-2);
+    flex-direction: column;
+    margin-bottom: var(--osc-space-1);
+    padding-top: var(--osc-space-0);
+    padding-bottom: var(--osc-space-0);
 }
 
 .osc-simulation-controls {
@@ -195,14 +196,32 @@
     margin: var(--osc-space-2);
 }
 
-.osc-hud-group {
-    flex-direction: column;
+.osc-hud-summary-row,
+.osc-hud-details-row,
+.osc-hud-tax-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.osc-hud-summary-row {
+    margin-bottom: var(--osc-space-0);
+}
+
+.osc-hud-metric {
+    flex-direction: row;
+    align-items: center;
     margin-right: var(--osc-space-3);
-    margin-bottom: var(--osc-space-1);
+    margin-bottom: var(--osc-space-0);
+    white-space: nowrap;
+}
+
+.osc-hud-metric .osc-panel__caption {
+    margin-right: var(--osc-space-1);
 }
 
 .osc-hud-value {
-    font-size: var(--osc-font-size-body-strong);
+    font-size: var(--osc-font-size-body);
     color: var(--osc-color-text-primary);
     -unity-font-style: bold;
 }
@@ -222,6 +241,18 @@
 .osc-hud-feedback {
     color: var(--osc-color-info);
     margin-left: var(--osc-space-2);
+    margin-bottom: var(--osc-space-0);
+    white-space: nowrap;
+}
+
+.osc-hud-action {
+    font-size: var(--osc-font-size-caption);
+    margin-right: var(--osc-space-1);
+    margin-bottom: var(--osc-space-0);
+    padding-left: var(--osc-space-1);
+    padding-right: var(--osc-space-1);
+    padding-top: var(--osc-space-0);
+    padding-bottom: var(--osc-space-0);
 }
 
 /* Fixture container: vertical by default, horizontal for the Build Palette. */

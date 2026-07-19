@@ -85,6 +85,10 @@ overlay 색은 월드 material과 별도 토큰으로 관리한다. 유효/무�
 
 화면이 좁을 때는 Inspector와 Build Palette를 접거나 교대로 표시한다. UI scale과 창 크기를 바꿔도 World View의 선택 지점과 입력 결과가 바뀌지 않아야 한다.
 
+P3의 `GlobalHud`는 World View를 위한 상단의 compact two-row 정보 bar다. 첫 줄은 날짜·재정·인구·RCI·개발
+상태를, 둘째 줄은 적용 기간·원인·세율·작은 action/feedback을 같은 행에 둔다. 세로 action stack이나
+세 번째 HUD 행으로 월드 작업 공간을 점유하지 않는다. `SimulationControls`는 계속 우하단 슬롯에 둔다.
+
 ### 3.4 공통 component
 
 - `GlobalHud`: 날짜·속도·재정·인구 등 현재 Phase의 전역 상태
