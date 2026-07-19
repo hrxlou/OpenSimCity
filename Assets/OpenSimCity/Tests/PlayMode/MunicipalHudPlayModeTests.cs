@@ -121,6 +121,10 @@ namespace OpenSimCity.Tests.PlayMode
                 Assert.That(bootstrap.GlobalHud.Q<Label>("osc-hud-development-status"), Is.Not.Null);
                 Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-summary"), Is.Not.Null);
                 Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-details"), Is.Not.Null);
+                Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-summary-left"), Is.Not.Null);
+                Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-summary-right"), Is.Not.Null);
+                Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-details-left"), Is.Not.Null);
+                Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-details-right"), Is.Not.Null);
             }
         }
 
