@@ -33,11 +33,15 @@ namespace OpenSimCity.UI.Foundation
         public const string BuildPaletteClass = "osc-build-palette";
         public const string ContextInspectorClass = "osc-context-inspector";
         public const string DataOverlayLegendClass = "osc-data-overlay-legend";
+        public const string GlobalHudClass = "osc-global-hud";
+        public const string SimulationControlsClass = "osc-simulation-controls";
 
         public const string RootName = "osc-root";
         public const string ToolRailName = "osc-tool-rail";
         public const string BuildPaletteName = "osc-build-palette";
         public const string ContextInspectorName = "osc-context-inspector";
         public const string DataOverlayLegendName = "osc-data-overlay-legend";
+        public const string GlobalHudName = "osc-global-hud";
+        public const string SimulationControlsName = "osc-simulation-controls";
     }
 }

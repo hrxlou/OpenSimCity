@@ -3,12 +3,25 @@ using System;
 namespace OpenSimCity.Simulation.Roads
 {
     /// <summary>
+    /// Narrow construction-funds port. P2's standalone road budget and P3's
+    /// municipal ledger both implement it, so road occupancy remains independent
+    /// from fiscal accounting.
+    /// </summary>
+    public interface IConstructionFunds
+    {
+        int Funds { get; }
+        bool CanAfford(int cost);
+        bool TrySpend(int cost);
+        bool TryRefund(int amount);
+    }
+
+    /// <summary>
     /// Minimal construction balance used by P2 road commands. It is deliberately
     /// separate from the road network so later municipal finance systems can
     /// replace the source without changing road occupancy rules.
     /// </summary>
     [Serializable]
-    public sealed class RoadConstructionBudget
+    public sealed class RoadConstructionBudget : IConstructionFunds
     {
         public RoadConstructionBudget(int initialFunds)
         {

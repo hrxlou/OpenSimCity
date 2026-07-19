@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using OpenSimCity.Core;
 using OpenSimCity.Core.Mathematics;
+using OpenSimCity.Simulation.Economy;
 using OpenSimCity.Simulation.Roads;
 
 namespace OpenSimCity.Application.Commands
@@ -15,16 +16,26 @@ namespace OpenSimCity.Application.Commands
     {
         private readonly RoadNetworkState _roadNetwork;
         private readonly RoadDefinitionCatalog _definitions;
-        private readonly RoadConstructionBudget _budget;
+        private readonly IConstructionFunds _funds;
+        private readonly MunicipalFinanceState _municipalFinance;
 
         public RoadCommandHandler(
             RoadNetworkState roadNetwork,
             RoadDefinitionCatalog definitions,
             RoadConstructionBudget budget)
+            : this(roadNetwork, definitions, (IConstructionFunds)budget)
+        {
+        }
+
+        public RoadCommandHandler(
+            RoadNetworkState roadNetwork,
+            RoadDefinitionCatalog definitions,
+            IConstructionFunds funds)
         {
             _roadNetwork = roadNetwork ?? throw new ArgumentNullException(nameof(roadNetwork));
             _definitions = definitions ?? throw new ArgumentNullException(nameof(definitions));
-            _budget = budget ?? throw new ArgumentNullException(nameof(budget));
+            _funds = funds ?? throw new ArgumentNullException(nameof(funds));
+            _municipalFinance = funds as MunicipalFinanceState;
         }
 
         public RoadCommandHandler(
@@ -42,7 +53,10 @@ namespace OpenSimCity.Application.Commands
 
         public RoadDefinitionCatalog Definitions => _definitions;
 
-        public RoadConstructionBudget Budget => _budget;
+        /// <summary>Compatibility accessor for P2 callers using a standalone budget.</summary>
+        public RoadConstructionBudget Budget => _funds as RoadConstructionBudget;
+
+        public IConstructionFunds Funds => _funds;
 
         public RoadCommandResult LastResult { get; private set; }
 
@@ -60,7 +74,7 @@ namespace OpenSimCity.Application.Commands
                     StableId.Invalid,
                     RoadCommandFailureReason.InvalidCommand,
                     0,
-                    _budget.Funds,
+                    _funds.Funds,
                     null);
             }
 
@@ -80,7 +94,7 @@ namespace OpenSimCity.Application.Commands
                     StableId.Invalid,
                     RoadCommandFailureReason.InvalidCommand,
                     0,
-                    _budget.Funds,
+                    _funds.Funds,
                     null);
             }
 
@@ -147,35 +161,38 @@ namespace OpenSimCity.Application.Commands
 
         private RoadCommandResult CommitPlacement(PlaceRoadCommand command, RoadCommandResult preview)
         {
-            if (!_budget.TrySpend(preview.Cost))
+            if (!_funds.TrySpend(preview.Cost))
             {
                 return RoadCommandResult.Rejected(
                     RoadCommandOperation.Place,
                     command.RoadDefinitionId,
                     RoadCommandFailureReason.InsufficientFunds,
                     preview.Cost,
-                    _budget.Funds,
+                    _funds.Funds,
                     command.Cells);
             }
 
             if (_roadNetwork.TryApplyPlacement(command.Cells, command.RoadDefinitionId))
             {
+                _municipalFinance?.RecordConstructionExpense(
+                    MunicipalConstructionCategory.Road,
+                    preview.Cost);
                 return RoadCommandResult.Applied(
                     RoadCommandOperation.Place,
                     command.RoadDefinitionId,
                     preview.Cost,
                     preview.FundsBefore,
-                    _budget.Funds,
+                    _funds.Funds,
                     command.Cells);
             }
 
-            _budget.TryRefund(preview.Cost);
+            _funds.TryRefund(preview.Cost);
             return RoadCommandResult.Rejected(
                 RoadCommandOperation.Place,
                 command.RoadDefinitionId,
                 RoadCommandFailureReason.StateChangedBeforeCommit,
                 preview.Cost,
-                _budget.Funds,
+                _funds.Funds,
                 command.Cells);
         }
 
@@ -190,7 +207,7 @@ namespace OpenSimCity.Application.Commands
                     StableId.Invalid,
                     0,
                     preview.FundsBefore,
-                    _budget.Funds,
+                    _funds.Funds,
                     command.Cells);
             }
 
@@ -199,7 +216,7 @@ namespace OpenSimCity.Application.Commands
                 StableId.Invalid,
                 RoadCommandFailureReason.StateChangedBeforeCommit,
                 0,
-                _budget.Funds,
+                _funds.Funds,
                 command.Cells);
         }
 
@@ -209,7 +226,7 @@ namespace OpenSimCity.Application.Commands
             IReadOnlyList<CellCoord> cells,
             bool requiresDefinition)
         {
-            var funds = _budget.Funds;
+            var funds = _funds.Funds;
             if (cells == null || cells.Count == 0)
             {
                 return RoadCommandResult.Rejected(
@@ -315,7 +332,7 @@ namespace OpenSimCity.Application.Commands
                 }
             }
 
-            if (requiresDefinition && !_budget.CanAfford(cost))
+            if (requiresDefinition && !_funds.CanAfford(cost))
             {
                 return RoadCommandResult.Rejected(
                     operation,

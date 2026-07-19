@@ -135,9 +135,21 @@ namespace OpenSimCity.UI.Placement
                 return;
 
             var content = ReplaceContent(palette, "osc-placement-palette");
+            palette.AddToClassList("osc-placement-palette--compact");
+            content.AddToClassList("osc-placement-palette__content");
+            // ReplaceContent gives every shell a vertical default inline style.
+            // The compact palette is the one exception: its three live values
+            // intentionally share the fixed bottom bar's single row.
+            content.style.flexDirection = FlexDirection.Row;
+            content.style.alignItems = Align.Center;
+            var title = palette.Q<Label>(className: UiFoundationNames.PanelTitleClass);
+            title?.AddToClassList("osc-placement-palette__heading");
             _paletteTool = AddValueLabel(content, UiFoundationNames.PanelTitleClass);
+            _paletteTool.AddToClassList("osc-placement-palette__tool");
             _paletteShortcut = AddValueLabel(content, UiFoundationNames.PanelCaptionClass);
+            _paletteShortcut.AddToClassList("osc-placement-palette__shortcut");
             _paletteCost = AddValueLabel(content, UiFoundationNames.PanelCaptionClass);
+            _paletteCost.AddToClassList("osc-placement-palette__cost");
         }
 
         private void BuildInspector()

@@ -1,5 +1,6 @@
 using OpenSimCity.Application.Input;
 using OpenSimCity.UI.Components;
+using OpenSimCity.UI.HUD;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -34,6 +35,10 @@ namespace OpenSimCity.UI.Foundation
         public ContextInspectorView ContextInspector { get; private set; }
 
         public DataOverlayLegendView DataOverlayLegend { get; private set; }
+
+        public GlobalHudView GlobalHud { get; private set; }
+
+        public SimulationControlsView SimulationControls { get; private set; }
 
         public StyleSheet ConfiguredTokensStyleSheet => tokensStyleSheet;
 
@@ -113,6 +118,8 @@ namespace OpenSimCity.UI.Foundation
             ContextInspector = new ContextInspectorView();
             DataOverlayLegend = new DataOverlayLegendView();
             BuildPalette = new BuildPaletteView();
+            GlobalHud = new GlobalHudView();
+            SimulationControls = new SimulationControlsView();
 
             var centre = new VisualElement { name = "osc-world-view-spacer" };
             centre.pickingMode = PickingMode.Ignore;
@@ -126,13 +133,19 @@ namespace OpenSimCity.UI.Foundation
             rightColumn.pickingMode = PickingMode.Ignore;
             rightColumn.style.flexDirection = FlexDirection.Column;
             rightColumn.style.justifyContent = Justify.SpaceBetween;
+            var rightBottom = new VisualElement { name = "osc-right-bottom" };
+            rightBottom.pickingMode = PickingMode.Ignore;
+            rightBottom.style.flexDirection = FlexDirection.Column;
+            rightBottom.Add(DataOverlayLegend);
+            rightBottom.Add(SimulationControls);
             rightColumn.Add(ContextInspector);
-            rightColumn.Add(DataOverlayLegend);
+            rightColumn.Add(rightBottom);
 
             middle.Add(ToolRail);
             middle.Add(centre);
             middle.Add(rightColumn);
 
+            Root.Add(GlobalHud);
             Root.Add(middle);
             Root.Add(BuildPalette);
             documentRoot.Add(Root);
@@ -142,6 +155,8 @@ namespace OpenSimCity.UI.Foundation
             _bridge.AddPointerSource(BuildPalette);
             _bridge.AddPointerSource(ContextInspector);
             _bridge.AddPointerSource(DataOverlayLegend);
+            _bridge.AddPointerSource(GlobalHud);
+            _bridge.AddPointerSource(SimulationControls);
             _bridge.Attach();
         }
 

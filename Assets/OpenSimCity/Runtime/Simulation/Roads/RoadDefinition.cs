@@ -16,20 +16,31 @@ namespace OpenSimCity.Simulation.Roads
         {
         }
 
-        public RoadDefinition(StableId id, int buildCost, string presentationKey)
+        public RoadDefinition(
+            StableId id,
+            int buildCost,
+            string presentationKey,
+            int monthlyMaintenanceCost = 0)
         {
             if (!id.IsValid)
                 throw new ArgumentException("A road definition must have a valid stable ID.", nameof(id));
             if (buildCost < 0)
                 throw new ArgumentOutOfRangeException(nameof(buildCost), "Road build cost cannot be negative.");
+            if (monthlyMaintenanceCost < 0)
+                throw new ArgumentOutOfRangeException(nameof(monthlyMaintenanceCost), "Road maintenance cannot be negative.");
 
             Id = id;
             BuildCost = buildCost;
+            MonthlyMaintenanceCost = monthlyMaintenanceCost;
             PresentationKey = presentationKey ?? string.Empty;
         }
 
-        public RoadDefinition(ulong id, int buildCost, string presentationKey = null)
-            : this(new StableId(id), buildCost, presentationKey)
+        public RoadDefinition(
+            ulong id,
+            int buildCost,
+            string presentationKey = null,
+            int monthlyMaintenanceCost = 0)
+            : this(new StableId(id), buildCost, presentationKey, monthlyMaintenanceCost)
         {
         }
 
@@ -41,11 +52,14 @@ namespace OpenSimCity.Simulation.Roads
 
         public int ConstructionCost => BuildCost;
 
+        public int MonthlyMaintenanceCost { get; }
+
         public string PresentationKey { get; }
 
         public bool Equals(RoadDefinition other)
         {
             return other != null && Id == other.Id && BuildCost == other.BuildCost &&
+                   MonthlyMaintenanceCost == other.MonthlyMaintenanceCost &&
                    string.Equals(PresentationKey, other.PresentationKey, StringComparison.Ordinal);
         }
 
@@ -55,12 +69,13 @@ namespace OpenSimCity.Simulation.Roads
         {
             unchecked
             {
-                return ((Id.GetHashCode() * 397) ^ BuildCost) * 397 ^
+                return (((Id.GetHashCode() * 397) ^ BuildCost) * 397 ^ MonthlyMaintenanceCost) * 397 ^
                        StringComparer.Ordinal.GetHashCode(PresentationKey);
             }
         }
 
-        public override string ToString() => $"{Id} [buildCost={BuildCost}, key={PresentationKey}]";
+        public override string ToString() =>
+            $"{Id} [buildCost={BuildCost}, maintenance={MonthlyMaintenanceCost}, key={PresentationKey}]";
     }
 
     /// <summary>

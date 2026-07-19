@@ -155,17 +155,26 @@
     min-width: var(--osc-tool-rail-width);
     align-self: flex-start;
     flex-shrink: 0;
+    margin: var(--osc-space-2);
 }
 
 .osc-build-palette {
     min-height: var(--osc-build-palette-height);
     align-self: stretch;
+    border-top-left-radius: var(--osc-space-0);
+    border-top-right-radius: var(--osc-space-0);
+    border-bottom-left-radius: var(--osc-space-0);
+    border-bottom-right-radius: var(--osc-space-0);
+    border-left-width: var(--osc-space-0);
+    border-right-width: var(--osc-space-0);
+    border-bottom-width: var(--osc-space-0);
 }
 
 .osc-context-inspector {
     width: var(--osc-context-inspector-width);
     align-self: flex-start;
     flex-shrink: 0;
+    margin: var(--osc-space-2);
 }
 
 /*
@@ -179,6 +188,138 @@
     display: none;
     align-self: flex-end;
     margin: var(--osc-space-2);
+}
+
+/* P3 Global HUD and lower-right simulation controls reuse the P2 token panel. */
+.osc-global-hud {
+    align-self: stretch;
+    flex-direction: column;
+    margin-bottom: var(--osc-space-0);
+    padding-top: var(--osc-space-0);
+    padding-bottom: var(--osc-space-0);
+    border-top-left-radius: var(--osc-space-0);
+    border-top-right-radius: var(--osc-space-0);
+    border-bottom-left-radius: var(--osc-space-0);
+    border-bottom-right-radius: var(--osc-space-0);
+    border-top-width: var(--osc-space-0);
+    border-left-width: var(--osc-space-0);
+    border-right-width: var(--osc-space-0);
+}
+
+.osc-simulation-controls {
+    align-self: flex-end;
+    flex-direction: row;
+    margin: var(--osc-space-2);
+}
+
+.osc-hud-summary-row {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.osc-hud-left,
+.osc-hud-right,
+.osc-hud-tax-actions {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.osc-hud-left {
+    flex-grow: 1;
+    min-width: var(--osc-space-0);
+}
+
+.osc-hud-right {
+    justify-content: flex-end;
+    flex-shrink: 1;
+    min-width: var(--osc-space-0);
+}
+
+.osc-hud-tax-actions {
+    flex-wrap: nowrap;
+}
+
+.osc-hud-summary-row {
+    margin-bottom: var(--osc-space-0);
+}
+
+.osc-hud-metric {
+    flex-direction: row;
+    align-items: center;
+    margin-right: var(--osc-space-3);
+    margin-bottom: var(--osc-space-0);
+    white-space: nowrap;
+}
+
+.osc-hud-metric .osc-panel__caption {
+    margin-right: var(--osc-space-1);
+}
+
+.osc-hud-value {
+    font-size: var(--osc-font-size-body);
+    color: var(--osc-color-text-primary);
+    -unity-font-style: bold;
+}
+
+.osc-hud-status {
+    color: var(--osc-color-success);
+}
+
+.osc-hud-status--warning {
+    color: var(--osc-color-warning);
+}
+
+.osc-hud-reason {
+    color: var(--osc-color-danger);
+}
+
+.osc-hud-feedback {
+    color: var(--osc-color-info);
+    margin-left: var(--osc-space-2);
+    margin-bottom: var(--osc-space-0);
+    white-space: nowrap;
+}
+
+.osc-hud-action {
+    font-size: var(--osc-font-size-caption);
+    margin-right: var(--osc-space-1);
+    margin-bottom: var(--osc-space-0);
+    padding-left: var(--osc-space-1);
+    padding-right: var(--osc-space-1);
+    padding-top: var(--osc-space-0);
+    padding-bottom: var(--osc-space-0);
+}
+
+/* The fixed Build Palette stays compact until later issues add real subtypes. */
+.osc-build-palette.osc-placement-palette--compact {
+    flex-direction: row;
+    align-items: center;
+}
+
+.osc-placement-palette__heading {
+    margin-bottom: var(--osc-space-0);
+    margin-right: var(--osc-space-3);
+    flex-shrink: var(--osc-space-0);
+}
+
+.osc-placement-palette__content {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.osc-placement-palette__tool {
+    margin-bottom: var(--osc-space-0);
+    margin-right: var(--osc-space-3);
+}
+
+.osc-placement-palette__shortcut,
+.osc-placement-palette__cost {
+    margin-right: var(--osc-space-3);
+    white-space: nowrap;
 }
 
 /* Fixture container: vertical by default, horizontal for the Build Palette. */

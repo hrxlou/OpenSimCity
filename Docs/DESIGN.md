@@ -85,6 +85,12 @@ overlay 색은 월드 material과 별도 토큰으로 관리한다. 유효/무�
 
 화면이 좁을 때는 Inspector와 Build Palette를 접거나 교대로 표시한다. UI scale과 창 크기를 바꿔도 World View의 선택 지점과 입력 결과가 바뀌지 않아야 한다.
 
+P3의 `GlobalHud`는 World View를 위한 상단의 compact single-row 상태 bar다. 재정·인구·RCI는 좌측,
+개발 상태·원인·세율·작은 action/feedback은 우측에 둔다. 별도 진단 행이나 세로 action stack으로 월드
+작업 공간을 점유하지 않는다. GlobalHud와 하단 Build Palette는 화면 가장자리에 붙는 직각의 fixed bar이며,
+Build Palette는 선택 도구·단축키·비용을 한 행으로 표시하고 실제 subtype 항목이 추가될 때만 높이가 늘어난다.
+Tool Rail·Context Inspector·SimulationControls는 화면 모서리에서 spacing token 하나만큼 떨어진 floating panel로 둔다.
+
 ### 3.4 공통 component
 
 - `GlobalHud`: 날짜·속도·재정·인구 등 현재 Phase의 전역 상태
@@ -108,6 +114,17 @@ component의 상태는 최소 `default`, `hover`, `focus`, `selected`, `disabled
 - 숫자 표의 tabular figure 지원 여부 또는 정렬 방식
 
 아이콘도 같은 시점에 라이선스와 source를 기록한다. 아이콘만으로 기능을 설명하지 않고 tooltip 또는 label을 제공한다.
+
+#### P3-06 구현 기록 (2026-07-19)
+
+- 새 font 또는 icon asset은 import·배포하지 않았다. 현재 UI Toolkit은 PanelSettings의 기본 동적
+  system fallback을 사용하며, 번들 글꼴/아이콘 라이선스와 provenance는 해당 asset이 없으므로 `N/A`다.
+- 한글 glyph/fallback의 실제 game-render 검증은 Windows와 macOS에서 각각 필요하다. 현재 token의
+  100% 기준 최소 크기는 caption `11px`, 본문 `13px`, 주요 값 `14px`이고 PanelSettings scale이
+  125%/150%를 적용한다.
+- HUD의 숫자 값은 별도 value label과 `N0` 형식으로 정렬한다. 기본 fallback의 tabular figure는 보장하지
+  않으므로, 추후 실제 font asset을 추가하려면 glyph 범위, tabular figure 또는 대체 정렬 방식, 배포·임베딩·수정
+  라이선스와 source를 asset provenance에 함께 기록해야 한다.
 
 ## 4. 제공된 시안의 사용 범위
 
@@ -250,7 +267,7 @@ AI 시안이나 Blender viewport만으로 완료를 판정하지 않는다. UI�
 
 ## 9. 확정 전 결정 항목
 
-- P3-06 이전: 한글 font, icon source와 라이선스, 최소 type scale
+- P3-06 후속 font asset import 전: 한글 font, icon source와 라이선스, tabular figure 보장 여부
 - P9-01 이전: Standard만 사용할지 Source tier가 필요한지, 파생 에셋 배포 방식
 - P8-02 이후: 모델별 triangle/material/LOD 기준과 target quality tier
 - P9-02 이전: 제품 로고, 메인 메뉴 배경, 지원 언어와 현지화 범위

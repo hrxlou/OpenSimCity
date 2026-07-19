@@ -24,6 +24,8 @@ namespace OpenSimCity.Editor
             var serialized = new SerializedObject(definition);
             serialized.FindProperty("definitionId").ulongValue = CityRuntimeOptions.DefaultPowerPlantDefinitionId.Value;
             serialized.FindProperty("powerCapacity").intValue = 100;
+            serialized.FindProperty("constructionCost").intValue = CityRuntimeOptions.DefaultPowerPlantConstructionCost;
+            serialized.FindProperty("monthlyMaintenanceCost").intValue = CityRuntimeOptions.DefaultPowerPlantMonthlyMaintenanceCost;
             serialized.FindProperty("presentationKey").stringValue = "utility.power.plant.placeholder";
             serialized.ApplyModifiedPropertiesWithoutUndo();
             AssetDatabase.SaveAssets(); AssetDatabase.Refresh();

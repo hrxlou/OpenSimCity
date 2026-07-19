@@ -72,5 +72,13 @@ namespace OpenSimCity.Gameplay.Construction
                 CityRuntimeContext.ClearCurrent(_context);
             _context = null;
         }
+
+        private void Update()
+        {
+            // The host owns presentation time only. CityRuntime's application
+            // clock turns it into deterministic fixed ticks and the ordered
+            // monthly scheduler remains Unity-independent.
+            _context?.Runtime.AdvanceSimulation(Time.unscaledDeltaTime);
+        }
     }
 }

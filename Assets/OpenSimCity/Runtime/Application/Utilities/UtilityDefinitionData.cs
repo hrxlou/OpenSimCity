@@ -8,16 +8,27 @@ namespace OpenSimCity.Application.Utilities
     [Serializable]
     public sealed class UtilityDefinitionData
     {
-        public UtilityDefinitionData(StableId id, int powerCapacity, string presentationKey)
+        public UtilityDefinitionData(
+            StableId id,
+            int powerCapacity,
+            string presentationKey,
+            int constructionCost = 0,
+            int monthlyMaintenanceCost = 0)
         {
             if (!id.IsValid) throw new ArgumentException("A utility definition requires a valid stable ID.", nameof(id));
             if (powerCapacity <= 0) throw new ArgumentOutOfRangeException(nameof(powerCapacity));
             if (string.IsNullOrWhiteSpace(presentationKey)) throw new ArgumentException("A presentation key is required.", nameof(presentationKey));
+            if (constructionCost < 0) throw new ArgumentOutOfRangeException(nameof(constructionCost));
+            if (monthlyMaintenanceCost < 0) throw new ArgumentOutOfRangeException(nameof(monthlyMaintenanceCost));
             Id = id; PowerCapacity = powerCapacity; PresentationKey = presentationKey;
+            ConstructionCost = constructionCost;
+            MonthlyMaintenanceCost = monthlyMaintenanceCost;
         }
         public StableId Id { get; }
         public int PowerCapacity { get; }
         public string PresentationKey { get; }
+        public int ConstructionCost { get; }
+        public int MonthlyMaintenanceCost { get; }
     }
 
     public sealed class UtilityDefinitionCatalog : IUtilityPowerProfileResolver

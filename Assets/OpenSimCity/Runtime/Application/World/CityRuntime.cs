@@ -23,9 +23,9 @@ using OpenSimCity.Simulation.Utilities;
 namespace OpenSimCity.Application.World
 {
     /// <summary>
-    /// Deterministic, Unity-independent assembly of the whole P2 city: world grid,
+    /// Deterministic, Unity-independent assembly of the whole P3 city: world grid,
     /// road/zone/parcel simulation, external-connection graph, definition catalogs,
-    /// construction budget, command handlers, dispatcher and the versioned read
+    /// municipal construction funds, command handlers, dispatcher and the versioned read
     /// models overlays and UI consume.
     /// <para>
     /// It is the single object the Gameplay host constructs and drives. Preview
@@ -65,19 +65,13 @@ namespace OpenSimCity.Application.World
 
             RoadDefinitions = new RoadDefinitionCatalog(options.CreateRoadDefinitions());
             ZoneDefinitions = ZoneDefinitionCatalog.CreateDefault();
-            Budget = new RoadConstructionBudget(options.InitialFunds);
+            Finance = new MunicipalFinanceState(options.InitialFunds, options.InitialTaxRates);
             DefaultRoadDefinitionId = options.DefaultRoadDefinitionId;
             DefaultPowerPlantDefinitionId = options.PowerPlantDefinitionId;
 
-            RoadCommands = new RoadCommandHandler(Roads, RoadDefinitions, Budget);
+            RoadCommands = new RoadCommandHandler(Roads, RoadDefinitions, Finance);
             ZoneCommands = new ZoneCommandHandler(Zones, Roads, ZoneDefinitions);
-            PowerCommands = new PowerCommandHandler(PowerProducers, UtilityDefinitions, Roads);
-            _dispatcher = new CommandDispatcher(new ICityCommandHandler[]
-            {
-                RoadCommands,
-                ZoneCommands,
-                PowerCommands
-            });
+            PowerCommands = new PowerCommandHandler(PowerProducers, UtilityDefinitions, Roads, Finance);
 
             RoadAccessibility = new RoadAccessibilityReadModel(RoadGraph);
             ZoneModel = new ZoneReadModel(Zones);
@@ -100,13 +94,45 @@ namespace OpenSimCity.Application.World
                 BuildingDefinitions,
                 options.GrowthDevelopmentParameters,
                 (ulong)options.Seed);
+            MunicipalFinanceSystem = new MunicipalFinanceMonthlySystem(
+                Finance,
+                UrbanEconomySystem,
+                GrowthSystem,
+                Buildings,
+                BuildingDefinitions,
+                Roads,
+                RoadDefinitions,
+                PowerProducers,
+                UtilityDefinitions,
+                options.MunicipalFinanceParameters);
             MonthlyScheduler = new MonthlySimulationScheduler(
-                new IMonthlySimulationSystem[] { PopulationSystem, UrbanEconomySystem, GrowthSystem },
+                new IMonthlySimulationSystem[] { PopulationSystem, MunicipalFinanceSystem },
                 options.TicksPerMonth,
                 options.FirstSimulationMonth);
+            Clock = new SimulationClock();
+            FinanceCommands = new MunicipalFinanceCommandHandler(Finance, () => MonthlyScheduler.NextMonth);
+            _dispatcher = new CommandDispatcher(new ICityCommandHandler[]
+            {
+                RoadCommands,
+                ZoneCommands,
+                PowerCommands,
+                FinanceCommands
+            });
             PopulationEmploymentModel = new PopulationEmploymentReadModel(PopulationSystem);
             UrbanEconomyModel = new UrbanEconomyReadModel(UrbanEconomySystem);
             GrowthModel = new GrowthDevelopmentReadModel(GrowthSystem);
+            FinanceModel = new MunicipalFinanceReadModel(Finance);
+            DevelopmentStatus = new DevelopmentStatusViewModel(
+                GrowthModel,
+                ParcelModel,
+                RoadAccessibility,
+                PowerModel);
+            HudModel = new MunicipalHudViewModel(
+                FinanceModel,
+                PopulationEmploymentModel,
+                UrbanEconomyModel,
+                DevelopmentStatus,
+                () => CurrentSimulationMonth);
         }
 
         public WorldState World { get; }
@@ -129,12 +155,17 @@ namespace OpenSimCity.Application.World
 
         public ZoneDefinitionCatalog ZoneDefinitions { get; }
 
-        public RoadConstructionBudget Budget { get; }
+        /// <summary>Public municipal balance replacing the temporary P2 road-only budget.</summary>
+        public MunicipalFinanceState Finance { get; }
+
+        [Obsolete("Use Finance; P3 municipal finance owns the city balance.")]
+        public MunicipalFinanceState Budget => Finance;
 
         public RoadCommandHandler RoadCommands { get; }
 
         public ZoneCommandHandler ZoneCommands { get; }
         public PowerCommandHandler PowerCommands { get; }
+        public MunicipalFinanceCommandHandler FinanceCommands { get; }
 
         public RoadAccessibilityReadModel RoadAccessibility { get; }
 
@@ -146,10 +177,15 @@ namespace OpenSimCity.Application.World
         public PopulationEmploymentMigrationSystem PopulationSystem { get; }
         public UrbanEconomySystem UrbanEconomySystem { get; }
         public GrowthDevelopmentSystem GrowthSystem { get; }
+        public MunicipalFinanceMonthlySystem MunicipalFinanceSystem { get; }
         public MonthlySimulationScheduler MonthlyScheduler { get; }
+        public SimulationClock Clock { get; }
         public PopulationEmploymentReadModel PopulationEmploymentModel { get; }
         public UrbanEconomyReadModel UrbanEconomyModel { get; }
         public GrowthDevelopmentReadModel GrowthModel { get; }
+        public MunicipalFinanceReadModel FinanceModel { get; }
+        public DevelopmentStatusViewModel DevelopmentStatus { get; }
+        public MunicipalHudViewModel HudModel { get; }
 
         public StableId DefaultRoadDefinitionId { get; }
         public StableId DefaultPowerPlantDefinitionId { get; }
@@ -161,11 +197,36 @@ namespace OpenSimCity.Application.World
             return new StableId(0xD100_0000_0000_0000UL | (ulong)(uint)(Roads.GetIndex(anchor) + 1));
         }
 
-        public int Funds => Budget.Funds;
+        public int Funds => Finance.Funds;
 
         public int Width => World.Width;
 
         public int Height => World.Height;
+
+        /// <summary>The currently in-progress monthly period shown by the HUD.</summary>
+        public SimulationDate CurrentSimulationMonth => MonthlyScheduler.NextMonth;
+
+        /// <summary>
+        /// Advances the application clock from a presentation host. Rendering speed
+        /// cannot change the number or order of monthly systems that run for a
+        /// given sequence of ticks.
+        /// </summary>
+        public int AdvanceSimulation(double realDeltaSeconds)
+        {
+            return Clock.Advance(realDeltaSeconds, ProcessSimulationTick);
+        }
+
+        /// <summary>Explicit tick seam used by deterministic fixtures and the runtime host.</summary>
+        public void ProcessSimulationTick(SimulationTick tick)
+        {
+            MonthlyScheduler.ProcessTick(tick);
+            RefreshReadModels();
+        }
+
+        public void SetSimulationSpeed(SimulationSpeed speed)
+        {
+            Clock.SetSpeed(speed);
+        }
 
         // --- Preview seams (never mutate simulation state) ---
 
@@ -225,6 +286,9 @@ namespace OpenSimCity.Application.World
             ParcelModel.RefreshIfNeeded();
             Power.RefreshIfNeeded();
             PowerModel.RefreshIfNeeded();
+            FinanceModel?.RefreshIfNeeded();
+            DevelopmentStatus?.RefreshIfNeeded();
+            HudModel?.RefreshIfNeeded();
         }
     }
 
@@ -236,6 +300,9 @@ namespace OpenSimCity.Application.World
     {
         public const int DefaultInitialFunds = 1_000_000;
         public const int DefaultRoadBuildCost = 10;
+        public const int DefaultRoadMonthlyMaintenanceCost = 1;
+        public const int DefaultPowerPlantConstructionCost = 100;
+        public const int DefaultPowerPlantMonthlyMaintenanceCost = 5;
 
         private const ulong RoadDefinitionNamespace = 0x0100_0000_0000_0000UL;
         private const ulong ExternalGateNamespace = 0x0200_0000_0000_0000UL;
@@ -257,6 +324,7 @@ namespace OpenSimCity.Application.World
         public int InitialFunds { get; set; } = DefaultInitialFunds;
 
         public int RoadBuildCost { get; set; } = DefaultRoadBuildCost;
+        public int RoadMonthlyMaintenanceCost { get; set; } = DefaultRoadMonthlyMaintenanceCost;
 
         public StableId DefaultRoadDefinitionId { get; set; } = StreetDefinitionId;
         public StableId PowerPlantDefinitionId { get; set; } = DefaultPowerPlantDefinitionId;
@@ -265,6 +333,8 @@ namespace OpenSimCity.Application.World
         public SimulationDate FirstSimulationMonth { get; set; } = new SimulationDate(1, 1);
         public UrbanEconomyParameters UrbanEconomyParameters { get; set; } = UrbanEconomyParameters.Default;
         public GrowthDevelopmentParameters GrowthDevelopmentParameters { get; set; } = GrowthDevelopmentParameters.Default;
+        public MunicipalFinanceParameters MunicipalFinanceParameters { get; set; } = MunicipalFinanceParameters.Default;
+        public UrbanEconomyTaxRates InitialTaxRates { get; set; } = UrbanEconomyTaxRates.Zero;
 
         public static CityRuntimeOptions Default => new CityRuntimeOptions();
 
@@ -272,7 +342,11 @@ namespace OpenSimCity.Application.World
         {
             return new[]
             {
-                new RoadDefinition(DefaultRoadDefinitionId, RoadBuildCost, "road.street")
+                new RoadDefinition(
+                    DefaultRoadDefinitionId,
+                    RoadBuildCost,
+                    "road.street",
+                    RoadMonthlyMaintenanceCost)
             };
         }
 
@@ -291,7 +365,15 @@ namespace OpenSimCity.Application.World
 
         public IReadOnlyList<UtilityDefinitionData> CreateUtilityDefinitions()
         {
-            return new[] { new UtilityDefinitionData(PowerPlantDefinitionId, PowerPlantCapacity, "utility.power.plant.placeholder") };
+            return new[]
+            {
+                new UtilityDefinitionData(
+                    PowerPlantDefinitionId,
+                    PowerPlantCapacity,
+                    "utility.power.plant.placeholder",
+                    DefaultPowerPlantConstructionCost,
+                    DefaultPowerPlantMonthlyMaintenanceCost)
+            };
         }
 
         /// <summary>
