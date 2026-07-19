@@ -64,6 +64,6 @@
 
     /* Layout slots from Docs/DESIGN.md section 3.3 */
     --osc-tool-rail-width: 56px;
-    --osc-build-palette-height: 96px;
+    --osc-build-palette-height: 56px;
     --osc-context-inspector-width: 280px;
 }

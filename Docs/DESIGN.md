@@ -85,10 +85,11 @@ overlay 색은 월드 material과 별도 토큰으로 관리한다. 유효/무�
 
 화면이 좁을 때는 Inspector와 Build Palette를 접거나 교대로 표시한다. UI scale과 창 크기를 바꿔도 World View의 선택 지점과 입력 결과가 바뀌지 않아야 한다.
 
-P3의 `GlobalHud`는 World View를 위한 상단의 compact two-row 정보 bar다. 재정·인구·RCI는 각 줄의 좌측,
-개발 상태·원인·세율·작은 action/feedback은 우측에 둔다. 세로 action stack이나 세 번째 HUD 행으로 월드
+P3의 `GlobalHud`는 World View를 위한 상단의 compact single-row 상태 bar다. 재정·인구·RCI는 좌측,
+개발 상태·원인·세율·작은 action/feedback은 우측에 둔다. 별도 진단 행이나 세로 action stack으로 월드
 작업 공간을 점유하지 않는다. GlobalHud와 하단 Build Palette는 화면 가장자리에 붙는 직각의 fixed bar이며,
-`SimulationControls`만 우하단의 별도 floating panel로 둔다.
+Build Palette는 선택 도구·단축키·비용을 한 행으로 표시하고 실제 subtype 항목이 추가될 때만 높이가 늘어난다.
+Tool Rail·Context Inspector·SimulationControls는 화면 모서리에서 spacing token 하나만큼 떨어진 floating panel로 둔다.
 
 ### 3.4 공통 component
 

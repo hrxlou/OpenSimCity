@@ -97,9 +97,10 @@ namespace OpenSimCity.UI.HUD
 
             hud.Clear();
 
-            // Keep the high-frequency city readout at a glance. The second row
-            // holds diagnostics and actions so one vertical action stack can
-            // never turn the GlobalHud into a dashboard that obscures the world.
+            // Keep all P3 readouts in a single status row. On the 1280px minimum
+            // desktop target the left economy group and the right development /
+            // tax group fit together, so a separate diagnostics row would only
+            // consume World View space without improving scanability.
             var summary = new VisualElement { name = "osc-hud-summary" };
             summary.AddToClassList("osc-hud-summary-row");
             var summaryLeft = CreateSection("osc-hud-summary-left", "osc-hud-left");
@@ -111,19 +112,9 @@ namespace OpenSimCity.UI.HUD
             _population = AddMetric(summaryLeft, "인구", "osc-hud-population");
             _rci = AddMetric(summaryLeft, "RCI", "osc-hud-rci");
             _development = AddMetric(summaryRight, "개발", "osc-hud-development-status");
-            summary.Add(summaryLeft);
-            summary.Add(summaryRight);
-            hud.Add(summary);
-
-            var details = new VisualElement { name = "osc-hud-details" };
-            details.AddToClassList("osc-hud-details-row");
-            var detailsLeft = CreateSection("osc-hud-details-left", "osc-hud-left");
-            var detailsRight = CreateSection("osc-hud-details-right", "osc-hud-right");
-            _period = AddMetric(detailsLeft, "적용", "osc-hud-period");
-            _reasons = AddMetric(detailsRight, "원인", "osc-hud-development-reasons");
-            _taxRates = AddMetric(detailsRight, "세율", "osc-hud-tax-rates");
-            details.Add(detailsLeft);
-            details.Add(detailsRight);
+            _period = AddMetric(summaryRight, "적용", "osc-hud-period");
+            _reasons = AddMetric(summaryRight, "원인", "osc-hud-development-reasons");
+            _taxRates = AddMetric(summaryRight, "세율", "osc-hud-tax-rates");
 
             var taxActions = new VisualElement { name = "osc-hud-tax-actions" };
             taxActions.AddToClassList("osc-hud-tax-actions");
@@ -139,12 +130,14 @@ namespace OpenSimCity.UI.HUD
             parcelDetails.AddToClassList(UiFoundationNames.ItemClass);
             parcelDetails.AddToClassList("osc-hud-action");
             taxActions.Add(parcelDetails);
-            detailsRight.Add(taxActions);
+            summaryRight.Add(taxActions);
 
             _feedback = new Label { name = "osc-hud-command-feedback" };
             _feedback.AddToClassList("osc-hud-feedback");
-            detailsRight.Add(_feedback);
-            hud.Add(details);
+            summaryRight.Add(_feedback);
+            summary.Add(summaryLeft);
+            summary.Add(summaryRight);
+            hud.Add(summary);
         }
 
         private void BuildSimulationControls()

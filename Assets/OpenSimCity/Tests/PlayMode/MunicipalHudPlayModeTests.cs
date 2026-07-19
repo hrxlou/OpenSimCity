@@ -114,17 +114,23 @@ namespace OpenSimCity.Tests.PlayMode
                 yield return null;
                 yield return null;
                 Assert.That(bootstrap.GlobalHud.resolvedStyle.height, Is.GreaterThan(0f));
-                Assert.That(bootstrap.GlobalHud.resolvedStyle.height, Is.LessThanOrEqualTo(96f),
-                    "The Global HUD must remain a compact two-row information bar.");
+                Assert.That(bootstrap.GlobalHud.resolvedStyle.height, Is.LessThanOrEqualTo(48f),
+                    "The Global HUD must remain a single-row status bar.");
+                Assert.That(bootstrap.BuildPalette.resolvedStyle.height, Is.LessThanOrEqualTo(64f),
+                    "The Build Palette must stay compact until it has real palette content.");
+                Assert.That(bootstrap.ToolRail.resolvedStyle.marginLeft, Is.EqualTo(8f).Within(0.5f),
+                    "The Tool Rail must retain a floating-panel gutter from the left edge.");
+                Assert.That(bootstrap.ContextInspector.resolvedStyle.marginTop, Is.EqualTo(8f).Within(0.5f),
+                    "The Context Inspector must retain a floating-panel gutter below the HUD.");
+                Assert.That(bootstrap.ContextInspector.resolvedStyle.marginRight, Is.EqualTo(8f).Within(0.5f),
+                    "The Context Inspector must retain a floating-panel gutter from the right edge.");
                 Assert.That(bootstrap.SimulationControls.resolvedStyle.width, Is.GreaterThan(0f));
                 Assert.That(bootstrap.GlobalHud.Q<Label>("osc-hud-date"), Is.Not.Null);
                 Assert.That(bootstrap.GlobalHud.Q<Label>("osc-hud-development-status"), Is.Not.Null);
                 Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-summary"), Is.Not.Null);
-                Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-details"), Is.Not.Null);
                 Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-summary-left"), Is.Not.Null);
                 Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-summary-right"), Is.Not.Null);
-                Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-details-left"), Is.Not.Null);
-                Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-details-right"), Is.Not.Null);
+                Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-details"), Is.Null);
             }
         }
 
