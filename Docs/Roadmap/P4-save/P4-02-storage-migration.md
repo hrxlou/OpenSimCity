@@ -66,12 +66,14 @@ application persistence port와 파일 저장 adapter를 분리하고 임시 파
 - [x] 원자적 교체와 안전한 오류 결과가 테스트된다.
 - [x] migration dispatcher와 최소 fixture가 존재한다.
 - [x] 플랫폼별 경로/잠금 차이가 application 계약을 새지 않는다.
-- [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+- [x] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
 
 ## Windows implementation evidence (2026-07-23)
 
 - OS: Windows 11 Enterprise `10.0.26200` build `26200` (`x64`)
 - Branch: `codex/p4-02-storage-migration`
+- Implementation commit: `6a2d272293a3b4292001e19c1729aa3c8979b4d5`
+- Draft PR: [#93](https://github.com/hrxlou/OpenSimCity/pull/93)
 - Unity: `6000.5.3f1` (`c2eb47b3a2a9`)
 - ProjectSettings index baseline guard: passed
 - P4-02 EditMode fixture: `11/11` passed
@@ -89,7 +91,6 @@ application persistence port와 파일 저장 adapter를 분리하고 임시 파
 
 - Primary인 macOS에서 같은 commit과 Unity `6000.5.3f1`로 EditMode와 fixture checksum을 재현하고,
   macOS save fixture를 Windows에서 load→save해 동일한 결과인지 확인해야 한다.
-- commit과 PR URL은 publish 후 이 문서와 GitHub 이슈에 기록한다.
 - save slot UI, 자동 저장 일정, cloud sync는 P4-03 또는 명시된 후속 범위이며 구현하지 않았다.
 
 ## Out of scope
