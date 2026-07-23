@@ -129,6 +129,14 @@ dirty/version/read model과 Unity presentation reference는 저장하지 않고 
 알 수 없는 snapshot version이나 road/zone/building/utility definition ID는 상태 적용 전에
 거부하며, JSON/file I/O와 migration 실행은 P4-02로 남긴다.
 
+P4-02는 Application의 save/load를 ASCII save key와 bytes 기반 `ICitySaveStorage`,
+`ICitySnapshotPayloadCodec` 포트로 제한하고 경로·JSON·파일 잠금은 `OpenSimCity.Platform`
+adapter에서 처리한다. 파일 저장은 같은 디렉터리의 temp write→disk flush→atomic move/replace
+순서를 지키며 기존 저장의 backup을 남기고 처리 가능한 실패에서 기존 파일을 보존한 채 temp를
+정리한다. Load는 명시적으로 등록된 forward migration만 실행하고 손상·truncated·unknown
+version을 공통 error result로 거부한다. v1→vNext golden fixture는 source bytes 불변과 target
+checksum을 검증하며 실제 v2 schema·정책은 후속 version 계약 전까지 만들지 않는다.
+
 ## 디자인·아트 단계 적용
 
 | 시점 | 제품 화면에 적용 | 준비 작업 |

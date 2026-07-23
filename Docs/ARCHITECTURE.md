@@ -48,6 +48,12 @@ Core의 좌표와 결정성 규칙은 다음과 같다.
 
 플레이어 명령을 검증하고 시뮬레이션 시스템의 실행 순서를 조정한다. 저장/불러오기, 새 도시 생성, 게임 속도도 여기서 조율한다.
 
+### Platform
+
+Application이 정의한 포트의 Unity·운영체제 adapter를 둔다. 사용자 데이터 경로, JSON codec,
+파일 잠금, flush와 원자적 교체 같은 세부사항은 이 계층에서 끝나며 Simulation/Application으로
+역참조되지 않는다.
+
 ### Gameplay
 
 셀 선택, 도로 드래그, 구역 칠하기, 철거처럼 입력을 도시 명령으로 변환한다. 상태를 직접 수정하지 않는다.
@@ -90,12 +96,13 @@ Scene·Prefab·정의 데이터 생성, 검증, 벤치마크, EditMode/PlayMode 
 | `OpenSimCity.Core` | 공통 값 타입, ID, 시간, 유틸리티 | 없음 |
 | `OpenSimCity.Simulation` | 도시 상태와 순수 규칙 | Core |
 | `OpenSimCity.Application` | 명령, 틱 조율, 저장 포트 | Core, Simulation |
+| `OpenSimCity.Platform` | JSON codec, 파일 저장소와 운영체제 adapter | Application, UnityEngine |
 | `OpenSimCity.Definitions` | Unity ScriptableObject 정적 정의 schema와 순수 catalog data 변환 | Core, Simulation, Application, UnityEngine |
 | `OpenSimCity.Gameplay` | 입력과 건설 도구 | Core, Application |
 | `OpenSimCity.Presentation` | 월드 렌더링과 뷰 동기화 | Core, Application |
 | `OpenSimCity.UI` | 화면 UI | Core, Application |
 | `OpenSimCity.Editor` | 생성·검증 도구 | 모든 Runtime assembly, Editor 전용 |
-| `OpenSimCity.Tests.EditMode` | 순수 로직 테스트 | Core, Simulation, Application, Gameplay |
+| `OpenSimCity.Tests.EditMode` | 순수 로직 테스트 | Core, Simulation, Application, Platform, Gameplay |
 | `OpenSimCity.Tests.PlayMode` | Scene/UI/입력 통합 테스트 | Runtime assemblies |
 
 금지되는 참조 방향:
@@ -147,6 +154,8 @@ OpenSimCity/
 │  │  │  │  ├─ Queries/
 │  │  │  │  ├─ Persistence/
 │  │  │  │  └─ Bootstrap/
+│  │  │  ├─ Platform/
+│  │  │  │  └─ Persistence/
 │  │  │  ├─ Definitions/
 │  │  │  │  └─ Buildings/
 │  │  │  ├─ Gameplay/
@@ -585,6 +594,28 @@ Material/ScriptableObject reference다. load는 sparse authoritative state를 �
 중앙 refresh 경로에서 다시 만든다. `SnapshotContractValidator`는 DTO graph를 reflection으로
 검사해 scalar/string/DTO/DTO array 외의 타입과 Presentation/Gameplay/UI/Editor/Definitions
 계층을 거부한다.
+
+### P4-02 storage와 migration 계약
+
+`CityPersistenceService`는 `ICitySaveStorage`와 `ICitySnapshotPayloadCodec`만 소비한다.
+Application이 전달하는 것은 ASCII save key, snapshot DTO와 bytes이며 사용자 데이터 root,
+확장자, 임시·backup 경로, `System.IO`/Unity JSON API와 플랫폼 잠금 오류는 알지 못한다.
+`OpenSimCity.Platform`의 `AtomicFileCitySaveStorage`가 같은 디렉터리의 `.tmp`를
+write→disk flush한 뒤 첫 저장은 atomic move, 기존 저장은 `File.Replace`로 교체하고 직전
+파일을 `.bak`으로 남긴다. 처리 가능한 실패에서는 기존 destination을 보존하고 `.tmp`를
+정리하며, 경로 문자열이나 예외 타입 대신 공통 error enum만 포트 밖으로 반환한다.
+
+저장 전 codec output은 version probe와 decode를 다시 통과해야 하며 실패하면 storage port를
+호출하지 않는다. load는 bytes를 먼저 version dispatcher에 전달하고 등록된 forward step만
+실행한다. 알 수 없는 미래 version, 손상·truncated·잘못된 UTF-8은 추측하지 않고 안전한 결과로
+거부한다. Dispatcher와 migration step에는 caller bytes의 clone만 전달하며 각 step은 source
+DTO와 별개의 target DTO/bytes를 만들어야 한다. 현재 제품 포맷은 v1을 유지하고 실제 v2 정책은
+v2 schema가 정의될 때 추가한다.
+
+Migration golden은 `Assets/OpenSimCity/Tests/Fixtures/Persistence`에 UTF-8 BOM 없음/LF로 둔다.
+기존 version fixture는 수정하지 않고 새 source/target pair를 추가한다. 테스트는 source bytes
+불변, golden bytes 일치, target header version을 함께 검증하고 교차 장비 인계에는 byte count와
+FNV-1a checksum을 기록한다.
 
 ## 11. 첫 번째 기술 결정
 
