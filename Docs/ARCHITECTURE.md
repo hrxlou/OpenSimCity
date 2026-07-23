@@ -522,6 +522,9 @@ P3-06에서 `MunicipalFinanceState`는 민간 `UrbanEconomyState`와 별도의 �
 (count 내림차순·stable enum code 오름차순), 접근성 및 직전 월 대비 변화만 복사한다. UI는 이 순서나
 factor를 다시 계산하지 않으며 primitive/Application DTO만 소비하므로 Simulation assembly를 참조하지
 않는다. `CityRuntimeHost`의 중앙 clock만 시뮬레이션을 전진시키고 HUD refresh·배속은 월간 결과를 바꾸지 않는다.
+HUD의 일자는 별도 authoritative state가 아니라 `CurrentTick`과 `TicksPerMonth`를 30일 달력에
+매핑한 Application query 값이다. 따라서 snapshot v1 필드나 월간 system cadence를 변경하지 않으며
+같은 저장 tick을 복원하면 같은 년·월·일이 표시된다.
 
 P3-07의 `BuildingViewReadModel`은 건설 중 site와 완료 building을 stable building ID,
 presentation key, anchor, footprint, 진행률로만 복사한다. `BuildingViewRenderer`,

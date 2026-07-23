@@ -89,7 +89,9 @@
 - P4-03 PlayMode smoke:
   `SaveRoundTripPlayModeTests` → `2/2` passed
 - Full Unity regression:
-  `Tools/CI/run-unity-tests.ps1 all` → EditMode `195/195`, PlayMode `34/34` passed
+  `Tools/CI/run-unity-tests.ps1 all` → EditMode `196/196`, PlayMode `34/34` passed
+- HUD 날짜는 저장된 clock tick의 월 진행률을 30일에 매핑해 `년 월 일`로 표시하며,
+  별도 저장 필드나 월간 simulation cadence를 추가하지 않는다.
 - Windows v1 fixture: `5,664 bytes`, FNV-1a `6039FE7670E3C298`
 - 정상 전력 복구 command와 다음 월 뒤 checksum: `68BE53564A1F46A7`
 - manual save/overwrite, 매월 tick-boundary autosave, manual load, load 중 clock/input/세율 command

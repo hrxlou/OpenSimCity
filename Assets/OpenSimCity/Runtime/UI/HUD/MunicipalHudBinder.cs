@@ -202,7 +202,7 @@ namespace OpenSimCity.UI.HUD
 
             _lastRefreshKey = key;
             var hud = runtime.HudModel.Snapshot;
-            _date.text = FormatMonth(hud.CurrentYear, hud.CurrentMonth);
+            _date.text = FormatDate(hud.CurrentYear, hud.CurrentMonth, hud.CurrentDay);
             _period.text = hud.HasSettledLedger ? FormatMonth(hud.LedgerYear, hud.LedgerMonth) : "월간 정산 전";
             _balance.text = $"{hud.Balance:N0}";
             _income.text = $"{hud.MonthlyIncome:N0}";
@@ -436,5 +436,8 @@ namespace OpenSimCity.UI.HUD
         }
 
         private static string FormatMonth(int year, int month) => $"{year}년 {month}월";
+
+        private static string FormatDate(int year, int month, int day) =>
+            $"{year}년 {month}월 {day}일";
     }
 }

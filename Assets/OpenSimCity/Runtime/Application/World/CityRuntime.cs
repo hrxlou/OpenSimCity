@@ -134,7 +134,8 @@ namespace OpenSimCity.Application.World
                 PopulationEmploymentModel,
                 UrbanEconomyModel,
                 DevelopmentStatus,
-                () => CurrentSimulationMonth);
+                () => CurrentSimulationMonth,
+                () => CurrentSimulationDay);
         }
 
         public WorldState World { get; }
@@ -217,6 +218,29 @@ namespace OpenSimCity.Application.World
 
         /// <summary>The currently in-progress monthly period shown by the HUD.</summary>
         public SimulationDate CurrentSimulationMonth => MonthlyScheduler.NextMonth;
+
+        /// <summary>
+        /// Display-only day within the current 30-day month. It is derived from
+        /// the saved clock tick and scheduler cadence, so it adds no independent
+        /// simulation or persistence state.
+        /// </summary>
+        public int CurrentSimulationDay
+        {
+            get
+            {
+                const int daysPerMonth = 30;
+                var periodStartTick = MonthlyScheduler.NextRunTick.Value -
+                                      (MonthlyScheduler.TicksPerMonth - 1L);
+                var progressedTicks = Clock.CurrentTick.Value - periodStartTick;
+                if (progressedTicks < 0L)
+                    progressedTicks = 0L;
+                if (progressedTicks >= MonthlyScheduler.TicksPerMonth)
+                    progressedTicks = MonthlyScheduler.TicksPerMonth - 1L;
+
+                return (int)(progressedTicks * daysPerMonth /
+                             MonthlyScheduler.TicksPerMonth) + 1;
+            }
+        }
 
         /// <summary>
         /// Advances the application clock from a presentation host. Rendering speed

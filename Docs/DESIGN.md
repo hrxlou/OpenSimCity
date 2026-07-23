@@ -107,6 +107,9 @@ P3의 `GlobalHud`는 World View를 위한 상단의 compact single-row 상태 ba
 작업 공간을 점유하지 않는다. GlobalHud와 하단 Build Palette는 화면 가장자리에 붙는 직각의 fixed bar이며,
 Build Palette는 선택 도구·단축키·비용을 한 행으로 표시하고 실제 subtype 항목이 추가될 때만 높이가 늘어난다.
 Tool Rail·Context Inspector·SimulationControls는 화면 모서리에서 spacing token 하나만큼 떨어진 floating panel로 둔다.
+GlobalHud의 현재 날짜는 `년 월 일`을 표시한다. 하루는 별도 simulation cadence가 아니라 현재 월의
+저장 가능한 clock tick 진행률을 30일에 결정적으로 매핑한 표시 단위이며, 월간 system 실행과 정산은
+기존 월 경계에서만 발생한다.
 
 ### 3.4 공통 component
 
