@@ -115,6 +115,13 @@ Blender/Source
 - 개발 조건
 - 저장 직렬화와 마이그레이션
 
+저장 migration golden fixture는
+`Assets/OpenSimCity/Tests/Fixtures/Persistence`에 UTF-8 BOM 없음, LF line ending으로 둔다.
+이미 커밋된 version fixture는 수정하지 않고 `p4-v{source}-*.json`과 target fixture를 새 pair로
+추가한다. Migration 테스트는 source bytes를 복제해 원본 불변을 확인하고 target golden bytes,
+header version, byte count와 FNV-1a checksum을 함께 검증한다. 다른 장비 인계 시 같은 fixture의
+load→save 결과와 checksum을 기록한다.
+
 ### PlayMode
 
 - Bootstrap 및 Scene 초기화
