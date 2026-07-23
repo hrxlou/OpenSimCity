@@ -20,15 +20,18 @@ namespace OpenSimCity.Simulation.Population
         private readonly BuildingStateCollection _buildings;
         private readonly IPopulationEmploymentProfileResolver _profiles;
         private readonly IReadOnlyList<ExternalConnectionState> _externalConnections;
+        private readonly Func<bool> _transportConnectionAvailability;
 
         public PopulationEmploymentMigrationSystem(
             BuildingStateCollection buildings,
             IPopulationEmploymentProfileResolver profiles,
-            IReadOnlyList<ExternalConnectionState> externalConnections)
+            IReadOnlyList<ExternalConnectionState> externalConnections,
+            Func<bool> transportConnectionAvailability = null)
         {
             _buildings = buildings ?? throw new ArgumentNullException(nameof(buildings));
             _profiles = profiles ?? throw new ArgumentNullException(nameof(profiles));
             _externalConnections = externalConnections ?? throw new ArgumentNullException(nameof(externalConnections));
+            _transportConnectionAvailability = transportConnectionAvailability;
             Population = new PopulationState();
             Employment = new EmploymentState();
             Migration = new MigrationState();
@@ -116,6 +119,9 @@ namespace OpenSimCity.Simulation.Population
 
         private bool HasEnabledTransportConnection()
         {
+            if (_transportConnectionAvailability != null)
+                return _transportConnectionAvailability();
+
             for (var index = 0; index < _externalConnections.Count; index++)
             {
                 var connection = _externalConnections[index];

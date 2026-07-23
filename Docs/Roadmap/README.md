@@ -109,6 +109,14 @@ P3-06은 `MunicipalFinanceState`를 민간 `UrbanEconomyState`와 분리한다. 
 기간, RCI, 실행 가능 필지, 결정적 상위 3개 차단 reason, 접근성·직전 기간 변화를 Application DTO로
 공개하고, UI는 이를 다시 계산하지 않는다.
 
+P3-07은 저밀도 R/C/I stable definition을 각각 3개로 확장하고 primitive prefab,
+`PlaceholderArtCatalog`, 공용 material을 재현 가능한 Editor setup으로 생성한다. 건설 중/완료
+건물, 도로, 발전소 view는 중앙 version scheduler와 pool만 사용하며 개별 view에는 `Update()`가
+없다. seed `0x307`의 단순 격자·간선-가지형 ordered command log를 기본 clock 18,000 tick
+(60개월, simulation 30분) 재생해 월별 checksum, view 관찰 on/off 동일성, 발전소 및 외부 gate
+road 차단→공개 reason→정상 command 복구를 기록한다. 이주 외부 연결은 현재 road graph의 실제
+gate 도달성을 사용한다.
+
 ## 디자인·아트 단계 적용
 
 | 시점 | 제품 화면에 적용 | 준비 작업 |

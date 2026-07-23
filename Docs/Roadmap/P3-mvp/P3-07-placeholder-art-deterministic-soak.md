@@ -45,6 +45,22 @@
 - 성능 개선이나 목표 FPS 달성 주장은 profiler/benchmark 전까지 하지 않는다.
 - P3의 회복은 성장 정지와 재개를 뜻한다. 쇠퇴·폐건물·재개발 회복은 P6 범위다.
 
+### Implemented contract
+
+- `BuildingDefinition`은 R/C/I 각각 stable ID와 presentation key가 다른 A/B/C 세 종류를
+  제공한다. `PlaceholderArtSetup`이 건물 9종, 건설 중, 발전소, 도로 prefab과 공용 material,
+  `PlaceholderArtCatalog`를 primitive로 재생성하고 definition ID/key/prefab/pivot/scale/material
+  validator가 참조를 확인한다.
+- `BuildingViewReadModel`은 Unity object 없는 value snapshot만 제공한다.
+  `BuildingViewRenderer`, `RoadViewRenderer`, `PowerProducerViewRenderer`가 중앙에서 version을
+  관찰하고 view를 pool로 생성·회수한다. 개별 prefab에는 `MonoBehaviour`가 없다.
+- `MvpSoakFixture`는 seed `0x307`, ordered command log, 단순 격자/간선-가지형 layout을 기본
+  clock 18,000 tick(60개월, simulation 30분) 재생하고 매월 P3 state checksum을 기록한다.
+  presentation snapshot 관찰 on/off replay는 같은 checksum을 만든다.
+- 발전소 철거/재배치와 external gate road 철거/재배치는 command log에 포함된다. 외부 연결
+  판정은 enabled gate만이 아니라 실제 reachable road를 요구해 HUD/성장/이주 snapshot 기간을
+  일치시킨다.
+
 ## Verification
 
 - 동일 seed/ordered command replay의 월별 checksum
@@ -63,13 +79,49 @@
 
 ## Done when
 
-- [ ] 첫 피드백 루프를 30분 동안 치명적 오류 없이 플레이한다.
-- [ ] 같은 seed와 command 기록으로 같은 월별 통계를 재현한다.
-- [ ] 성장 정지 원인을 공개 UI에서 확인하고 정상 command로 복구한다.
-- [ ] 서로 다른 두 도로 배치가 기본 성장 루프를 완주한다.
-- [ ] 30분 뒤 적어도 하나의 설명 가능한 다음 행동이 남는다.
-- [ ] P3 gate 증거와 알려진 문제 목록을 이슈에 기록한다.
-- [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+- [x] 첫 피드백 루프를 simulation 30분 동안 치명적 오류 없이 가속 Player soak한다.
+- [x] 같은 seed와 command 기록으로 같은 월별 통계를 재현한다.
+- [x] 성장 정지 원인을 공개 UI에서 확인하고 정상 command로 복구한다.
+- [x] 서로 다른 두 도로 배치가 기본 성장 루프를 완주한다.
+- [x] 30분 뒤 적어도 하나의 설명 가능한 다음 행동이 남는다.
+- [x] P3 gate 증거와 알려진 문제 목록을 이슈에 기록한다.
+- [x] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+
+## Windows implementation evidence (2026-07-23)
+
+- OS: Windows 11 Enterprise `10.0.26200` (`x64`)
+- Unity: `6000.5.3f1` (`c2eb47b3a2a9`)
+- Branch: `feature/p3-07-mvp-soak`
+- Implementation commit: `b9506f25a8f04ac66e4c9815aebc70366a73a80a`
+- Draft PR: [#89](https://github.com/hrxlou/OpenSimCity/pull/89)
+- EditMode:
+  `powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\run-unity-tests.ps1 edit`
+  → `172/172` passed
+- PlayMode:
+  `powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\run-unity-tests.ps1 play`
+  → `30/30` passed
+- 최종 전체 회귀:
+  `powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\run-unity-tests.ps1 all`
+  → EditMode `172/172`, PlayMode `30/30` passed
+- 단순 격자 60개월 final checksum: `B4E6E15547236FCE`
+- 간선-가지형 60개월 final checksum: `726257FF395A38BB`
+- 두 layout의 60개 월별 checksum 전체는 `TestResults/editmode.xml`의
+  `ThirtyMinuteReplayProducesIdenticalMonthlyChecksums` output에 기록된다.
+- 가속 Player soak: 두 layout 모두 첫 인구·고용·세수 feedback과 설명 가능한 다음 action을
+  만들고 fatal log `0`; Unity total allocated memory 관측은 두 run 합산 전후
+  `435,552,507 → 435,957,963` bytes (`+405,456`)였다. 이는 profiler benchmark나 성능
+  개선 근거가 아니다.
+- CityPrototype PlayMode는 실제 prefab reference, 중앙 road/building/power view 생성·회수,
+  공개 HUD의 외부 도로 단절 문구와 road placement tool 복구를 검증했다.
+
+## Remaining verification / known issues
+
+- macOS Verify 장비에서 동일 commit의 import/compile, EditMode/PlayMode, 두 layout의 60개 월별
+  checksum과 placeholder material/prefab reference를 비교해야 한다.
+- Windows의 30분 wall-clock 수동 Editor 플레이, 입력/UI 반복 조작, 실제 game render 위
+  contrast·한글 fallback·100/125/150% OS scale capture는 자동 가속 soak와 별도로 남아 있다.
+- 메모리 수치는 PlayMode 전후 관측치일 뿐 leak 판정이나 성능 budget 증거가 아니다. P3-07은
+  FPS/성능 개선을 주장하지 않는다.
 
 ## Out of scope
 

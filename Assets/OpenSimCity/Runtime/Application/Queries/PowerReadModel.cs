@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using OpenSimCity.Core;
 using OpenSimCity.Core.Mathematics;
+using OpenSimCity.Application.Utilities;
 using OpenSimCity.Simulation.Utilities;
 
 namespace OpenSimCity.Application.Queries
@@ -10,11 +11,22 @@ namespace OpenSimCity.Application.Queries
     public sealed class PowerReadModel
     {
         private readonly PowerNetwork _network;
+        private readonly UtilityDefinitionCatalog _definitions;
+        private readonly PowerProducerCollection _sourceProducers;
         private IReadOnlyList<BuildingPowerResult> _buildings = Array.AsReadOnly(Array.Empty<BuildingPowerResult>());
         private IReadOnlyList<PowerProducerResult> _producers = Array.AsReadOnly(Array.Empty<PowerProducerResult>());
         private IReadOnlyList<PowerProducerViewData> _producerViews = Array.AsReadOnly(Array.Empty<PowerProducerViewData>());
         private int _sourceVersion = -1;
-        public PowerReadModel(PowerNetwork network) { _network = network ?? throw new ArgumentNullException(nameof(network)); RefreshIfNeeded(); }
+        public PowerReadModel(
+            PowerNetwork network,
+            UtilityDefinitionCatalog definitions = null,
+            PowerProducerCollection sourceProducers = null)
+        {
+            _network = network ?? throw new ArgumentNullException(nameof(network));
+            _definitions = definitions;
+            _sourceProducers = sourceProducers;
+            RefreshIfNeeded();
+        }
         public int Version { get { RefreshIfNeeded(); return _sourceVersion; } }
         public IReadOnlyList<BuildingPowerResult> Buildings { get { RefreshIfNeeded(); return _buildings; } }
         public IReadOnlyList<PowerProducerResult> Producers { get { RefreshIfNeeded(); return _producers; } }
@@ -30,8 +42,13 @@ namespace OpenSimCity.Application.Queries
             for (var i = 0; i < producers.Length; i++)
             {
                 producers[i] = _network.Producers[i];
+                var presentationKey = string.Empty;
+                var source = _sourceProducers?.Producers;
+                if (_definitions != null && source != null && i < source.Count &&
+                    _definitions.TryGet(source[i].DefinitionId, out var definition))
+                    presentationKey = definition.PresentationKey;
                 producerViews[i] = new PowerProducerViewData(producers[i].ProducerId, producers[i].Cell,
-                    producers[i].IsConnected, producers[i].Production);
+                    producers[i].IsConnected, producers[i].Production, presentationKey);
             }
             _buildings = Array.AsReadOnly(buildings); _producers = Array.AsReadOnly(producers);
             _producerViews = Array.AsReadOnly(producerViews);
@@ -43,11 +60,23 @@ namespace OpenSimCity.Application.Queries
 
     public readonly struct PowerProducerViewData
     {
-        public PowerProducerViewData(StableId id, CellCoord cell, bool isConnected, int production)
-        { Id = id; Cell = cell; IsConnected = isConnected; Production = production; }
+        public PowerProducerViewData(
+            StableId id,
+            CellCoord cell,
+            bool isConnected,
+            int production,
+            string presentationKey = "")
+        {
+            Id = id;
+            Cell = cell;
+            IsConnected = isConnected;
+            Production = production;
+            PresentationKey = presentationKey ?? string.Empty;
+        }
         public StableId Id { get; }
         public CellCoord Cell { get; }
         public bool IsConnected { get; }
         public int Production { get; }
+        public string PresentationKey { get; }
     }
 }

@@ -36,6 +36,23 @@ OpenSimCity는 도시가 주인공인 2.5D 시뮬레이션이다. 화면은 정�
 
 한글 텍스트는 실제 상표·전화번호·기관명을 복제하지 않고 가상의 짧은 문구를 사용한다. 작은 화면에서 읽히지 않는 텍스트는 장식 패턴으로 취급하고, gameplay 정보를 전달하는 텍스트와 구분한다.
 
+### 2.3 P3 primitive placeholder
+
+P3 제품 화면은 production 아트 방향을 확정하지 않는 primitive placeholder를 사용한다.
+저밀도 주거·상업·공업은 각각 A/B/C 세 실루엣으로 구분하고, 발전소·도로·건설 중 상태도 공용
+색과 굵은 형태로만 표현한다. prefab root는 바닥 중심 pivot, identity rotation, scale
+`(1, 1, 1)`을 사용하며 runtime footprint scale은 중앙 renderer가 적용한다.
+
+- 주거: 녹색 계열과 지붕/저층·중층 높이 차
+- 상업: 청색 계열과 차양·간판 mass
+- 공업: 황토색 계열과 창고·굴뚝·tank mass
+- 발전소: 보라색 공공시설 mass와 stack
+- 도로: 어두운 surface와 밝은 중앙 marking
+- 건설 중: 노란 foundation/frame
+
+색은 용도 식별의 보조 채널이며 실루엣과 naming을 함께 사용한다. 이 세트는 P3-08
+representative performance slice나 P9 production/Korean-city set을 대신하지 않는다.
+
 ## 3. UI 시스템
 
 ### 3.1 원칙

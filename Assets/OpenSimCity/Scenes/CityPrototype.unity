@@ -260,7 +260,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e6b264e830d4599a2a209fcf5ec570d, type: 3}
-  m_Name: ''
+  m_Name: 
   m_EditorClassIdentifier: OpenSimCity.UI::OpenSimCity.UI.HUD.MunicipalHudBinder
   bootstrap: {fileID: 154218319}
 --- !u!1 &157361170
@@ -320,6 +320,8 @@ MonoBehaviour:
   initialOrthographicSize: 18
   initialQuarterTurn: 0
   movementSpeed: 20
+  zoomSensitivity: 4
+  maximumZoomStep: 6
   dragSensitivity: 1
   dragThresholdPixels: 6
   enableInput: 1
@@ -442,8 +444,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5881478a2448482ab7b4fbedb6082e0a, type: 3}
-  m_Name: ''
+  m_Name: 
   m_EditorClassIdentifier: OpenSimCity.Presentation::OpenSimCity.Presentation.Utilities.PowerProducerViewRenderer
+  catalog: {fileID: 11400000, guid: 7761049431034154c92332b982d3e658, type: 2}
 --- !u!1 &839554728
 GameObject:
   m_ObjectHideFlags: 0
@@ -785,6 +788,8 @@ Transform:
   - {fileID: 294122725}
   - {fileID: 2123667864}
   - {fileID: 409229852}
+  - {fileID: 1870607967}
+  - {fileID: 1794754561}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1673108138
@@ -926,6 +931,96 @@ Transform:
   - {fileID: 16349143}
   m_Father: {fileID: 1384901247}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1794754560
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1794754561}
+  - component: {fileID: 1794754562}
+  m_Layer: 0
+  m_Name: RoadViews
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1794754561
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1794754560}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1384901247}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1794754562
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1794754560}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58af52467f0b4f2ca62b2f89093da958, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: OpenSimCity.Presentation::OpenSimCity.Presentation.Roads.RoadViewRenderer
+  catalog: {fileID: 11400000, guid: 7761049431034154c92332b982d3e658, type: 2}
+--- !u!1 &1870607966
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1870607967}
+  - component: {fileID: 1870607968}
+  m_Layer: 0
+  m_Name: BuildingViews
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1870607967
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1870607966}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1384901247}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1870607968
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1870607966}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0c36b2f01f046a0a06ba9dc48bfabfb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: OpenSimCity.Presentation::OpenSimCity.Presentation.Buildings.BuildingViewRenderer
+  catalog: {fileID: 11400000, guid: 7761049431034154c92332b982d3e658, type: 2}
 --- !u!1 &1935429082
 GameObject:
   m_ObjectHideFlags: 0

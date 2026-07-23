@@ -76,12 +76,13 @@ namespace OpenSimCity.Application.World
             RoadAccessibility = new RoadAccessibilityReadModel(RoadGraph);
             ZoneModel = new ZoneReadModel(Zones);
             ParcelModel = new ParcelReadModel(Parcels);
-            PowerModel = new PowerReadModel(Power);
+            PowerModel = new PowerReadModel(Power, UtilityDefinitions, PowerProducers);
             DevelopmentPowerEligibility = new DevelopmentPowerEligibilityQuery(ParcelModel, BuildingDefinitions, Power);
             PopulationSystem = new PopulationEmploymentMigrationSystem(
                 Buildings,
                 BuildingDefinitions,
-                ExternalConnections);
+                ExternalConnections,
+                HasReachableExternalRoadConnection);
             UrbanEconomySystem = new UrbanEconomySystem(
                 Buildings,
                 BuildingDefinitions,
@@ -121,6 +122,7 @@ namespace OpenSimCity.Application.World
             PopulationEmploymentModel = new PopulationEmploymentReadModel(PopulationSystem);
             UrbanEconomyModel = new UrbanEconomyReadModel(UrbanEconomySystem);
             GrowthModel = new GrowthDevelopmentReadModel(GrowthSystem);
+            BuildingViews = new BuildingViewReadModel(Buildings, BuildingDefinitions, GrowthSystem);
             FinanceModel = new MunicipalFinanceReadModel(Finance);
             DevelopmentStatus = new DevelopmentStatusViewModel(
                 GrowthModel,
@@ -183,6 +185,7 @@ namespace OpenSimCity.Application.World
         public PopulationEmploymentReadModel PopulationEmploymentModel { get; }
         public UrbanEconomyReadModel UrbanEconomyModel { get; }
         public GrowthDevelopmentReadModel GrowthModel { get; }
+        public BuildingViewReadModel BuildingViews { get; }
         public MunicipalFinanceReadModel FinanceModel { get; }
         public DevelopmentStatusViewModel DevelopmentStatus { get; }
         public MunicipalHudViewModel HudModel { get; }
@@ -286,9 +289,23 @@ namespace OpenSimCity.Application.World
             ParcelModel.RefreshIfNeeded();
             Power.RefreshIfNeeded();
             PowerModel.RefreshIfNeeded();
+            BuildingViews?.RefreshIfNeeded();
             FinanceModel?.RefreshIfNeeded();
             DevelopmentStatus?.RefreshIfNeeded();
             HudModel?.RefreshIfNeeded();
+        }
+
+        private bool HasReachableExternalRoadConnection()
+        {
+            RoadGraph.RefreshIfNeeded();
+            var cells = RoadGraph.Cells;
+            for (var index = 0; index < cells.Count; index++)
+            {
+                if (cells[index].HasRoad && cells[index].IsReachable)
+                    return true;
+            }
+
+            return false;
         }
     }
 
@@ -355,11 +372,23 @@ namespace OpenSimCity.Application.World
             return new[]
             {
                 new BuildingDefinitionData(new StableId(BuildingDefinitionNamespace | 1UL), ZoneType.ResidentialLow,
-                    new BuildingFootprint(2, 2), 4, 0, "building.residential.low.placeholder", 4),
+                    new BuildingFootprint(2, 2), 4, 0, "building.residential.low.a", 4),
                 new BuildingDefinitionData(new StableId(BuildingDefinitionNamespace | 2UL), ZoneType.CommercialLow,
-                    new BuildingFootprint(2, 2), 0, 6, "building.commercial.low.placeholder", 6),
+                    new BuildingFootprint(2, 2), 0, 6, "building.commercial.low.a", 6),
                 new BuildingDefinitionData(new StableId(BuildingDefinitionNamespace | 3UL), ZoneType.IndustrialLow,
-                    new BuildingFootprint(2, 2), 0, 8, "building.industrial.low.placeholder", 8)
+                    new BuildingFootprint(2, 2), 0, 8, "building.industrial.low.a", 8),
+                new BuildingDefinitionData(new StableId(BuildingDefinitionNamespace | 4UL), ZoneType.ResidentialLow,
+                    new BuildingFootprint(2, 1), 8, 0, "building.residential.low.b", 8),
+                new BuildingDefinitionData(new StableId(BuildingDefinitionNamespace | 5UL), ZoneType.CommercialLow,
+                    new BuildingFootprint(2, 1), 0, 4, "building.commercial.low.b", 4),
+                new BuildingDefinitionData(new StableId(BuildingDefinitionNamespace | 6UL), ZoneType.IndustrialLow,
+                    new BuildingFootprint(2, 1), 0, 6, "building.industrial.low.b", 6),
+                new BuildingDefinitionData(new StableId(BuildingDefinitionNamespace | 7UL), ZoneType.ResidentialLow,
+                    new BuildingFootprint(1, 1), 12, 0, "building.residential.low.c", 12),
+                new BuildingDefinitionData(new StableId(BuildingDefinitionNamespace | 8UL), ZoneType.CommercialLow,
+                    new BuildingFootprint(1, 1), 0, 10, "building.commercial.low.c", 10),
+                new BuildingDefinitionData(new StableId(BuildingDefinitionNamespace | 9UL), ZoneType.IndustrialLow,
+                    new BuildingFootprint(1, 1), 0, 12, "building.industrial.low.c", 12)
             };
         }
 

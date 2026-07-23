@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56512971c704449798f5964f2b30b259, type: 3}
+  m_Name: CommercialLowC
+  m_EditorClassIdentifier: OpenSimCity.Definitions::OpenSimCity.Definitions.Buildings.BuildingDefinition
+  definitionId: 12754194144713244680
+  zoneType: 2
+  footprintWidth: 1
+  footprintHeight: 1
+  occupancyCapacity: 0
+  jobCapacity: 10
+  powerDemand: 10
+  presentationKey: building.commercial.low.c

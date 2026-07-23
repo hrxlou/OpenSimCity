@@ -1,6 +1,7 @@
 using System.Collections;
 using NUnit.Framework;
 using OpenSimCity.Application.Commands;
+using OpenSimCity.Application.Construction;
 using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.World;
 using OpenSimCity.Core;
@@ -93,6 +94,56 @@ namespace OpenSimCity.Tests.PlayMode
             Assert.That(status.text, Does.StartWith("수요 있음 / 개발 가능 "));
             Assert.That(status.text, Does.Not.Contain("없음"));
             Assert.That(period.text, Is.EqualTo("1년 2월"));
+        }
+
+        [UnityTest]
+        public IEnumerator HudShowsExternalRoadCutAndNormalRoadToolRecoveryOnNextPeriod()
+        {
+            yield return LoadCityPrototype();
+
+            var context = CityRuntimeContext.Current;
+            var runtime = context.Runtime;
+            var roadY = runtime.Height / 2;
+            Assert.That(runtime.Execute(new PlaceRoadCommand(
+                runtime.DefaultRoadDefinitionId,
+                new CellCoord(0, roadY),
+                new CellCoord(5, roadY))).IsApplied, Is.True);
+            Assert.That(runtime.Execute(new ZoneAreaCommand(
+                ZoneType.ResidentialLow,
+                new CellCoord(2, roadY - 2),
+                new CellCoord(3, roadY - 1))).IsApplied, Is.True);
+            var plantCell = new CellCoord(5, roadY - 1);
+            Assert.That(runtime.Execute(new PlacePowerProducerCommand(
+                runtime.PowerProducerIdFor(plantCell),
+                runtime.DefaultPowerPlantDefinitionId,
+                plantCell)).IsApplied, Is.True);
+            var commercial = runtime.BuildingDefinitions.Definitions[1];
+            runtime.Buildings.Create(
+                new StableId(0xA21CE),
+                commercial.Id,
+                new StableId(0xB21CE),
+                new CellCoord(8, roadY + 3));
+
+            RunOneMonth(runtime, 0);
+            context.SelectTool(ConstructionToolMode.Demolish);
+            context.Tool.BeginDrag(new CellCoord(0, roadY));
+            Assert.That(context.Tool.CommitDrag().Committed, Is.True);
+            RunOneMonth(runtime, runtime.MonthlyScheduler.TicksPerMonth);
+            yield return null;
+
+            var bootstrap = Object.FindAnyObjectByType<UiFoundationBootstrap>();
+            var reasons = bootstrap.GlobalHud.Q<Label>("osc-hud-development-reasons");
+            Assert.That(reasons.text, Does.Contain("외부 도로 없음"));
+            Assert.That(runtime.PopulationSystem.Migration.HasExternalConnection, Is.False);
+
+            context.SelectTool(ConstructionToolMode.Road);
+            context.Tool.BeginDrag(new CellCoord(0, roadY));
+            Assert.That(context.Tool.CommitDrag().Committed, Is.True);
+            RunOneMonth(runtime, runtime.MonthlyScheduler.TicksPerMonth * 2);
+            yield return null;
+
+            Assert.That(reasons.text, Does.Not.Contain("외부 도로 없음"));
+            Assert.That(runtime.PopulationSystem.Migration.HasExternalConnection, Is.True);
         }
 
         [UnityTest]

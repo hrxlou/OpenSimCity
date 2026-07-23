@@ -513,6 +513,25 @@ P3-06에서 `MunicipalFinanceState`는 민간 `UrbanEconomyState`와 별도의 �
 factor를 다시 계산하지 않으며 primitive/Application DTO만 소비하므로 Simulation assembly를 참조하지
 않는다. `CityRuntimeHost`의 중앙 clock만 시뮬레이션을 전진시키고 HUD refresh·배속은 월간 결과를 바꾸지 않는다.
 
+P3-07의 `BuildingViewReadModel`은 건설 중 site와 완료 building을 stable building ID,
+presentation key, anchor, footprint, 진행률로만 복사한다. `BuildingViewRenderer`,
+`RoadViewRenderer`, `PowerProducerViewRenderer`는 각각 하나의 중앙 `Update()`에서 versioned
+Application read model을 관찰하고 view를 pool로 생성·회수한다. 생성된 개별 placeholder에는
+`MonoBehaviour`가 없으며 view를 끄거나 read model을 읽지 않아도 Simulation state와 RNG 소비는
+바뀌지 않는다.
+
+P3 placeholder는 `PlaceholderArtCatalog`의 presentation key → prefab 정적 매핑으로만 선택한다.
+저밀도 R/C/I는 stable definition ID별 A/B/C 세 종류이고, 발전소·도로·건설 중 표현을 포함한
+모든 prefab은 `PlaceholderArtSetup`이 primitive와 공용 material로 재생성한다. catalog,
+prefab, material reference는 Simulation/Core에 들어가지 않는다.
+
+`MvpSoakFixture`는 seed `0x307`, ordered command log, 단순 격자와 간선-가지형 layout으로
+기본 clock의 18,000 tick(300 tick/month × 60개월 = simulation 30분)을 재생한다. 매월 P3
+authoritative state를 FNV-1a checksum으로 기록하고, presentation read model 관찰 on/off 결과를
+비교한다. 발전소 철거/배치와 외부 gate road 철거/배치는 같은 command log에 포함된다. 이주가
+사용하는 외부 연결도 enabled gate 존재만이 아니라 현재 road graph에서 실제 도달 가능한 road가
+있는지 확인하므로 성장 reason, HUD snapshot, 이주 snapshot이 같은 기간을 가리킨다.
+
 ## 9. 성능 예산
 
 프로토타입 목표:

@@ -11,6 +11,8 @@ using OpenSimCity.Gameplay.Construction;
 using OpenSimCity.Gameplay.Selection;
 using OpenSimCity.Presentation.Overlays;
 using OpenSimCity.Presentation.Utilities;
+using OpenSimCity.Presentation.Buildings;
+using OpenSimCity.Presentation.Roads;
 using OpenSimCity.UI.Placement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -126,6 +128,8 @@ namespace OpenSimCity.Tests.PlayMode
             Assert.That(Object.FindAnyObjectByType<PlacementOverlayRenderer>(), Is.Not.Null);
             Assert.That(Object.FindAnyObjectByType<PlacementUiBinder>(), Is.Not.Null);
             Assert.That(Object.FindAnyObjectByType<PowerProducerViewRenderer>(), Is.Not.Null);
+            Assert.That(Object.FindAnyObjectByType<BuildingViewRenderer>(), Is.Not.Null);
+            Assert.That(Object.FindAnyObjectByType<RoadViewRenderer>(), Is.Not.Null);
             Assert.That(CityRuntimeContext.Current, Is.Not.Null);
         }
 
