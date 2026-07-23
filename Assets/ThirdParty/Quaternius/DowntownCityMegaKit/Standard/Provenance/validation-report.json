@@ -1,0 +1,294 @@
+{
+  "assets": [
+    {
+      "assetId": "osc.benchmark.megakit.building.small",
+      "normalizedPath": "Normalized/FBX/OSC_REP_BLD_SMALL.fbx",
+      "observed": {
+        "dimensionsMeters": [
+          12.46,
+          17.026,
+          14.536
+        ],
+        "footprintCells": [
+          2,
+          2
+        ],
+        "materialSlots": 13,
+        "maximumMeters": [
+          6.23,
+          17.026,
+          7.268
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -6.23,
+          0.0,
+          -7.268
+        ],
+        "normalizedSha256": "96a945606aad56399bbef3a78fc2ac77190cb80d52a2694b4006055f5c01d5b2",
+        "objectTransforms": [
+          {
+            "name": "Building_Small_1",
+            "rotationDegrees": [
+              -9e-06,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ],
+        "triangles": 18344
+      },
+      "prefabKey": "OSC_REP_BLD_SMALL",
+      "role": "BuildingSmall",
+      "sourcePath": "Source/FBX/Building_Small_1.fbx"
+    },
+    {
+      "assetId": "osc.benchmark.megakit.building.medium",
+      "normalizedPath": "Normalized/FBX/OSC_REP_BLD_MEDIUM.fbx",
+      "observed": {
+        "dimensionsMeters": [
+          15.0557,
+          25.0087,
+          13.0557
+        ],
+        "footprintCells": [
+          2,
+          2
+        ],
+        "materialSlots": 12,
+        "maximumMeters": [
+          7.5278,
+          25.0087,
+          6.5278
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -7.5278,
+          0.0,
+          -6.5278
+        ],
+        "normalizedSha256": "7614c70a9eedcb7e8d9042bbaae5f95fdf25759114db42d6058bd76d9176287b",
+        "objectTransforms": [
+          {
+            "name": "Building_Medium_2.001",
+            "rotationDegrees": [
+              -9e-06,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ],
+        "triangles": 25612
+      },
+      "prefabKey": "OSC_REP_BLD_MEDIUM",
+      "role": "BuildingMedium",
+      "sourcePath": "Source/FBX/Building_Medium_2_001.fbx"
+    },
+    {
+      "assetId": "osc.benchmark.megakit.building.large",
+      "normalizedPath": "Normalized/FBX/OSC_REP_BLD_LARGE.fbx",
+      "observed": {
+        "dimensionsMeters": [
+          23.9744,
+          28.0,
+          19.9744
+        ],
+        "footprintCells": [
+          3,
+          3
+        ],
+        "materialSlots": 12,
+        "maximumMeters": [
+          11.9872,
+          28.0,
+          9.9872
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -11.9872,
+          -0.0,
+          -9.9872
+        ],
+        "normalizedSha256": "078695cc0cafefb3f305dcdb7e31430461c569d480365b4577cab5761f15ae2a",
+        "objectTransforms": [
+          {
+            "name": "Building_Large_2",
+            "rotationDegrees": [
+              -9e-06,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ],
+        "triangles": 45122
+      },
+      "prefabKey": "OSC_REP_BLD_LARGE",
+      "role": "BuildingLarge",
+      "sourcePath": "Source/FBX/Building_Large_2.fbx"
+    },
+    {
+      "assetId": "osc.benchmark.megakit.road.street-2lane",
+      "normalizedPath": "Normalized/FBX/OSC_REP_ROAD_2LANE.fbx",
+      "observed": {
+        "dimensionsMeters": [
+          6.0,
+          0.15,
+          12.0
+        ],
+        "footprintCells": [
+          1,
+          2
+        ],
+        "materialSlots": 3,
+        "maximumMeters": [
+          3.0,
+          0.15,
+          6.0
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -3.0,
+          -0.0,
+          -6.0
+        ],
+        "normalizedSha256": "f6bc52a21527baf20805de743bc4a70972c81350015625b75b98fb59c0339ccc",
+        "objectTransforms": [
+          {
+            "name": "Street_2Lane",
+            "rotationDegrees": [
+              -9e-06,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ],
+        "triangles": 220
+      },
+      "prefabKey": "OSC_REP_ROAD_2LANE",
+      "role": "Road",
+      "sourcePath": "Source/FBX/Street_2Lane.fbx"
+    },
+    {
+      "assetId": "osc.benchmark.megakit.facade.brick-plain",
+      "normalizedPath": "Normalized/FBX/OSC_REP_FACADE_BRICK.fbx",
+      "observed": {
+        "dimensionsMeters": [
+          2.0,
+          3.0,
+          0.2
+        ],
+        "footprintCells": [
+          1,
+          1
+        ],
+        "materialSlots": 2,
+        "maximumMeters": [
+          1.0,
+          3.0,
+          0.1
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -1.0,
+          -0.0,
+          -0.1
+        ],
+        "normalizedSha256": "d072020d3e03612f3fe6b72f19d89d267d6f22a15a0f8382216eebd4e7b8d5c7",
+        "objectTransforms": [
+          {
+            "name": "Brick_Plain_3",
+            "rotationDegrees": [
+              -9e-06,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ],
+        "triangles": 6
+      },
+      "prefabKey": "OSC_REP_FACADE_BRICK",
+      "role": "Facade",
+      "sourcePath": "Source/FBX/Brick_Plain_3.fbx"
+    },
+    {
+      "assetId": "osc.benchmark.megakit.prop.ac-unit",
+      "normalizedPath": "Normalized/FBX/OSC_REP_PROP_AC_UNIT.fbx",
+      "observed": {
+        "dimensionsMeters": [
+          0.8932,
+          0.6,
+          0.3471
+        ],
+        "footprintCells": [
+          1,
+          1
+        ],
+        "materialSlots": 1,
+        "maximumMeters": [
+          0.4466,
+          0.6,
+          0.1735
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -0.4466,
+          -0.0,
+          -0.1735
+        ],
+        "normalizedSha256": "ac643d356236e34d6897750fd125f0de7b0bd8cf4416e89f051154cce99785ee",
+        "objectTransforms": [
+          {
+            "name": "Prop_ACUnit",
+            "rotationDegrees": [
+              -9e-06,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ],
+        "triangles": 136
+      },
+      "prefabKey": "OSC_REP_PROP_AC_UNIT",
+      "role": "Prop",
+      "sourcePath": "Source/FBX/Prop_ACUnit.fbx"
+    }
+  ],
+  "axisContract": "Blender Z-up exported as Unity Y-up (-Z forward, Y up)",
+  "blenderVersion": "5.1.2",
+  "gridCellMeters": 8,
+  "issues": [],
+  "pivotContract": "bottom-center",
+  "schemaVersion": 1,
+  "status": "Passed",
+  "unitContract": "1 Blender unit = 1 meter = 1 Unity unit"
+}

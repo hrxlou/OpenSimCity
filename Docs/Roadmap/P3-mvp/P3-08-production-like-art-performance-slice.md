@@ -51,11 +51,30 @@ placeholder와 구조가 다른 실제 후보 에셋 소수로 Benchmark 전용 
 
 ## Done when
 
-- [ ] 대표 건물·도로·모듈이 재현 가능한 importer/validator를 통과한다.
-- [ ] vendor asset과 OpenSimCity wrapper의 저장 경계가 실제 파일로 검증된다.
-- [ ] P8 fixture가 사용할 production-like renderer/material/texture baseline이 기록된다.
-- [ ] CityPrototype placeholder와 gameplay 계약을 바꾸지 않는다.
+- [x] 대표 건물·도로·모듈이 재현 가능한 importer/validator를 통과한다.
+- [x] vendor asset과 OpenSimCity wrapper의 저장 경계가 실제 파일로 검증된다.
+- [x] P8 fixture가 사용할 production-like renderer/material/texture baseline이 기록된다.
+- [x] CityPrototype placeholder와 gameplay 계약을 바꾸지 않는다.
 - [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+
+## Implementation evidence
+
+- Windows 11 Enterprise 10.0.26200, Unity 6000.5.3f1, Blender 5.1.2
+- acquisition archive SHA-256:
+  `5b1a945576d54cdbb4ccc9c3d52711e6d530da74c74c586407ecc28b165335da`,
+  CC0-1.0, selected assets 6/textures 17
+- Blender validator: `P3_08_VALIDATION_PASSED assets=6 textures=17`
+- Windows standalone renderer baseline test: `1/1 passed`, production-like
+  `24 renderers / 172 material slots / 17 textures / 175 draw calls`,
+  placeholder `56 / 56 / 0 / 59`
+- Unity import baseline: models 6 `1,778 ms`, textures 17 `3,983 ms`,
+  total `5,761 ms`
+- Blender 5.1.2 clean export 2회에서 normalized FBX 6개의 SHA-256가
+  각각 일치했다.
+- Detailed evidence:
+  [P3-08 production-like art baseline](../../Benchmarks/P3-08-production-like-art-baseline.md)
+- Branch: `codex/p3-08-production-like-art-performance-slice`
+- Commit/PR: PR 생성 뒤 이 문서에 기록한다.
 
 ## Out of scope
 

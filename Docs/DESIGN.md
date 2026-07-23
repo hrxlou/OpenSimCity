@@ -178,7 +178,7 @@ pooled primitive placeholder로 표시하고, 연결 발전소/미연결 발전�
 
 ## 6. Downtown City MegaKit Standard 검증 기준선
 
-검토한 무료 파일은 `Downtown City MegaKit[Standard].zip`이며 SHA-256은 `499dc648a2451686baa11d4519192f07339fdf66c8bd23739c931ca4667ef1f2`다. ZIP 내부 라이선스는 CC0 1.0으로 확인했다. 실제 import 전에 acquisition manifest에 원본 URL, 취득일, 배포 tier, hash와 라이선스 파일을 함께 기록한다.
+2026-07-23에 공식 배포 페이지에서 취득한 무료 파일은 `Downtown City MegaKit[Standard].zip`이며 SHA-256은 `5b1a945576d54cdbb4ccc9c3d52711e6d530da74c74c586407ecc28b165335da`다. 이전 검토본의 SHA-256 `499dc648a2451686baa11d4519192f07339fdf66c8bd23739c931ca4667ef1f2`와 다르므로 서로 대체 가능한 archive로 취급하지 않는다. P3-08 acquisition manifest가 현재 archive와 선별 entry 각각의 hash를 고정한다. ZIP 내부 라이선스는 CC0 1.0으로 확인했다.
 
 ### 6.1 확인된 구성
 
@@ -197,12 +197,26 @@ pooled primitive placeholder로 표시하고, 연결 발전소/미연결 발전�
 |---|---:|---:|---:|
 | `Building_Small_1` | `12.46 × 14.54 × 17.03` | `18,344` | `13` |
 | `Building_Medium_2_001` | `15.06 × 13.06 × 25.01` | `25,612` | `12` |
-| `Building_Large_2` | `23.97 × 19.97 × 28.00` | `45,122` | `13` |
+| `Building_Large_2` | `23.97 × 19.97 × 28.00` | `45,122` | `12` |
 | `Brick_Plain_3` | `2.00 × 0.20 × 3.00` | `6` | `2` |
 | `Street_2Lane` | `6.00 × 12.00 × 0.15` | `220` | `3` |
 | `Prop_ACUnit` | `0.89 × 0.35 × 0.60` | `136` | `1` |
 
 표본은 Blender 5.1.2에서 scale `0.01`, X rotation `90°`가 적용되지 않은 transform으로 들어왔다. 이는 성능 budget이 아니라 source 관찰값이다. 8m grid 기준 완성 건물은 정규화 후 대략 2×2, 2×2, 3×3 footprint 후보지만, 실제 footprint는 validator와 배치 smoke로 확정한다.
+
+### 6.3 P3-08 representative fixture
+
+공용 Blender importer/validator는 위 6개 source와 필요한 texture 17개만 archive에서
+선별하고, basename texture relink, 1 unit=1m, Unity Y-up/-Z forward,
+bottom-center pivot과 8m footprint를 재현한다. 원본과 호환성 정규화 FBX/texture,
+license/report는 `Assets/ThirdParty`에 두고 stable asset ID/prefab key를 가진
+material/prefab/definition/catalog은 `Assets/OpenSimCity`에 둔다.
+
+`RepresentativeArtBenchmarkFixture`는 6개 binding을 4회 반복하고 production-like와
+P3 placeholder mode만 교체한다. 이 fixture는 `Benchmark` 전용이며 `CityPrototype`,
+simulation state, 저장 catalog와 LOD/collider 계약을 바꾸지 않는다. Windows 기준
+renderer/material/texture memory/draw call/import 관찰값은
+[P3-08 baseline](Benchmarks/P3-08-production-like-art-baseline.md)에 기록한다.
 
 ## 7. 에셋 파이프라인
 

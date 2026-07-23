@@ -1,0 +1,769 @@
+{
+  "archiveSha256": "5b1a945576d54cdbb4ccc9c3d52711e6d530da74c74c586407ecc28b165335da",
+  "assetPack": "Downtown City MegaKit",
+  "assets": [
+    {
+      "assetId": "osc.benchmark.megakit.building.small",
+      "normalized": {
+        "dimensionsMeters": [
+          12.46,
+          17.026,
+          14.536
+        ],
+        "materialSlots": 13,
+        "materials": [
+          "MI_RedBrick_Pale",
+          "MI_Trim",
+          "MI_InteriorWall",
+          "MI_Trim_MetalConcrete",
+          "MI_Glass",
+          "MI_FakeInterior_2",
+          "MI_Trim_Dark",
+          "MI_FakeInterior_1",
+          "MI_Concrete",
+          "MI_FakeInterior_4",
+          "MI_FakeInterior_3",
+          "MI_Asphalt",
+          "MI_InteriorFloor"
+        ],
+        "maximumMeters": [
+          6.23,
+          17.026,
+          7.268
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -6.23,
+          0.0,
+          -7.268
+        ],
+        "objectTransforms": [
+          {
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "name": "Building_Small_1",
+            "rotationDegrees": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ],
+        "triangles": 18344
+      },
+      "normalizedPath": "Normalized/FBX/OSC_REP_BLD_SMALL.fbx",
+      "normalizedSha256": "96a945606aad56399bbef3a78fc2ac77190cb80d52a2694b4006055f5c01d5b2",
+      "originalTexturePaths": [
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Concrete_Asphalt_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Concrete_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Concrete_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_MarbleFloor_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_MarbleFloor_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_MetalConcrete_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_MetalConcrete_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_RedBrick_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_RedBrick_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Trim_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Trim_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_dark_interior.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_lit_interior_1.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_lit_interior_2.png"
+      ],
+      "prefabKey": "OSC_REP_BLD_SMALL",
+      "raw": {
+        "dimensionsMeters": [
+          12.46,
+          14.536,
+          17.026
+        ],
+        "materialSlots": 13,
+        "materials": [
+          "MI_RedBrick_Pale",
+          "MI_Trim",
+          "MI_InteriorWall",
+          "MI_Trim_MetalConcrete",
+          "MI_Glass",
+          "MI_FakeInterior_2",
+          "MI_Trim_Dark",
+          "MI_FakeInterior_1",
+          "MI_Concrete",
+          "MI_FakeInterior_4",
+          "MI_FakeInterior_3",
+          "MI_Asphalt",
+          "MI_InteriorFloor"
+        ],
+        "maximumMeters": [
+          5.23,
+          12.23,
+          17.014
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -7.23,
+          -2.306,
+          -0.0119
+        ],
+        "objectTransforms": [
+          {
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "name": "Building_Small_1",
+            "rotationDegrees": [
+              89.999996,
+              -0.0,
+              0.0
+            ],
+            "scale": [
+              0.01,
+              0.01,
+              0.01
+            ]
+          }
+        ],
+        "triangles": 18344
+      },
+      "relinkedTextures": [
+        "T_Concrete_Asphalt_BaseColor.png",
+        "T_Concrete_BaseColor.png",
+        "T_Concrete_Normal.png",
+        "T_MarbleFloor_BaseColor.png",
+        "T_MarbleFloor_Normal.png",
+        "T_MetalConcrete_BaseColor.png",
+        "T_MetalConcrete_Normal.png",
+        "T_RedBrick_BaseColor.png",
+        "T_RedBrick_Normal.png",
+        "T_Trim_BaseColor.png",
+        "T_Trim_Normal.png",
+        "T_dark_interior.png",
+        "T_lit_interior_1.png",
+        "T_lit_interior_2.png"
+      ],
+      "sourcePath": "Source/FBX/Building_Small_1.fbx",
+      "sourceSha256": "b480fb44f735e44bfc2988743a87a176c4819f880cf557885f916066f0fbfed7"
+    },
+    {
+      "assetId": "osc.benchmark.megakit.building.medium",
+      "normalized": {
+        "dimensionsMeters": [
+          15.0557,
+          25.0087,
+          13.0557
+        ],
+        "materialSlots": 12,
+        "materials": [
+          "MI_InteriorFloor",
+          "MI_Trim_Green",
+          "MI_FakeInterior_1",
+          "MI_FakeInterior_2",
+          "MI_FakeInterior_3",
+          "MI_FakeInterior_4",
+          "MI_InteriorWall",
+          "MI_Trim",
+          "MI_Glass",
+          "MI_Trim_Dark",
+          "MI_RedBrick",
+          "MI_Asphalt"
+        ],
+        "maximumMeters": [
+          7.5278,
+          25.0087,
+          6.5278
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -7.5278,
+          0.0,
+          -6.5278
+        ],
+        "objectTransforms": [
+          {
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "name": "Building_Medium_2.001",
+            "rotationDegrees": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ],
+        "triangles": 25612
+      },
+      "normalizedPath": "Normalized/FBX/OSC_REP_BLD_MEDIUM.fbx",
+      "normalizedSha256": "7614c70a9eedcb7e8d9042bbaae5f95fdf25759114db42d6058bd76d9176287b",
+      "originalTexturePaths": [
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Concrete_Asphalt_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Concrete_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_MarbleFloor_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_MarbleFloor_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_RedBrick_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_RedBrick_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Trim_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Trim_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_dark_interior.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_lit_interior_1.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_lit_interior_2.png"
+      ],
+      "prefabKey": "OSC_REP_BLD_MEDIUM",
+      "raw": {
+        "dimensionsMeters": [
+          15.0557,
+          13.0557,
+          25.0087
+        ],
+        "materialSlots": 12,
+        "materials": [
+          "MI_InteriorFloor",
+          "MI_Trim_Green",
+          "MI_FakeInterior_1",
+          "MI_FakeInterior_2",
+          "MI_FakeInterior_3",
+          "MI_FakeInterior_4",
+          "MI_InteriorWall",
+          "MI_Trim",
+          "MI_Glass",
+          "MI_Trim_Dark",
+          "MI_RedBrick",
+          "MI_Asphalt"
+        ],
+        "maximumMeters": [
+          7.5278,
+          12.4877,
+          24.9984
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -7.5279,
+          -0.568,
+          -0.0103
+        ],
+        "objectTransforms": [
+          {
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "name": "Building_Medium_2.001",
+            "rotationDegrees": [
+              89.999996,
+              -0.0,
+              0.0
+            ],
+            "scale": [
+              0.01,
+              0.01,
+              0.01
+            ]
+          }
+        ],
+        "triangles": 25612
+      },
+      "relinkedTextures": [
+        "T_Concrete_Asphalt_BaseColor.png",
+        "T_Concrete_Normal.png",
+        "T_MarbleFloor_BaseColor.png",
+        "T_MarbleFloor_Normal.png",
+        "T_RedBrick_BaseColor.png",
+        "T_RedBrick_Normal.png",
+        "T_Trim_BaseColor.png",
+        "T_Trim_Normal.png",
+        "T_dark_interior.png",
+        "T_lit_interior_1.png",
+        "T_lit_interior_2.png"
+      ],
+      "sourcePath": "Source/FBX/Building_Medium_2_001.fbx",
+      "sourceSha256": "d8b63f79dc675f4cf5bcccc83278e25b6155f800fb123ae1187d79b38d468c22"
+    },
+    {
+      "assetId": "osc.benchmark.megakit.building.large",
+      "normalized": {
+        "dimensionsMeters": [
+          23.9744,
+          28.0,
+          19.9744
+        ],
+        "materialSlots": 12,
+        "materials": [
+          "MI_InteriorFloor",
+          "MI_Trim_Dark",
+          "MI_Trim_MetalConcrete",
+          "MI_InteriorWall",
+          "MI_Glass",
+          "MI_FakeInterior_2",
+          "MI_FakeInterior_3",
+          "MI_RedBrick",
+          "MI_FakeInterior_1",
+          "MI_FakeInterior_4",
+          "MI_Trim",
+          "MI_Asphalt"
+        ],
+        "maximumMeters": [
+          11.9872,
+          28.0,
+          9.9872
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -11.9872,
+          -0.0,
+          -9.9872
+        ],
+        "objectTransforms": [
+          {
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "name": "Building_Large_2",
+            "rotationDegrees": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ],
+        "triangles": 45122
+      },
+      "normalizedPath": "Normalized/FBX/OSC_REP_BLD_LARGE.fbx",
+      "normalizedSha256": "078695cc0cafefb3f305dcdb7e31430461c569d480365b4577cab5761f15ae2a",
+      "originalTexturePaths": [
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Concrete_Asphalt_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Concrete_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_MarbleFloor_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_MarbleFloor_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_MetalConcrete_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_MetalConcrete_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_RedBrick_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_RedBrick_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Trim_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Trim_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_dark_interior.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_lit_interior_1.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_lit_interior_2.png"
+      ],
+      "prefabKey": "OSC_REP_BLD_LARGE",
+      "raw": {
+        "dimensionsMeters": [
+          23.9744,
+          19.9744,
+          28.0
+        ],
+        "materialSlots": 12,
+        "materials": [
+          "MI_InteriorFloor",
+          "MI_Trim_Dark",
+          "MI_Trim_MetalConcrete",
+          "MI_InteriorWall",
+          "MI_Glass",
+          "MI_FakeInterior_2",
+          "MI_FakeInterior_3",
+          "MI_RedBrick",
+          "MI_FakeInterior_1",
+          "MI_FakeInterior_4",
+          "MI_Trim",
+          "MI_Asphalt"
+        ],
+        "maximumMeters": [
+          12.9722,
+          17.9722,
+          28.0
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -11.0023,
+          -2.0022,
+          -0.0
+        ],
+        "objectTransforms": [
+          {
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "name": "Building_Large_2",
+            "rotationDegrees": [
+              89.999996,
+              -0.0,
+              0.0
+            ],
+            "scale": [
+              0.01,
+              0.01,
+              0.01
+            ]
+          }
+        ],
+        "triangles": 45122
+      },
+      "relinkedTextures": [
+        "T_Concrete_Asphalt_BaseColor.png",
+        "T_Concrete_Normal.png",
+        "T_MarbleFloor_BaseColor.png",
+        "T_MarbleFloor_Normal.png",
+        "T_MetalConcrete_BaseColor.png",
+        "T_MetalConcrete_Normal.png",
+        "T_RedBrick_BaseColor.png",
+        "T_RedBrick_Normal.png",
+        "T_Trim_BaseColor.png",
+        "T_Trim_Normal.png",
+        "T_dark_interior.png",
+        "T_lit_interior_1.png",
+        "T_lit_interior_2.png"
+      ],
+      "sourcePath": "Source/FBX/Building_Large_2.fbx",
+      "sourceSha256": "a03432dc29d99ea378b6111f233b34d447041340dcfe5478a954e5a60b4d2a7c"
+    },
+    {
+      "assetId": "osc.benchmark.megakit.road.street-2lane",
+      "normalized": {
+        "dimensionsMeters": [
+          6.0,
+          0.15,
+          12.0
+        ],
+        "materialSlots": 3,
+        "materials": [
+          "MI_Asphalt",
+          "MI_StreetDecals",
+          "MI_Trim_MetalConcrete"
+        ],
+        "maximumMeters": [
+          3.0,
+          0.15,
+          6.0
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -3.0,
+          -0.0,
+          -6.0
+        ],
+        "objectTransforms": [
+          {
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "name": "Street_2Lane",
+            "rotationDegrees": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ],
+        "triangles": 220
+      },
+      "normalizedPath": "Normalized/FBX/OSC_REP_ROAD_2LANE.fbx",
+      "normalizedSha256": "f6bc52a21527baf20805de743bc4a70972c81350015625b75b98fb59c0339ccc",
+      "originalTexturePaths": [
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Concrete_Asphalt_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Concrete_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_MetalConcrete_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_MetalConcrete_Normal.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Street_Decals.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Street_Decals.png"
+      ],
+      "prefabKey": "OSC_REP_ROAD_2LANE",
+      "raw": {
+        "dimensionsMeters": [
+          6.0,
+          12.0,
+          0.15
+        ],
+        "materialSlots": 3,
+        "materials": [
+          "MI_Asphalt",
+          "MI_StreetDecals",
+          "MI_Trim_MetalConcrete"
+        ],
+        "maximumMeters": [
+          3.0,
+          6.0,
+          0.0
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -3.0,
+          -6.0,
+          -0.15
+        ],
+        "objectTransforms": [
+          {
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "name": "Street_2Lane",
+            "rotationDegrees": [
+              89.999996,
+              -0.0,
+              0.0
+            ],
+            "scale": [
+              0.01,
+              0.01,
+              0.01
+            ]
+          }
+        ],
+        "triangles": 220
+      },
+      "relinkedTextures": [
+        "T_Concrete_Asphalt_BaseColor.png",
+        "T_Concrete_Normal.png",
+        "T_MetalConcrete_BaseColor.png",
+        "T_MetalConcrete_Normal.png",
+        "T_Street_Decals.png"
+      ],
+      "sourcePath": "Source/FBX/Street_2Lane.fbx",
+      "sourceSha256": "c2161af30c65a3001c309497fd0e1ccb83bcdf6f8e2695a771126ab639c92796"
+    },
+    {
+      "assetId": "osc.benchmark.megakit.facade.brick-plain",
+      "normalized": {
+        "dimensionsMeters": [
+          2.0,
+          3.0,
+          0.2
+        ],
+        "materialSlots": 2,
+        "materials": [
+          "MI_RedBrick",
+          "MI_InteriorWall"
+        ],
+        "maximumMeters": [
+          1.0,
+          3.0,
+          0.1
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -1.0,
+          -0.0,
+          -0.1
+        ],
+        "objectTransforms": [
+          {
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "name": "Brick_Plain_3",
+            "rotationDegrees": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ],
+        "triangles": 6
+      },
+      "normalizedPath": "Normalized/FBX/OSC_REP_FACADE_BRICK.fbx",
+      "normalizedSha256": "d072020d3e03612f3fe6b72f19d89d267d6f22a15a0f8382216eebd4e7b8d5c7",
+      "originalTexturePaths": [
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_RedBrick_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_RedBrick_Normal.png"
+      ],
+      "prefabKey": "OSC_REP_FACADE_BRICK",
+      "raw": {
+        "dimensionsMeters": [
+          2.0,
+          0.2,
+          3.0
+        ],
+        "materialSlots": 2,
+        "materials": [
+          "MI_RedBrick",
+          "MI_InteriorWall"
+        ],
+        "maximumMeters": [
+          1.0,
+          0.2,
+          3.0
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -1.0,
+          0.0,
+          -0.0
+        ],
+        "objectTransforms": [
+          {
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "name": "Brick_Plain_3",
+            "rotationDegrees": [
+              89.999996,
+              -0.0,
+              0.0
+            ],
+            "scale": [
+              0.01,
+              0.01,
+              0.01
+            ]
+          }
+        ],
+        "triangles": 6
+      },
+      "relinkedTextures": [
+        "T_RedBrick_BaseColor.png",
+        "T_RedBrick_Normal.png"
+      ],
+      "sourcePath": "Source/FBX/Brick_Plain_3.fbx",
+      "sourceSha256": "0080309883ded3d6a180a6418b1cdf9743d06c320a4df6e5137a0836c88eb79c"
+    },
+    {
+      "assetId": "osc.benchmark.megakit.prop.ac-unit",
+      "normalized": {
+        "dimensionsMeters": [
+          0.8932,
+          0.6,
+          0.3471
+        ],
+        "materialSlots": 1,
+        "materials": [
+          "MI_Ornaments"
+        ],
+        "maximumMeters": [
+          0.4466,
+          0.6,
+          0.1735
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -0.4466,
+          -0.0,
+          -0.1735
+        ],
+        "objectTransforms": [
+          {
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "name": "Prop_ACUnit",
+            "rotationDegrees": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ],
+        "triangles": 136
+      },
+      "normalizedPath": "Normalized/FBX/OSC_REP_PROP_AC_UNIT.fbx",
+      "normalizedSha256": "ac643d356236e34d6897750fd125f0de7b0bd8cf4416e89f051154cce99785ee",
+      "originalTexturePaths": [
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Ornaments_BaseColor.png",
+        "C:\\Dropbox\\Work\\Blender\\_FreeModels\\_Unfinished\\Downtown City MegaKit\\Blends\\T_Ornaments_Normal.png"
+      ],
+      "prefabKey": "OSC_REP_PROP_AC_UNIT",
+      "raw": {
+        "dimensionsMeters": [
+          0.8932,
+          0.3471,
+          0.6
+        ],
+        "materialSlots": 1,
+        "materials": [
+          "MI_Ornaments"
+        ],
+        "maximumMeters": [
+          0.4827,
+          0.0186,
+          0.5997
+        ],
+        "meshCount": 1,
+        "minimumMeters": [
+          -0.4105,
+          -0.3285,
+          -0.0003
+        ],
+        "objectTransforms": [
+          {
+            "location": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "name": "Prop_ACUnit",
+            "rotationDegrees": [
+              89.999996,
+              -0.0,
+              0.0
+            ],
+            "scale": [
+              0.01,
+              0.01,
+              0.01
+            ]
+          }
+        ],
+        "triangles": 136
+      },
+      "relinkedTextures": [
+        "T_Ornaments_BaseColor.png",
+        "T_Ornaments_Normal.png"
+      ],
+      "sourcePath": "Source/FBX/Prop_ACUnit.fbx",
+      "sourceSha256": "149251ed04869c6835c44e4db66d63da7e73afa8a375b1be9ea5f83ff74e6b6f"
+    }
+  ],
+  "axisContract": "Blender Z-up exported as Unity Y-up (-Z forward, Y up)",
+  "blenderVersion": "5.1.2",
+  "gridCellMeters": 8,
+  "pivotContract": "bottom-center",
+  "schemaVersion": 1,
+  "unitContract": "1 Blender unit = 1 meter = 1 Unity unit"
+}

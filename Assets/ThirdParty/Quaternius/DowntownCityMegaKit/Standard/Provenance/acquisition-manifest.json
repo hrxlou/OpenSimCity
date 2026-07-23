@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 1,
+  "assetPack": "Downtown City MegaKit",
+  "publisher": "Quaternius",
+  "distributionTier": "Standard",
+  "sourceUrl": "https://quaternius.com/packs/downtowncitymegakit.html",
+  "downloadPageUrl": "https://quaternius.itch.io/downtown-city-megakit",
+  "acquiredUtc": "2026-07-23T09:10:53Z",
+  "archiveFileName": "Downtown City MegaKit[Standard].zip",
+  "archiveBytes": 234753092,
+  "archiveSha256": "5b1a945576d54cdbb4ccc9c3d52711e6d530da74c74c586407ecc28b165335da",
+  "previousReviewedArchiveSha256": "499dc648a2451686baa11d4519192f07339fdf66c8bd23739c931ca4667ef1f2",
+  "hashReview": "The official Standard archive downloaded on 2026-07-23 differs from the earlier reviewed ZIP hash. This manifest pins the acquired official archive and every selected entry instead of treating the earlier hash as interchangeable.",
+  "license": {
+    "spdx": "CC0-1.0",
+    "name": "CC0 1.0 Universal",
+    "archiveEntry": "License_Standard.txt",
+    "repositoryPath": "Provenance/LICENSE_CC0_1.0.txt",
+    "sha256": "afac5819301671301c41e90402d26e4ade5e459ad58fdf77f142147410862f1f"
+  },
+  "selection": [
+    {
+      "assetId": "osc.benchmark.megakit.building.small",
+      "prefabKey": "OSC_REP_BLD_SMALL",
+      "role": "BuildingSmall",
+      "sourceEntry": "Exports/FBX (Unity)/Building_Small_1.fbx",
+      "sourcePath": "Source/FBX/Building_Small_1.fbx",
+      "normalizedPath": "Normalized/FBX/OSC_REP_BLD_SMALL.fbx",
+      "sourceSha256": "b480fb44f735e44bfc2988743a87a176c4819f880cf557885f916066f0fbfed7",
+      "expectedDimensionsMeters": [12.46, 14.536, 17.026],
+      "expectedFootprintCells": [2, 2],
+      "triangles": 18344,
+      "materialSlots": 13,
+      "placeholderPresentationKey": "building.residential.low.a",
+      "textures": [
+        "T_Concrete_Asphalt_BaseColor.png",
+        "T_Concrete_BaseColor.png",
+        "T_Concrete_Normal.png",
+        "T_dark_interior.png",
+        "T_lit_interior_1.png",
+        "T_lit_interior_2.png",
+        "T_MarbleFloor_BaseColor.png",
+        "T_MarbleFloor_Normal.png",
+        "T_MetalConcrete_BaseColor.png",
+        "T_MetalConcrete_Normal.png",
+        "T_RedBrick_BaseColor.png",
+        "T_RedBrick_Normal.png",
+        "T_Trim_BaseColor.png",
+        "T_Trim_Normal.png"
+      ]
+    },
+    {
+      "assetId": "osc.benchmark.megakit.building.medium",
+      "prefabKey": "OSC_REP_BLD_MEDIUM",
+      "role": "BuildingMedium",
+      "sourceEntry": "Exports/FBX (Unity)/Building_Medium_2_001.fbx",
+      "sourcePath": "Source/FBX/Building_Medium_2_001.fbx",
+      "normalizedPath": "Normalized/FBX/OSC_REP_BLD_MEDIUM.fbx",
+      "sourceSha256": "d8b63f79dc675f4cf5bcccc83278e25b6155f800fb123ae1187d79b38d468c22",
+      "expectedDimensionsMeters": [15.0557, 13.0557, 25.0087],
+      "expectedFootprintCells": [2, 2],
+      "triangles": 25612,
+      "materialSlots": 12,
+      "placeholderPresentationKey": "building.residential.low.b",
+      "textures": [
+        "T_Concrete_Asphalt_BaseColor.png",
+        "T_Concrete_Normal.png",
+        "T_dark_interior.png",
+        "T_lit_interior_1.png",
+        "T_lit_interior_2.png",
+        "T_MarbleFloor_BaseColor.png",
+        "T_MarbleFloor_Normal.png",
+        "T_RedBrick_BaseColor.png",
+        "T_RedBrick_Normal.png",
+        "T_Trim_BaseColor.png",
+        "T_Trim_Normal.png"
+      ]
+    },
+    {
+      "assetId": "osc.benchmark.megakit.building.large",
+      "prefabKey": "OSC_REP_BLD_LARGE",
+      "role": "BuildingLarge",
+      "sourceEntry": "Exports/FBX (Unity)/Building_Large_2.fbx",
+      "sourcePath": "Source/FBX/Building_Large_2.fbx",
+      "normalizedPath": "Normalized/FBX/OSC_REP_BLD_LARGE.fbx",
+      "sourceSha256": "a03432dc29d99ea378b6111f233b34d447041340dcfe5478a954e5a60b4d2a7c",
+      "expectedDimensionsMeters": [23.9744, 19.9744, 28.0],
+      "expectedFootprintCells": [3, 3],
+      "triangles": 45122,
+      "materialSlots": 12,
+      "placeholderPresentationKey": "building.residential.low.c",
+      "textures": [
+        "T_Concrete_Asphalt_BaseColor.png",
+        "T_Concrete_Normal.png",
+        "T_dark_interior.png",
+        "T_lit_interior_1.png",
+        "T_lit_interior_2.png",
+        "T_MarbleFloor_BaseColor.png",
+        "T_MarbleFloor_Normal.png",
+        "T_MetalConcrete_BaseColor.png",
+        "T_MetalConcrete_Normal.png",
+        "T_RedBrick_BaseColor.png",
+        "T_RedBrick_Normal.png",
+        "T_Trim_BaseColor.png",
+        "T_Trim_Normal.png"
+      ]
+    },
+    {
+      "assetId": "osc.benchmark.megakit.road.street-2lane",
+      "prefabKey": "OSC_REP_ROAD_2LANE",
+      "role": "Road",
+      "sourceEntry": "Exports/FBX (Unity)/Street_2Lane.fbx",
+      "sourcePath": "Source/FBX/Street_2Lane.fbx",
+      "normalizedPath": "Normalized/FBX/OSC_REP_ROAD_2LANE.fbx",
+      "sourceSha256": "c2161af30c65a3001c309497fd0e1ccb83bcdf6f8e2695a771126ab639c92796",
+      "expectedDimensionsMeters": [6.0, 12.0, 0.15],
+      "expectedFootprintCells": [1, 2],
+      "triangles": 220,
+      "materialSlots": 3,
+      "placeholderPresentationKey": "road.street.placeholder",
+      "textures": [
+        "T_Concrete_Asphalt_BaseColor.png",
+        "T_Concrete_Normal.png",
+        "T_MetalConcrete_BaseColor.png",
+        "T_MetalConcrete_Normal.png",
+        "T_Street_Decals.png"
+      ]
+    },
+    {
+      "assetId": "osc.benchmark.megakit.facade.brick-plain",
+      "prefabKey": "OSC_REP_FACADE_BRICK",
+      "role": "Facade",
+      "sourceEntry": "Exports/FBX (Unity)/Brick_Plain_3.fbx",
+      "sourcePath": "Source/FBX/Brick_Plain_3.fbx",
+      "normalizedPath": "Normalized/FBX/OSC_REP_FACADE_BRICK.fbx",
+      "sourceSha256": "0080309883ded3d6a180a6418b1cdf9743d06c320a4df6e5137a0836c88eb79c",
+      "expectedDimensionsMeters": [2.0, 0.2, 3.0],
+      "expectedFootprintCells": [1, 1],
+      "triangles": 6,
+      "materialSlots": 2,
+      "placeholderPresentationKey": "building.commercial.low.a",
+      "textures": [
+        "T_RedBrick_BaseColor.png",
+        "T_RedBrick_Normal.png"
+      ]
+    },
+    {
+      "assetId": "osc.benchmark.megakit.prop.ac-unit",
+      "prefabKey": "OSC_REP_PROP_AC_UNIT",
+      "role": "Prop",
+      "sourceEntry": "Exports/FBX (Unity)/Prop_ACUnit.fbx",
+      "sourcePath": "Source/FBX/Prop_ACUnit.fbx",
+      "normalizedPath": "Normalized/FBX/OSC_REP_PROP_AC_UNIT.fbx",
+      "sourceSha256": "149251ed04869c6835c44e4db66d63da7e73afa8a375b1be9ea5f83ff74e6b6f",
+      "expectedDimensionsMeters": [0.8932, 0.3471, 0.6],
+      "expectedFootprintCells": [1, 1],
+      "triangles": 136,
+      "materialSlots": 1,
+      "placeholderPresentationKey": "utility.power.plant.placeholder",
+      "textures": [
+        "T_Ornaments_BaseColor.png",
+        "T_Ornaments_Normal.png"
+      ]
+    }
+  ],
+  "requiredTextures": [
+    {
+      "archiveEntry": "Textures/T_Concrete_Asphalt_BaseColor.png",
+      "repositoryPath": "Textures/T_Concrete_Asphalt_BaseColor.png",
+      "bytes": 988093,
+      "sha256": "a37ca932c4287a67d9cf7f78997b5cc4b026ca7319a4c8454132d076307ca5cf"
+    },
+    {
+      "archiveEntry": "Textures/T_Concrete_BaseColor.png",
+      "repositoryPath": "Textures/T_Concrete_BaseColor.png",
+      "bytes": 1341594,
+      "sha256": "697276f680b34d6321e6b06da208a0fc3516db372d4a7de543fc2c33e895f482"
+    },
+    {
+      "archiveEntry": "Textures/T_Concrete_Normal.png",
+      "repositoryPath": "Textures/T_Concrete_Normal.png",
+      "bytes": 4416770,
+      "sha256": "e4de917d2506bff4b17d44380a136336cf16e5ea828edfdb8981f4f27e30a86a"
+    },
+    {
+      "archiveEntry": "Textures/T_dark_interior.png",
+      "repositoryPath": "Textures/T_dark_interior.png",
+      "bytes": 325090,
+      "sha256": "59e5c77292953d93c3cd239c2f06d4e80e393761195da66d886d3887ad59f1dc"
+    },
+    {
+      "archiveEntry": "Textures/T_lit_interior_1.png",
+      "repositoryPath": "Textures/T_lit_interior_1.png",
+      "bytes": 395226,
+      "sha256": "d20aa9f249a506eb145d76e264e59667cec4bef66c07e4baace6583a28cc3be4"
+    },
+    {
+      "archiveEntry": "Textures/T_lit_interior_2.png",
+      "repositoryPath": "Textures/T_lit_interior_2.png",
+      "bytes": 316427,
+      "sha256": "83c3f1b2ad84b65aab88d5744e6997730a04140e41d230e2cecfe9bfb2ae0559"
+    },
+    {
+      "archiveEntry": "Textures/T_MarbleFloor_BaseColor.png",
+      "repositoryPath": "Textures/T_MarbleFloor_BaseColor.png",
+      "bytes": 1095714,
+      "sha256": "a01f57e2976d3af21a59f1ae18e12be84d2acae7ba3e93d184d2874224f737c0"
+    },
+    {
+      "archiveEntry": "Textures/T_MarbleFloor_Normal.png",
+      "repositoryPath": "Textures/T_MarbleFloor_Normal.png",
+      "bytes": 1382828,
+      "sha256": "52ba88ccfd35f072a51d11c31cdfb6e6ea8cde641ab4521115994d2c3216b451"
+    },
+    {
+      "archiveEntry": "Textures/T_MetalConcrete_BaseColor.png",
+      "repositoryPath": "Textures/T_MetalConcrete_BaseColor.png",
+      "bytes": 1488628,
+      "sha256": "adae656323f15cd2c3f1a6453685cb1ca104b700dc114076137cb3a4c253d3d0"
+    },
+    {
+      "archiveEntry": "Textures/T_MetalConcrete_Normal.png",
+      "repositoryPath": "Textures/T_MetalConcrete_Normal.png",
+      "bytes": 4815924,
+      "sha256": "93f95a96c32b27820c590301f00f5ba1d23d4054046d92bf6d58adbf23007419"
+    },
+    {
+      "archiveEntry": "Textures/T_Ornaments_BaseColor.png",
+      "repositoryPath": "Textures/T_Ornaments_BaseColor.png",
+      "bytes": 4776648,
+      "sha256": "528cbe672c62384aa3bac703f574b60509bd69b4d492291cb2915022a12a449c"
+    },
+    {
+      "archiveEntry": "Textures/T_Ornaments_Normal.png",
+      "repositoryPath": "Textures/T_Ornaments_Normal.png",
+      "bytes": 7172215,
+      "sha256": "c1aa6b307d47386b63e775ba88d82992dd0aaf34f1e4c2b7824002e3cc0a795a"
+    },
+    {
+      "archiveEntry": "Textures/T_RedBrick_BaseColor.png",
+      "repositoryPath": "Textures/T_RedBrick_BaseColor.png",
+      "bytes": 1732063,
+      "sha256": "ea85bfc02c4c807265a85f7ab50656f7eaa19f6567301d362d78c1d06da161ab"
+    },
+    {
+      "archiveEntry": "Textures/T_RedBrick_Normal.png",
+      "repositoryPath": "Textures/T_RedBrick_Normal.png",
+      "bytes": 7273659,
+      "sha256": "147f14d7f665d2598d0d796bd02a227f6b8b0fbc790c3e0737b1b90128101c93"
+    },
+    {
+      "archiveEntry": "Textures/T_Street_Decals.png",
+      "repositoryPath": "Textures/T_Street_Decals.png",
+      "bytes": 2233893,
+      "sha256": "90eca7571c910f713952d7568674e231fd21bc6f6693de5514a563c19c91148e"
+    },
+    {
+      "archiveEntry": "Textures/T_Trim_BaseColor.png",
+      "repositoryPath": "Textures/T_Trim_BaseColor.png",
+      "bytes": 4421593,
+      "sha256": "c3334902f8315783477eec63e2d462f8cefedf9c55b41ef452d8374b5603f08e"
+    },
+    {
+      "archiveEntry": "Textures/T_Trim_Normal.png",
+      "repositoryPath": "Textures/T_Trim_Normal.png",
+      "bytes": 4104873,
+      "sha256": "95fa43093067956fa6e206408f3e2f2302c18c7453b75a02f6e29fe57e2cd041"
+    }
+  ]
+}
