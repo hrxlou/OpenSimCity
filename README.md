@@ -28,6 +28,7 @@ SimCity 계열의 피드백 루프를 작은 규모부터 검증하는 Unity 기
 
 ## 설계 문서
 
+- [프로젝트 메모와 현재 컨텍스트](Docs/PROJECT_MEMORY.md)
 - [아키텍처와 디렉터리 구조](Docs/ARCHITECTURE.md)
 - [디자인·UI·아트 기준](Docs/DESIGN.md)
 - [이슈 단위 개발 로드맵](Docs/Roadmap/README.md)
