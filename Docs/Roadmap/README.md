@@ -121,6 +121,14 @@ P3-07은 저밀도 R/C/I stable definition을 각각 3개로 확장하고 primit
 road 차단→공개 reason→정상 command 복구를 기록한다. 이주 외부 연결은 현재 road graph의 실제
 gate 도달성을 사용한다.
 
+P4-01은 `FormatVersion=1`의 field-only 전체 도시 snapshot을 제공한다. world, sparse road/zone,
+parcel identity/topology, external gate, building/development/power producer, population/employment/
+migration, market/RCI/municipal finance와 growth RNG, clock tick, command sequence, scheduler
+next-run을 stable 순서로 저장한다. road graph·parcel frontage/accessibility·power allocation·
+dirty/version/read model과 Unity presentation reference는 저장하지 않고 load 후 재구축한다.
+알 수 없는 snapshot version이나 road/zone/building/utility definition ID는 상태 적용 전에
+거부하며, JSON/file I/O와 migration 실행은 P4-02로 남긴다.
+
 ## 디자인·아트 단계 적용
 
 | 시점 | 제품 화면에 적용 | 준비 작업 |

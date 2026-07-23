@@ -78,6 +78,37 @@ namespace OpenSimCity.Simulation.Economy
                 ClosingBalance = ClosingBalance
             };
         }
+
+        public static MunicipalMonthlyLedgerEntry FromDto(MunicipalMonthlyLedgerEntryDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+            if (dto.ResidentialTaxIncome < 0 ||
+                dto.CommercialTaxIncome < 0 ||
+                dto.IndustrialTaxIncome < 0 ||
+                dto.RoadConstructionExpense < 0 ||
+                dto.PowerConstructionExpense < 0 ||
+                dto.RoadMaintenanceExpense < 0 ||
+                dto.PowerMaintenanceExpense < 0)
+            {
+                throw new ArgumentException("Municipal ledger amounts must be non-negative.", nameof(dto));
+            }
+
+            var entry = new MunicipalMonthlyLedgerEntry(
+                new SimulationDate(dto.Year, dto.Month),
+                dto.OpeningBalance,
+                dto.ResidentialTaxIncome,
+                dto.CommercialTaxIncome,
+                dto.IndustrialTaxIncome,
+                dto.RoadConstructionExpense,
+                dto.PowerConstructionExpense,
+                dto.RoadMaintenanceExpense,
+                dto.PowerMaintenanceExpense,
+                dto.ClosingBalance);
+            if (entry.ClosingBalance != checked(entry.OpeningBalance + entry.NetChange))
+                throw new ArgumentException("Municipal ledger balance invariant failed.", nameof(dto));
+            return entry;
+        }
     }
 
     [Serializable]
@@ -299,8 +330,69 @@ namespace OpenSimCity.Simulation.Economy
                 PendingIndustrialTaxPermille = PendingTaxRates.IndustrialPermille,
                 PendingEffectiveYear = HasPendingTaxRateChange ? PendingTaxEffectiveMonth.Year : 0,
                 PendingEffectiveMonth = HasPendingTaxRateChange ? PendingTaxEffectiveMonth.Month : 0,
+                PeriodOpeningBalance = _periodOpeningBalance,
+                RoadConstructionExpense = _roadConstructionExpense,
+                PowerConstructionExpense = _powerConstructionExpense,
                 Ledger = rows
             };
+        }
+
+        public void RestoreFromDto(MunicipalFinanceStateDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+            if (dto.RoadConstructionExpense < 0 || dto.PowerConstructionExpense < 0)
+                throw new ArgumentException("Pending construction expenses must be non-negative.", nameof(dto));
+
+            var activeRates = new UrbanEconomyTaxRates(
+                dto.ActiveResidentialTaxPermille,
+                dto.ActiveCommercialTaxPermille,
+                dto.ActiveIndustrialTaxPermille);
+            var pendingRates = new UrbanEconomyTaxRates(
+                dto.PendingResidentialTaxPermille,
+                dto.PendingCommercialTaxPermille,
+                dto.PendingIndustrialTaxPermille);
+            var rows = dto.Ledger ?? Array.Empty<MunicipalMonthlyLedgerEntryDto>();
+            var restored = new List<MunicipalMonthlyLedgerEntry>(rows.Length);
+            MunicipalMonthlyLedgerEntry previous = null;
+            for (var index = 0; index < rows.Length; index++)
+            {
+                var entry = MunicipalMonthlyLedgerEntry.FromDto(rows[index]);
+                if (previous != null)
+                {
+                    if (entry.Month.CompareTo(previous.Month) <= 0)
+                        throw new ArgumentException("Municipal ledger months must be strictly increasing.", nameof(dto));
+                    if (entry.OpeningBalance != previous.ClosingBalance)
+                        throw new ArgumentException("Municipal ledger balances must form one continuous chain.", nameof(dto));
+                }
+
+                restored.Add(entry);
+                previous = entry;
+            }
+
+            if (previous != null && dto.PeriodOpeningBalance != previous.ClosingBalance)
+                throw new ArgumentException("The current fiscal period must open at the last settled balance.", nameof(dto));
+            if (checked(dto.PeriodOpeningBalance -
+                        dto.RoadConstructionExpense -
+                        dto.PowerConstructionExpense) != dto.Balance)
+            {
+                throw new ArgumentException("Pending construction expenses do not reconcile to balance.", nameof(dto));
+            }
+
+            Balance = dto.Balance;
+            ActiveTaxRates = activeRates;
+            HasPendingTaxRateChange = dto.HasPendingTaxRateChange;
+            PendingTaxRates = dto.HasPendingTaxRateChange ? pendingRates : default(UrbanEconomyTaxRates);
+            PendingTaxEffectiveMonth = dto.HasPendingTaxRateChange
+                ? new SimulationDate(dto.PendingEffectiveYear, dto.PendingEffectiveMonth)
+                : default(SimulationDate);
+            _periodOpeningBalance = dto.PeriodOpeningBalance;
+            _roadConstructionExpense = dto.RoadConstructionExpense;
+            _powerConstructionExpense = dto.PowerConstructionExpense;
+            _ledger.Clear();
+            _ledger.AddRange(restored);
+            LastSettledMonth = previous == null ? default(SimulationDate) : previous.Month;
+            Version = 1;
         }
     }
 
@@ -317,6 +409,9 @@ namespace OpenSimCity.Simulation.Economy
         public int PendingIndustrialTaxPermille;
         public int PendingEffectiveYear;
         public int PendingEffectiveMonth;
+        public int PeriodOpeningBalance;
+        public int RoadConstructionExpense;
+        public int PowerConstructionExpense;
         public MunicipalMonthlyLedgerEntryDto[] Ledger = Array.Empty<MunicipalMonthlyLedgerEntryDto>();
     }
 }

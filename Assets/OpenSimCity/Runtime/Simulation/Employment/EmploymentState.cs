@@ -88,6 +88,39 @@ namespace OpenSimCity.Simulation.Employment
                 Buildings = rows
             };
         }
+
+        public void RestoreFromDto(EmploymentStateDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+
+            var source = dto.Buildings ?? Array.Empty<BuildingEmploymentStateDto>();
+            var rows = new BuildingEmploymentState[source.Length];
+            var previousId = StableId.Invalid;
+            for (var index = 0; index < source.Length; index++)
+            {
+                if (source[index] == null)
+                    throw new ArgumentException("An employment DTO row cannot be null.", nameof(dto));
+
+                var buildingId = new StableId(source[index].BuildingId);
+                if (index > 0 && buildingId <= previousId)
+                {
+                    throw new ArgumentException(
+                        "Employment DTO rows must use unique ascending building IDs.",
+                        nameof(dto));
+                }
+
+                rows[index] = new BuildingEmploymentState(
+                    buildingId,
+                    source[index].FilledJobs,
+                    source[index].Capacity);
+                previousId = buildingId;
+            }
+
+            Set(dto.LaborForce, rows);
+            if (EmployedWorkers != dto.EmployedWorkers || AvailableJobs != dto.AvailableJobs)
+                throw new ArgumentException("Employment DTO aggregate values do not match its rows.", nameof(dto));
+        }
     }
 
     [Serializable]

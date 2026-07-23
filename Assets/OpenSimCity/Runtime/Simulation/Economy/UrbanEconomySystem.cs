@@ -61,6 +61,39 @@ namespace OpenSimCity.Simulation.Economy
         public bool HasProcessedMonth { get; private set; }
         public int Version { get; private set; }
 
+        public UrbanEconomySystemStateDto ToDto()
+        {
+            return new UrbanEconomySystemStateDto
+            {
+                HasProcessedMonth = HasProcessedMonth,
+                LastProcessedYear = HasProcessedMonth ? LastProcessedMonth.Year : 0,
+                LastProcessedMonth = HasProcessedMonth ? LastProcessedMonth.Month : 0,
+                ResidentialTaxPermille = TaxRates.ResidentialPermille,
+                CommercialTaxPermille = TaxRates.CommercialPermille,
+                IndustrialTaxPermille = TaxRates.IndustrialPermille,
+                Market = Market.ToDto(),
+                Rci = Rci.ToDto()
+            };
+        }
+
+        public void RestoreFromDto(UrbanEconomySystemStateDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+
+            Market.RestoreFromDto(dto.Market);
+            Rci.RestoreFromDto(dto.Rci);
+            TaxRates = new UrbanEconomyTaxRates(
+                dto.ResidentialTaxPermille,
+                dto.CommercialTaxPermille,
+                dto.IndustrialTaxPermille);
+            HasProcessedMonth = dto.HasProcessedMonth;
+            LastProcessedMonth = dto.HasProcessedMonth
+                ? new SimulationDate(dto.LastProcessedYear, dto.LastProcessedMonth)
+                : default(SimulationDate);
+            Version = dto.HasProcessedMonth ? 1 : 0;
+        }
+
         public void RunMonth(SimulationDate month)
         {
             if (HasProcessedMonth && month.CompareTo(LastProcessedMonth) <= 0)
@@ -188,5 +221,18 @@ namespace OpenSimCity.Simulation.Economy
                 magnitude = 1;
             return current + (delta > 0 ? magnitude : -magnitude);
         }
+    }
+
+    [Serializable]
+    public sealed class UrbanEconomySystemStateDto
+    {
+        public bool HasProcessedMonth;
+        public int LastProcessedYear;
+        public int LastProcessedMonth;
+        public int ResidentialTaxPermille;
+        public int CommercialTaxPermille;
+        public int IndustrialTaxPermille;
+        public MarketStateDto Market;
+        public RciDemandStateDto Rci;
     }
 }

@@ -51,6 +51,26 @@ namespace OpenSimCity.Simulation.Development
             MonthsRemaining = MonthsRemaining
         };
 
+        public static GrowthEvent FromDto(GrowthEventDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+            if (dto.Kind < byte.MinValue ||
+                dto.Kind > byte.MaxValue ||
+                !Enum.IsDefined(typeof(GrowthEventKind), (GrowthEventKind)dto.Kind))
+                throw new ArgumentException("A growth event DTO has an unknown kind.", nameof(dto));
+            if (dto.MonthsRemaining < 0)
+                throw new ArgumentOutOfRangeException(nameof(dto), "Growth event remaining months cannot be negative.");
+
+            return new GrowthEvent(
+                (GrowthEventKind)dto.Kind,
+                new StableId(dto.BuildingId),
+                new StableId(dto.DefinitionId),
+                new StableId(dto.ParcelId),
+                new CellCoord(dto.AnchorX, dto.AnchorY),
+                dto.MonthsRemaining);
+        }
+
         public bool Equals(GrowthEvent other)
         {
             return Kind == other.Kind && BuildingId == other.BuildingId &&

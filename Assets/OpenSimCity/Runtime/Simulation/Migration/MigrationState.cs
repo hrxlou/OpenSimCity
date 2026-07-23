@@ -40,6 +40,19 @@ namespace OpenSimCity.Simulation.Migration
                 HasExternalConnection = HasExternalConnection
             };
         }
+
+        public void RestoreFromDto(MigrationStateDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+
+            Set(
+                dto.InboundPressure,
+                dto.OutboundPressure,
+                dto.Arrivals,
+                dto.Departures,
+                dto.HasExternalConnection);
+        }
     }
 
     [Serializable]

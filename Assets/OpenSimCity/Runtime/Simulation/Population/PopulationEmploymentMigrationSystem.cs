@@ -44,6 +44,34 @@ namespace OpenSimCity.Simulation.Population
         public bool HasProcessedMonth { get; private set; }
         public int Version { get; private set; }
 
+        public PopulationEmploymentMigrationStateDto ToDto()
+        {
+            return new PopulationEmploymentMigrationStateDto
+            {
+                HasProcessedMonth = HasProcessedMonth,
+                LastProcessedYear = HasProcessedMonth ? LastProcessedMonth.Year : 0,
+                LastProcessedMonth = HasProcessedMonth ? LastProcessedMonth.Month : 0,
+                Population = Population.ToDto(),
+                Employment = Employment.ToDto(),
+                Migration = Migration.ToDto()
+            };
+        }
+
+        public void RestoreFromDto(PopulationEmploymentMigrationStateDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+
+            Population.RestoreFromDto(dto.Population);
+            Employment.RestoreFromDto(dto.Employment);
+            Migration.RestoreFromDto(dto.Migration);
+            HasProcessedMonth = dto.HasProcessedMonth;
+            LastProcessedMonth = dto.HasProcessedMonth
+                ? new SimulationDate(dto.LastProcessedYear, dto.LastProcessedMonth)
+                : default(SimulationDate);
+            Version = dto.HasProcessedMonth ? 1 : 0;
+        }
+
         public void RunMonth(SimulationDate month)
         {
             if (HasProcessedMonth && month.CompareTo(LastProcessedMonth) <= 0)
@@ -244,5 +272,16 @@ namespace OpenSimCity.Simulation.Population
             public int FilledJobs { get; set; }
             public int Capacity { get; }
         }
+    }
+
+    [Serializable]
+    public sealed class PopulationEmploymentMigrationStateDto
+    {
+        public bool HasProcessedMonth;
+        public int LastProcessedYear;
+        public int LastProcessedMonth;
+        public PopulationStateDto Population;
+        public OpenSimCity.Simulation.Employment.EmploymentStateDto Employment;
+        public OpenSimCity.Simulation.Migration.MigrationStateDto Migration;
     }
 }

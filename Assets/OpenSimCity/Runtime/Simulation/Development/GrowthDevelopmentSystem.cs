@@ -61,7 +61,7 @@ namespace OpenSimCity.Simulation.Development
             _rng = DeterministicRandom.ForSubsystem(seed, RngSubsystemKey);
         }
 
-        public DevelopmentState State { get; } = new DevelopmentState();
+        public DevelopmentState State { get; private set; } = new DevelopmentState();
 
         public GrowthDevelopmentParameters Parameters => _parameters;
 
@@ -74,6 +74,55 @@ namespace OpenSimCity.Simulation.Development
         public bool HasProcessedMonth { get; private set; }
 
         public int Version { get; private set; }
+
+        public ulong RandomState => _rng.State;
+
+        public GrowthDevelopmentSystemStateDto ToDto()
+        {
+            var events = new GrowthEventDto[_lastEvents.Length];
+            for (var index = 0; index < events.Length; index++)
+                events[index] = _lastEvents[index].ToDto();
+
+            var summaries = new DevelopmentSectorSummaryDto[_summaries.Length];
+            for (var index = 0; index < summaries.Length; index++)
+                summaries[index] = _summaries[index].ToDto();
+
+            return new GrowthDevelopmentSystemStateDto
+            {
+                HasProcessedMonth = HasProcessedMonth,
+                LastProcessedYear = HasProcessedMonth ? LastProcessedMonth.Year : 0,
+                LastProcessedMonth = HasProcessedMonth ? LastProcessedMonth.Month : 0,
+                RandomState = _rng.State,
+                Development = State.ToDto(),
+                LastEvents = events,
+                SectorSummaries = summaries
+            };
+        }
+
+        public void RestoreFromDto(GrowthDevelopmentSystemStateDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+
+            State = DevelopmentState.FromDto(dto.Development);
+            _rng = DeterministicRandom.Restore(dto.RandomState);
+
+            var eventDtos = dto.LastEvents ?? Array.Empty<GrowthEventDto>();
+            _lastEvents = new GrowthEvent[eventDtos.Length];
+            for (var index = 0; index < eventDtos.Length; index++)
+                _lastEvents[index] = GrowthEvent.FromDto(eventDtos[index]);
+
+            var summaryDtos = dto.SectorSummaries ?? Array.Empty<DevelopmentSectorSummaryDto>();
+            _summaries = new DevelopmentSectorSummary[summaryDtos.Length];
+            for (var index = 0; index < summaryDtos.Length; index++)
+                _summaries[index] = DevelopmentSectorSummary.FromDto(summaryDtos[index]);
+
+            HasProcessedMonth = dto.HasProcessedMonth;
+            LastProcessedMonth = dto.HasProcessedMonth
+                ? new SimulationDate(dto.LastProcessedYear, dto.LastProcessedMonth)
+                : default(SimulationDate);
+            Version = dto.HasProcessedMonth ? 1 : 0;
+        }
 
         public void RunMonth(SimulationDate month)
         {
@@ -438,5 +487,18 @@ namespace OpenSimCity.Simulation.Development
             public DevelopmentBuildingProfile Profile { get; }
             public int Component { get; }
         }
+    }
+
+    [Serializable]
+    public sealed class GrowthDevelopmentSystemStateDto
+    {
+        public bool HasProcessedMonth;
+        public int LastProcessedYear;
+        public int LastProcessedMonth;
+        public ulong RandomState;
+        public DevelopmentStateDto Development;
+        public GrowthEventDto[] LastEvents = Array.Empty<GrowthEventDto>();
+        public DevelopmentSectorSummaryDto[] SectorSummaries =
+            Array.Empty<DevelopmentSectorSummaryDto>();
     }
 }
