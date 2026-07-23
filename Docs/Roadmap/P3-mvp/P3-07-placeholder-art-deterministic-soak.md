@@ -85,13 +85,15 @@
 - [x] 서로 다른 두 도로 배치가 기본 성장 루프를 완주한다.
 - [x] 30분 뒤 적어도 하나의 설명 가능한 다음 행동이 남는다.
 - [x] P3 gate 증거와 알려진 문제 목록을 이슈에 기록한다.
-- [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+- [x] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
 
 ## Windows implementation evidence (2026-07-23)
 
 - OS: Windows 11 Enterprise `10.0.26200` (`x64`)
 - Unity: `6000.5.3f1` (`c2eb47b3a2a9`)
 - Branch: `feature/p3-07-mvp-soak`
+- Implementation commit: `b9506f25a8f04ac66e4c9815aebc70366a73a80a`
+- Draft PR: [#89](https://github.com/hrxlou/OpenSimCity/pull/89)
 - EditMode:
   `powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\run-unity-tests.ps1 edit`
   → `172/172` passed
@@ -120,7 +122,6 @@
   contrast·한글 fallback·100/125/150% OS scale capture는 자동 가속 soak와 별도로 남아 있다.
 - 메모리 수치는 PlayMode 전후 관측치일 뿐 leak 판정이나 성능 budget 증거가 아니다. P3-07은
   FPS/성능 개선을 주장하지 않는다.
-- Commit/PR과 GitHub 이슈 링크는 publish 뒤 이 기록과 GitHub 이슈에 추가한다.
 
 ## Out of scope
 
