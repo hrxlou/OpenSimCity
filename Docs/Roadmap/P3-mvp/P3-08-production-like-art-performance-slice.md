@@ -55,7 +55,7 @@ placeholder와 구조가 다른 실제 후보 에셋 소수로 Benchmark 전용 
 - [x] vendor asset과 OpenSimCity wrapper의 저장 경계가 실제 파일로 검증된다.
 - [x] P8 fixture가 사용할 production-like renderer/material/texture baseline이 기록된다.
 - [x] CityPrototype placeholder와 gameplay 계약을 바꾸지 않는다.
-- [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+- [x] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
 
 ## Implementation evidence
 
@@ -74,7 +74,8 @@ placeholder와 구조가 다른 실제 후보 에셋 소수로 Benchmark 전용 
 - Detailed evidence:
   [P3-08 production-like art baseline](../../Benchmarks/P3-08-production-like-art-baseline.md)
 - Branch: `codex/p3-08-production-like-art-performance-slice`
-- Commit/PR: PR 생성 뒤 이 문서에 기록한다.
+- Implementation commit: `b52cb6feed85efd5cd66342dc5a73762a6353cc4`
+- PR: [#91](https://github.com/hrxlou/OpenSimCity/pull/91)
 
 ## Out of scope
 
