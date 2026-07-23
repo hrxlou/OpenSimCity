@@ -74,13 +74,15 @@
 - [ ] 손상 파일과 알 수 없는 버전을 안전하게 알린다.
 - [ ] 저장 전후 공개 원인·가능 명령·다음 기간 결과가 의미상 동일하다.
 - [ ] P4 gate 증거와 save fixture 버전이 기록된다.
-- [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+- [x] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
 
 ## Windows implementation evidence (2026-07-23)
 
 - OS: Windows 11 Enterprise `10.0.26200` build `26200` (`x64`)
 - Unity: `6000.5.3f1` (`c2eb47b3a2a9`)
 - Branch: `codex/p4-03-save-ui-cross-platform-roundtrip`
+- Implementation commit: `e1bec84ba619b99b7798ffceb0b12505433d2e84`
+- Draft PR: [#94](https://github.com/hrxlou/OpenSimCity/pull/94)
 - ProjectSettings index baseline guard: passed
 - P4-03 EditMode fixture:
   `CityPersistenceControllerTests` → `4/4` passed
@@ -93,7 +95,6 @@
 - manual save/overwrite, 매월 tick-boundary autosave, manual load, load 중 clock/input/세율 command
   차단, context 교체와 pooled road view 재구축, 손상/unknown version의 partial-apply 방지 및
   recovery 선택을 자동 fixture로 검증했다.
-- Commit/PR은 publish 후 최종 evidence commit에서 이 절에 기록한다.
 
 ## Remaining verification / blocked
 
