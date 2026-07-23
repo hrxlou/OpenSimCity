@@ -134,7 +134,8 @@ namespace OpenSimCity.Application.World
                 PopulationEmploymentModel,
                 UrbanEconomyModel,
                 DevelopmentStatus,
-                () => CurrentSimulationMonth);
+                () => CurrentSimulationMonth,
+                () => CurrentSimulationDay);
         }
 
         public WorldState World { get; }
@@ -190,6 +191,14 @@ namespace OpenSimCity.Application.World
         public DevelopmentStatusViewModel DevelopmentStatus { get; }
         public MunicipalHudViewModel HudModel { get; }
 
+        /// <summary>
+        /// Raised only after the application clock has committed every tick
+        /// processed by one presentation advance. Persistence listeners can take
+        /// a snapshot here without observing a scheduler result paired with the
+        /// previous clock tick.
+        /// </summary>
+        public event Action<int> SimulationAdvanceCompleted;
+
         public StableId DefaultRoadDefinitionId { get; }
         public StableId DefaultPowerPlantDefinitionId { get; }
         public CommandSequence NextCommandSequence => _sequence;
@@ -211,13 +220,39 @@ namespace OpenSimCity.Application.World
         public SimulationDate CurrentSimulationMonth => MonthlyScheduler.NextMonth;
 
         /// <summary>
+        /// Display-only day within the current 30-day month. It is derived from
+        /// the saved clock tick and scheduler cadence, so it adds no independent
+        /// simulation or persistence state.
+        /// </summary>
+        public int CurrentSimulationDay
+        {
+            get
+            {
+                const int daysPerMonth = 30;
+                var periodStartTick = MonthlyScheduler.NextRunTick.Value -
+                                      (MonthlyScheduler.TicksPerMonth - 1L);
+                var progressedTicks = Clock.CurrentTick.Value - periodStartTick;
+                if (progressedTicks < 0L)
+                    progressedTicks = 0L;
+                if (progressedTicks >= MonthlyScheduler.TicksPerMonth)
+                    progressedTicks = MonthlyScheduler.TicksPerMonth - 1L;
+
+                return (int)(progressedTicks * daysPerMonth /
+                             MonthlyScheduler.TicksPerMonth) + 1;
+            }
+        }
+
+        /// <summary>
         /// Advances the application clock from a presentation host. Rendering speed
         /// cannot change the number or order of monthly systems that run for a
         /// given sequence of ticks.
         /// </summary>
         public int AdvanceSimulation(double realDeltaSeconds)
         {
-            return Clock.Advance(realDeltaSeconds, ProcessSimulationTick);
+            var processedTicks = Clock.Advance(realDeltaSeconds, ProcessSimulationTick);
+            if (processedTicks > 0)
+                SimulationAdvanceCompleted?.Invoke(processedTicks);
+            return processedTicks;
         }
 
         /// <summary>Explicit tick seam used by deterministic fixtures and the runtime host.</summary>

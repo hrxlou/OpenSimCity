@@ -177,6 +177,7 @@ GameObject:
   - component: {fileID: 154218319}
   - component: {fileID: 154218321}
   - component: {fileID: 154218322}
+  - component: {fileID: 154218323}
   m_Layer: 0
   m_Name: UIDocument
   m_TagString: Untagged
@@ -262,6 +263,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e6b264e830d4599a2a209fcf5ec570d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: OpenSimCity.UI::OpenSimCity.UI.HUD.MunicipalHudBinder
+  bootstrap: {fileID: 154218319}
+--- !u!114 &154218323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 154218317}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a14d85aff8dedb74ab1132983c9a22b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: OpenSimCity.UI::OpenSimCity.UI.Persistence.SaveUiBinder
   bootstrap: {fileID: 154218319}
 --- !u!1 &157361170
 GameObject:
@@ -351,6 +365,7 @@ GameObject:
   - component: {fileID: 294122725}
   - component: {fileID: 294122727}
   - component: {fileID: 294122726}
+  - component: {fileID: 294122728}
   m_Layer: 0
   m_Name: CityRuntime
   m_TagString: Untagged
@@ -402,6 +417,20 @@ MonoBehaviour:
   worldBoundsSource: {fileID: 157361173}
   cameraRig: {fileID: 157361172}
   cellSize: 1
+--- !u!114 &294122728
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 294122724}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c40d3879a924eae42809606fc747019b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: OpenSimCity.Platform::OpenSimCity.Platform.Persistence.CityPersistenceHost
+  runtimeHost: {fileID: 294122727}
+  inputDriver: {fileID: 294122726}
 --- !u!1 &409229851
 GameObject:
   m_ObjectHideFlags: 0

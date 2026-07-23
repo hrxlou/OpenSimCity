@@ -48,7 +48,38 @@ namespace OpenSimCity.Gameplay.Construction
 
         private void OnEnable()
         {
-            var runtime = new CityRuntime(CityRuntimeOptions.Default);
+            ReplaceRuntime(new CityRuntime(CityRuntimeOptions.Default));
+        }
+
+        private void OnDisable()
+        {
+            if (_context != null)
+            {
+                CityRuntimeContext.ClearCurrent(_context);
+                _context.Dispose();
+            }
+            _context = null;
+        }
+
+        /// <summary>
+        /// Atomically publishes a fully validated runtime. Presentation systems
+        /// observe the new ambient context on their next centralized refresh and
+        /// rebuild derived views from stable IDs rather than restoring Unity
+        /// instance IDs.
+        /// </summary>
+        public void ReplaceRuntime(CityRuntime runtime)
+        {
+            if (runtime == null)
+                throw new System.ArgumentNullException(nameof(runtime));
+
+            runtime.RefreshReadModels();
+            var previous = _context;
+            if (previous != null)
+            {
+                CityRuntimeContext.ClearCurrent(previous);
+                previous.Dispose();
+            }
+
             _context = new CityRuntimeContext(runtime);
             CityRuntimeContext.SetCurrent(_context);
 
@@ -64,13 +95,6 @@ namespace OpenSimCity.Gameplay.Construction
 
             if (cameraRig != null)
                 cameraRig.SetWorldBounds(WorldBounds);
-        }
-
-        private void OnDisable()
-        {
-            if (_context != null)
-                CityRuntimeContext.ClearCurrent(_context);
-            _context = null;
         }
 
         private void Update()

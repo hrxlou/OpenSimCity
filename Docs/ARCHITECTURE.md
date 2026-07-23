@@ -96,7 +96,7 @@ Scene·Prefab·정의 데이터 생성, 검증, 벤치마크, EditMode/PlayMode 
 | `OpenSimCity.Core` | 공통 값 타입, ID, 시간, 유틸리티 | 없음 |
 | `OpenSimCity.Simulation` | 도시 상태와 순수 규칙 | Core |
 | `OpenSimCity.Application` | 명령, 틱 조율, 저장 포트 | Core, Simulation |
-| `OpenSimCity.Platform` | JSON codec, 파일 저장소와 운영체제 adapter | Application, UnityEngine |
+| `OpenSimCity.Platform` | JSON codec, 파일 저장소·runtime persistence host와 운영체제 adapter | Application, Gameplay, UnityEngine |
 | `OpenSimCity.Definitions` | Unity ScriptableObject 정적 정의 schema와 순수 catalog data 변환 | Core, Simulation, Application, UnityEngine |
 | `OpenSimCity.Gameplay` | 입력과 건설 도구 | Core, Application |
 | `OpenSimCity.Presentation` | 월드 렌더링과 뷰 동기화 | Core, Application |
@@ -522,6 +522,9 @@ P3-06에서 `MunicipalFinanceState`는 민간 `UrbanEconomyState`와 별도의 �
 (count 내림차순·stable enum code 오름차순), 접근성 및 직전 월 대비 변화만 복사한다. UI는 이 순서나
 factor를 다시 계산하지 않으며 primitive/Application DTO만 소비하므로 Simulation assembly를 참조하지
 않는다. `CityRuntimeHost`의 중앙 clock만 시뮬레이션을 전진시키고 HUD refresh·배속은 월간 결과를 바꾸지 않는다.
+HUD의 일자는 별도 authoritative state가 아니라 `CurrentTick`과 `TicksPerMonth`를 30일 달력에
+매핑한 Application query 값이다. 따라서 snapshot v1 필드나 월간 system cadence를 변경하지 않으며
+같은 저장 tick을 복원하면 같은 년·월·일이 표시된다.
 
 P3-07의 `BuildingViewReadModel`은 건설 중 site와 완료 building을 stable building ID,
 presentation key, anchor, footprint, 진행률로만 복사한다. `BuildingViewRenderer`,
@@ -616,6 +619,35 @@ Migration golden은 `Assets/OpenSimCity/Tests/Fixtures/Persistence`에 UTF-8 BOM
 기존 version fixture는 수정하지 않고 새 source/target pair를 추가한다. 테스트는 source bytes
 불변, golden bytes 일치, target header version을 함께 검증하고 교차 장비 인계에는 byte count와
 FNV-1a checksum을 기록한다.
+
+### P4-03 저장 UI·자동 저장·runtime 교체 계약
+
+`CityPersistenceController`는 `manual-1`과 `autosave` 두 save key의 메타데이터 ViewModel,
+manual save/load command, 월 경계 자동 저장과 진행/오류 feedback을 Application에서 소유한다.
+UI는 이 ViewModel을 표시하고 command를 요청할 뿐 파일 경로·JSON·snapshot DTO를 읽지 않는다.
+요청은 즉시 현재 clock을 pause하고 Platform host의 다음 update에서 처리한다. save capture 때만
+플레이어가 선택한 직전 속도를 일시적으로 복원하므로 저장 파일은 정상 재개 속도를 유지하고,
+동시에 다른 simulation tick이나 player command가 끼어들지 않는다.
+
+자동 저장 cadence는 현재 P4에서 완료된 매월 한 번이다. `CityRuntime`은 한 presentation advance의
+모든 tick을 처리하고 `SimulationClock.CurrentTick`을 다음 실행 tick으로 올린 뒤에만
+`SimulationAdvanceCompleted`를 발행한다. Controller는 이 완전한 tick 경계에서 autosave를
+예약하고 즉시 clock을 pause하므로 scheduler 결과와 이전 clock tick이 섞인 snapshot을 만들지 않는다.
+
+load는 storage read, version/migration, decode와 전체 snapshot restore가 성공하기 전까지 기존
+`CityRuntime`과 `CityRuntimeContext`를 유지한다. 성공하면 `CityRuntimeHost.ReplaceRuntime`이
+새 context와 world bounds를 원자적으로 publish한다. 도로·건물·발전소 중앙 renderer는 context
+identity 변경을 감지해 기존 view를 pool로 회수하고 stable-ID read model에서 다시 만든다.
+GameObject/View instance ID는 복원하지 않는다. 실패하면 기존 도시와 속도를 복구하고 손상,
+unknown version, 잠금/권한 오류를 player message와 `다시 시도`/`현재 도시 계속하기` 선택으로
+노출한다.
+
+교차 플랫폼 gate fixture는 snapshot v1
+`Assets/OpenSimCity/Tests/Fixtures/Persistence/p4-v1-roundtrip-windows.json`이다. 실제 save
+payload는 마지막 LF를 제외한 `5,664 bytes`, FNV-1a `6039FE7670E3C298`이며 전력 복구 command와
+다음 월 실행 뒤 checksum은 `68BE53564A1F46A7`이다. 다른 플랫폼은 동일 bytes를 load하고
+`DevelopmentStatusViewModel`의 기간·상위 reason·실행 가능 필지 수, recovery command preview와
+다음 월 checksum을 비교한 뒤 그 플랫폼에서 만든 v1 save를 반대 장비 artifact로 돌려준다.
 
 ## 11. 첫 번째 기술 결정
 

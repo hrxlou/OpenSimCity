@@ -107,6 +107,9 @@ P3의 `GlobalHud`는 World View를 위한 상단의 compact single-row 상태 ba
 작업 공간을 점유하지 않는다. GlobalHud와 하단 Build Palette는 화면 가장자리에 붙는 직각의 fixed bar이며,
 Build Palette는 선택 도구·단축키·비용을 한 행으로 표시하고 실제 subtype 항목이 추가될 때만 높이가 늘어난다.
 Tool Rail·Context Inspector·SimulationControls는 화면 모서리에서 spacing token 하나만큼 떨어진 floating panel로 둔다.
+GlobalHud의 현재 날짜는 `년 월 일`을 표시한다. 하루는 별도 simulation cadence가 아니라 현재 월의
+저장 가능한 clock tick 진행률을 30일에 결정적으로 매핑한 표시 단위이며, 월간 system 실행과 정산은
+기존 월 경계에서만 발생한다.
 
 ### 3.4 공통 component
 
@@ -120,6 +123,16 @@ Tool Rail·Context Inspector·SimulationControls는 화면 모서리에서 spaci
 - `Toast/CommandFeedback`: 명령 성공·실패와 비용 변화
 
 component의 상태는 최소 `default`, `hover`, `focus`, `selected`, `disabled`, `warning`, `error`를 정의한다. motion은 상태 전환을 설명하는 짧은 feedback에만 사용하며 simulation tick이나 명령 완료 시점과 결합하지 않는다.
+
+#### P4-03 저장 panel
+
+저장/불러오기는 별도 대시보드나 출시 메뉴를 앞당기지 않고 Simulation Controls의
+`저장/불러오기` 진입점과 우하단 elevated panel로 제공한다. panel은 `수동 저장`과 `자동 저장`
+두 slot의 기간·format version·저장 시간을 Application ViewModel 그대로 표시한다. 작업 중에는
+버튼과 world command 입력을 함께 disable하고 `저장 중`/`불러오는 중` 문구를 표시한다.
+손상·unknown version은 danger 색만 사용하지 않고 원인 문구, 기존 도시 유지 설명,
+`다시 시도`와 `현재 도시 계속하기` label을 함께 제공한다. UI가 save bytes나 경로를 읽거나
+GameObject 복원을 지시하지 않는다.
 
 ### 3.5 타이포그래피·아이콘
 

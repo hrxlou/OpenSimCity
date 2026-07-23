@@ -40,6 +40,13 @@ namespace OpenSimCity.Tests.PlayMode
             Assert.That(bootstrap.GlobalHud, Is.Not.Null);
             Assert.That(bootstrap.SimulationControls, Is.Not.Null);
 
+            var date = bootstrap.GlobalHud.Q<Label>("osc-hud-date");
+            var snapshot = context.Runtime.HudModel.Snapshot;
+            Assert.That(
+                date.text,
+                Is.EqualTo(
+                    $"{snapshot.CurrentYear}년 {snapshot.CurrentMonth}월 {snapshot.CurrentDay}일"));
+
             Assert.That(bootstrap.GlobalHud.Q<Button>("osc-tax-residential-increase"), Is.Not.Null);
             hud.RequestResidentialTaxIncrease();
             yield return null;

@@ -13,6 +13,7 @@ namespace OpenSimCity.Application.Queries
     {
         public int CurrentYear;
         public int CurrentMonth;
+        public int CurrentDay;
         public bool HasSettledLedger;
         public int LedgerYear;
         public int LedgerMonth;
@@ -63,6 +64,7 @@ namespace OpenSimCity.Application.Queries
         private readonly UrbanEconomyReadModel _urbanEconomy;
         private readonly DevelopmentStatusViewModel _development;
         private readonly Func<SimulationDate> _currentDate;
+        private readonly Func<int> _currentDay;
 
         private int _version = -1;
         private MunicipalHudSnapshotDto _snapshot;
@@ -72,13 +74,15 @@ namespace OpenSimCity.Application.Queries
             PopulationEmploymentReadModel population,
             UrbanEconomyReadModel urbanEconomy,
             DevelopmentStatusViewModel development,
-            Func<SimulationDate> currentDate)
+            Func<SimulationDate> currentDate,
+            Func<int> currentDay)
         {
             _finance = finance ?? throw new ArgumentNullException(nameof(finance));
             _population = population ?? throw new ArgumentNullException(nameof(population));
             _urbanEconomy = urbanEconomy ?? throw new ArgumentNullException(nameof(urbanEconomy));
             _development = development ?? throw new ArgumentNullException(nameof(development));
             _currentDate = currentDate ?? throw new ArgumentNullException(nameof(currentDate));
+            _currentDay = currentDay ?? throw new ArgumentNullException(nameof(currentDay));
         }
 
         public int Version
@@ -94,6 +98,7 @@ namespace OpenSimCity.Application.Queries
         public bool RefreshIfNeeded()
         {
             var date = _currentDate();
+            var day = _currentDay();
             var financeVersion = _finance.Version;
             var populationVersion = _population.Version;
             var economyVersion = _urbanEconomy.Version;
@@ -101,22 +106,29 @@ namespace OpenSimCity.Application.Queries
             var developmentVersion = _development.HasSnapshot
                 ? _development.Snapshot.Date.GetHashCode()
                 : 0;
-            var nextVersion = Combine(financeVersion, populationVersion, economyVersion, developmentVersion, date);
+            var nextVersion = Combine(
+                financeVersion,
+                populationVersion,
+                economyVersion,
+                developmentVersion,
+                date,
+                day);
             if (_version == nextVersion)
                 return false;
 
-            _snapshot = Build(date);
+            _snapshot = Build(date, day);
             _version = nextVersion;
             return true;
         }
 
-        private MunicipalHudSnapshotDto Build(SimulationDate date)
+        private MunicipalHudSnapshotDto Build(SimulationDate date, int day)
         {
             var finance = _finance.Snapshot;
             var result = new MunicipalHudSnapshotDto
             {
                 CurrentYear = date.Year,
                 CurrentMonth = date.Month,
+                CurrentDay = day,
                 Balance = finance.Balance,
                 ActiveResidentialTaxPermille = finance.ActiveResidentialTaxPermille,
                 ActiveCommercialTaxPermille = finance.ActiveCommercialTaxPermille,
@@ -190,7 +202,13 @@ namespace OpenSimCity.Application.Queries
             target.TopBlockReasons = rows;
         }
 
-        private static int Combine(int finance, int population, int economy, int development, SimulationDate date)
+        private static int Combine(
+            int finance,
+            int population,
+            int economy,
+            int development,
+            SimulationDate date,
+            int day)
         {
             unchecked
             {
@@ -199,7 +217,8 @@ namespace OpenSimCity.Application.Queries
                 hash = hash * 397 ^ economy;
                 hash = hash * 397 ^ development;
                 hash = hash * 397 ^ date.Year;
-                return hash * 397 ^ date.Month;
+                hash = hash * 397 ^ date.Month;
+                return hash * 397 ^ day;
             }
         }
     }

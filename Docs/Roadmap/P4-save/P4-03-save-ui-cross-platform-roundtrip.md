@@ -4,7 +4,7 @@
 - Primary: `Windows`
 - Verify: `Mac`
 - Estimate: `3 days`
-- Branch: `feature/p4-03-save-ui-roundtrip`
+- Branch: `codex/p4-03-save-ui-cross-platform-roundtrip`
 - Depends on: `P4-02`
 
 ## Goal
@@ -39,6 +39,22 @@
 - load 후 GameObject/View instance ID를 복원하려 하지 않는다.
 - 자동 저장은 simulation tick 경계에서 일관된 snapshot을 취한다.
 
+### Implemented contract
+
+- Application의 `CityPersistenceController`가 `manual-1`/`autosave` slot metadata ViewModel,
+  manual save/load command, 진행·오류 feedback과 매월 autosave cadence를 소유한다. UI는 파일이나
+  JSON을 직접 읽지 않는다.
+- persistence request는 즉시 clock과 construction input을 pause하고 Platform host의 다음 update에서
+  실행한다. autosave는 `SimulationClock.CurrentTick`이 다음 tick으로 commit된 월 경계에서만 예약한다.
+- load는 decode·validation·runtime restore가 모두 성공하기 전 기존 도시를 유지한다. 성공하면
+  `CityRuntimeHost.ReplaceRuntime`이 새 context/world bounds를 publish하고 중앙 pooled road/building/
+  power renderer가 stable-ID read model에서 view/cache를 다시 만든다.
+- 손상·unknown version·잠금/권한/쓰기 오류는 partial apply 없이 player message로 매핑하며
+  `다시 시도`와 `현재 도시 계속하기`를 제공한다.
+- v1 Windows gate fixture는 `p4-v1-roundtrip-windows.json`이다. 실제 save payload는 `5,664 bytes`,
+  FNV-1a `6039FE7670E3C298`, 정상 전력 복구 command와 다음 월 뒤 checksum은
+  `68BE53564A1F46A7`이다.
+
 ## Verification
 
 - Windows↔Mac 교차 load와 다음 월 checksum
@@ -58,7 +74,37 @@
 - [ ] 손상 파일과 알 수 없는 버전을 안전하게 알린다.
 - [ ] 저장 전후 공개 원인·가능 명령·다음 기간 결과가 의미상 동일하다.
 - [ ] P4 gate 증거와 save fixture 버전이 기록된다.
-- [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+- [x] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+
+## Windows implementation evidence (2026-07-23)
+
+- OS: Windows 11 Enterprise `10.0.26200` build `26200` (`x64`)
+- Unity: `6000.5.3f1` (`c2eb47b3a2a9`)
+- Branch: `codex/p4-03-save-ui-cross-platform-roundtrip`
+- Implementation commit: `e1bec84ba619b99b7798ffceb0b12505433d2e84`
+- Draft PR: [#94](https://github.com/hrxlou/OpenSimCity/pull/94)
+- ProjectSettings index baseline guard: passed
+- P4-03 EditMode fixture:
+  `CityPersistenceControllerTests` → `4/4` passed
+- P4-03 PlayMode smoke:
+  `SaveRoundTripPlayModeTests` → `2/2` passed
+- Full Unity regression:
+  `Tools/CI/run-unity-tests.ps1 all` → EditMode `196/196`, PlayMode `34/34` passed
+- HUD 날짜는 저장된 clock tick의 월 진행률을 30일에 매핑해 `년 월 일`로 표시하며,
+  별도 저장 필드나 월간 simulation cadence를 추가하지 않는다.
+- Windows v1 fixture: `5,664 bytes`, FNV-1a `6039FE7670E3C298`
+- 정상 전력 복구 command와 다음 월 뒤 checksum: `68BE53564A1F46A7`
+- manual save/overwrite, 매월 tick-boundary autosave, manual load, load 중 clock/input/세율 command
+  차단, context 교체와 pooled road view 재구축, 손상/unknown version의 partial-apply 방지 및
+  recovery 선택을 자동 fixture로 검증했다.
+
+## Remaining verification / blocked
+
+- macOS와 Unity `6000.5.3f1`에서 Windows fixture를 load해 기간·상위 reason·실행 가능 필지 수,
+  recovery command preview와 다음 월 checksum `68BE53564A1F46A7`을 재현해야 한다.
+- macOS가 같은 scenario의 v1 `.osc-save`를 만들어 byte count/checksum과 함께 전달하고,
+  Windows가 이를 load→다음 월까지 검증해야 양방향 항목과 P4 gate를 완료할 수 있다.
+- 현재 작업 환경에는 macOS 장비가 없으므로 위 두 항목은 이 PR에서 Blocked다.
 
 ## Out of scope
 

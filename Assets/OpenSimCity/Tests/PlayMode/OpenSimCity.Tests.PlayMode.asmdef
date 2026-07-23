@@ -5,6 +5,7 @@
     "OpenSimCity.Core",
     "OpenSimCity.Simulation",
     "OpenSimCity.Application",
+    "OpenSimCity.Platform",
     "OpenSimCity.Gameplay",
     "OpenSimCity.Presentation",
     "OpenSimCity.UI",

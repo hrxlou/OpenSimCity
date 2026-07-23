@@ -152,11 +152,77 @@ namespace OpenSimCity.Application.Persistence
             }
         }
 
+        public CitySaveMetadataResult ReadMetadata(string saveKey)
+        {
+            CitySaveStorageReadResult read;
+            try
+            {
+                read = _storage.Read(saveKey);
+            }
+            catch (Exception)
+            {
+                return MetadataFailure(CityPersistenceError.Unknown);
+            }
+
+            if (read == null)
+                return MetadataFailure(CityPersistenceError.Unknown);
+            if (!read.IsSuccess)
+                return MetadataFailure(Map(read.Error));
+
+            var migration = _migrationDispatcher.Dispatch(read.Payload);
+            if (!migration.IsSuccess)
+                return MetadataFailure(Map(migration.Error), migration.SourceVersion);
+
+            SnapshotPayloadDecodeResult decoding;
+            try
+            {
+                decoding = _codec.Decode(migration.Payload);
+            }
+            catch (Exception)
+            {
+                return MetadataFailure(CityPersistenceError.CorruptData, migration.SourceVersion);
+            }
+
+            var snapshot = decoding?.Snapshot;
+            if (decoding == null ||
+                !decoding.IsSuccess ||
+                snapshot?.Header == null ||
+                snapshot.Timeline == null)
+            {
+                return MetadataFailure(CityPersistenceError.CorruptData, migration.SourceVersion);
+            }
+
+            return new CitySaveMetadataResult(
+                CityPersistenceError.None,
+                snapshot.Header.FormatVersion,
+                snapshot.Header.GameVersion,
+                snapshot.Header.CreatedUtcTicks,
+                snapshot.Timeline.CurrentTick,
+                snapshot.Timeline.NextMonthYear,
+                snapshot.Timeline.NextMonth,
+                read.Payload.Length);
+        }
+
         private static CityLoadResult Failure(
             CityPersistenceError error,
             int sourceVersion = 0)
         {
             return new CityLoadResult(error, null, false, sourceVersion);
+        }
+
+        private static CitySaveMetadataResult MetadataFailure(
+            CityPersistenceError error,
+            int formatVersion = 0)
+        {
+            return new CitySaveMetadataResult(
+                error,
+                formatVersion,
+                string.Empty,
+                0,
+                0,
+                0,
+                0,
+                0);
         }
 
         private static CityPersistenceError Map(CitySaveStorageError error)

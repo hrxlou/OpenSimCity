@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using OpenSimCity.Application.Bootstrap;
 using OpenSimCity.Application.Commands;
 using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.World;
@@ -13,6 +14,29 @@ namespace OpenSimCity.Tests.EditMode
 {
     public sealed class MunicipalFinanceHudTests
     {
+        [Test]
+        public void HudCalendarDayIsDerivedDeterministicallyFromMonthlyTickProgress()
+        {
+            var runtime = new CityRuntime(new CityRuntimeOptions
+            {
+                Width = 8,
+                Height = 8,
+                TicksPerMonth = 30,
+                FirstSimulationMonth = new SimulationDate(1, 1)
+            });
+
+            AssertHudDate(runtime, 1, 1, 1);
+
+            AdvanceTicks(runtime, 1);
+            AssertHudDate(runtime, 1, 1, 2);
+
+            AdvanceTicks(runtime, 28);
+            AssertHudDate(runtime, 1, 1, 30);
+
+            AdvanceTicks(runtime, 1);
+            AssertHudDate(runtime, 1, 2, 1);
+        }
+
         [Test]
         public void MonthlyLedgerPreservesOpeningPlusNetEqualsClosingAndSerializes()
         {
@@ -145,6 +169,28 @@ namespace OpenSimCity.Tests.EditMode
                 TicksPerMonth = 1,
                 FirstSimulationMonth = new SimulationDate(1, 1)
             });
+        }
+
+        private static void AdvanceTicks(CityRuntime runtime, int count)
+        {
+            for (var index = 0; index < count; index++)
+            {
+                Assert.That(
+                    runtime.AdvanceSimulation(SimulationClock.DefaultFixedDeltaSeconds),
+                    Is.EqualTo(1));
+            }
+        }
+
+        private static void AssertHudDate(
+            CityRuntime runtime,
+            int expectedYear,
+            int expectedMonth,
+            int expectedDay)
+        {
+            var hud = runtime.HudModel.Snapshot;
+            Assert.That(hud.CurrentYear, Is.EqualTo(expectedYear));
+            Assert.That(hud.CurrentMonth, Is.EqualTo(expectedMonth));
+            Assert.That(hud.CurrentDay, Is.EqualTo(expectedDay));
         }
     }
 }
