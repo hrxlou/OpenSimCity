@@ -38,7 +38,7 @@ GitHub 실행 현황은 [Workflow Kanban](https://github.com/users/hrxlou/projec
 | P2 도로·구역·필지 | 도로 접면·외부 연결·접근성 거리가 개발 입력으로 제공됨 | 설치·취소·철거가 가능하고 고립망·개발 불가·접근성 band를 화면에서 구분함 | [P2-00](P2-roads-zones/P2-00-ui-toolkit-foundation.md), [P2-01](P2-roads-zones/P2-01-road-state-commands.md), [P2-02](P2-roads-zones/P2-02-road-graph-external-connection.md), [P2-03](P2-roads-zones/P2-03-zoning-commands.md), [P2-04](P2-roads-zones/P2-04-parcels-development-eligibility.md), [P2-05](P2-roads-zones/P2-05-placement-overlays-cross-platform.md) |
 | P3 첫 MVP | 도로·전력·수요·접근성 기반 성장과 월간 경제가 30분 동작 | 성장 정지 원인을 공개 UI에서 확인하고 전력·외부 연결 복구 뒤 성장이 재개되며, 서로 다른 두 도로 배치가 기본 루프를 완주함 | [P3-01](P3-mvp/P3-01-building-definitions-state.md), [P3-02](P3-mvp/P3-02-power-network.md), [P3-03](P3-mvp/P3-03-population-employment-migration.md), [P3-04](P3-mvp/P3-04-market-rci-demand.md), [P3-05](P3-mvp/P3-05-growth-development.md), [P3-06](P3-mvp/P3-06-municipal-economy-hud.md), [P3-07](P3-mvp/P3-07-placeholder-art-deterministic-soak.md) |
 | P3–P7 아트 성능 준비 | P8 측정용 production-like renderer/material/texture fixture가 재현됨 | 제품 gate 아님. CityPrototype placeholder와 gameplay를 바꾸지 않음 | [P3-08](P3-mvp/P3-08-production-like-art-performance-slice.md) |
-| P4 저장·복원 | 성장 중인 도시가 양쪽 플랫폼에서 동일하게 복원됨 | 저장 전후 공개 원인·가능 명령·다음 기간 결과가 의미상 동일함 | [P4-01](P4-save/P4-01-snapshot-dto-serialization.md), [P4-02](P4-save/P4-02-storage-migration.md), [P4-03](P4-save/P4-03-save-ui-cross-platform-roundtrip.md) |
+| P4 저장·복원·신규 도시 시작 | 성장 중인 도시가 양쪽 플랫폼에서 동일하게 복원되고 빈 신규 도시의 첫 성장 timeline이 결정적임 | 공개 UI만으로 첫 인구까지 도달하고 저장 전후 원인·가능 명령·다음 기간 결과가 의미상 동일함 | [P4-01](P4-save/P4-01-snapshot-dto-serialization.md), [P4-02](P4-save/P4-02-storage-migration.md), [P4-03](P4-save/P4-03-save-ui-cross-platform-roundtrip.md), [P4-04](P4-save/P4-04-new-city-growth-bootstrap.md) |
 | P5 집계 교통·교통 설계 | 표시 차량과 무관한 교통 결과, 도로 계층·방향, 집계형 버스 결과와 벤치마크가 존재함 | 철거 없는 도로 변경 또는 버스 투자로 병목을 개선하고 두 전략의 비용·공간 trade-off를 설명함 | [P5-01](P5-traffic/P5-01-trip-demand-matching.md), [P5-02](P5-traffic/P5-02-routing-traffic-aggregation.md), [P5-03](P5-traffic/P5-03-vehicle-views-congestion-benchmark.md), [P5-04](P5-traffic/P5-04-road-hierarchy-upgrade-one-way.md), [P5-05](P5-traffic/P5-05-aggregate-bus-transit.md) |
 | P6 입지·쇠퇴 | 입지 악화가 시간 지연을 거쳐 쇠퇴로 설명됨 | 쇠퇴 원인을 두 채널 이상에서 확인하고 조건 회복 뒤 재개발까지 추적함 | [P6-01](P6-decline/P6-01-spatial-condition-fields.md), [P6-02](P6-decline/P6-02-decline-redevelopment-datamaps.md) |
 | P7 서비스·밀도·정체성 | 서비스·수도·예산·밀도, 특성화 한 종류, 지구와 정책 두 종류가 도시 상태에 반영됨 | 일반/특성화 도시와 정책 유무 지구가 서로 다른 실행 가능한 운영과 설명 가능한 trade-off를 제공함 | [P7-01](P7-services/P7-01-service-coverage-budget.md), [P7-02](P7-services/P7-02-water-density-progression.md), [P7-03](P7-services/P7-03-dispatch-vehicles-service-ui.md), [P7-04](P7-services/P7-04-specialization-vertical-slice.md), [P7-05](P7-services/P7-05-specialization-experience-gate.md), [P7-06](P7-services/P7-06-district-policy-vertical-slice.md) |
@@ -53,7 +53,7 @@ GitHub 실행 현황은 [Workflow Kanban](https://github.com/users/hrxlou/projec
 | `P2-00` | `P1-05` |
 | `P3-01` | `P2-05` |
 | `P4-01` | `P3-07` |
-| `P5-01` | `P4-03` |
+| `P5-01` | `P4-04` |
 | `P6-01` | `P5-05` |
 | `P7-01` | `P6-02` |
 | `P8-01` | `P7-06`와 병행 준비 `P3-08` |
@@ -146,6 +146,14 @@ stable-ID read model에서 view/cache를 다시 만든다. 손상·unknown versi
 `다시 시도`/`현재 도시 계속하기`를 제공한다. Windows v1 gate fixture payload는
 `5,664 bytes`, FNV-1a `6039FE7670E3C298`, 정상 전력 복구 뒤 다음 월 checksum
 `68BE53564A1F46A7`로 고정하며 macOS가 같은 결과와 역방향 save artifact를 검증해야 P4 gate가 닫힌다.
+
+P4-04는 빈 신규 도시에서 기존 RCI가 일자리·주택 0 상태를 계속 관찰해 모든 수요가 0에 머무는
+bootstrap deadlock을 해소한다. 신규 `CityRuntime`은 설정된 유한 초기 시장 압력을 한 번만 기존
+RCI state에 적용하고 이후 월간 smoothing과 실제 건물·인구·고용 결과에 인계한다. snapshot load는
+저장된 RCI/growth/clock state만 복원하며 초기 압력을 다시 적용하지 않는다. Scene이나 UI가 숨은
+건물·인구·일자리를 직접 주입하지 않고, 서로 다른 두 공개 command layout이 6개월 이내 첫 인구까지
+도달하는 timeline과 save/load 이후 checksum을 고정한다. P9-02A는 이 작동하는 시작 루프에
+onboarding task와 hint를 연결할 뿐 bootstrap simulation 규칙을 새로 만들지 않는다.
 
 ## 디자인·아트 단계 적용
 
