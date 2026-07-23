@@ -68,13 +68,15 @@ Unity presentation 객체를 포함하지 않는 버전형 전체 도시 snapsho
 - [x] 성장 중인 도시 상태가 DTO round-trip 후 동일하다.
 - [x] 저장 대상과 재구축 cache 경계가 문서화된다.
 - [ ] 양쪽 플랫폼에서 동일 fixture를 읽을 수 있다.
-- [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+- [x] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
 
 ## Windows implementation evidence (2026-07-23)
 
 - OS: Windows 11 Enterprise `10.0.26200` (`x64`)
 - Unity: `6000.5.3f1` (`c2eb47b3a2a9`)
 - Branch: `codex/p4-01-snapshot-dto-serialization`
+- Implementation commit: `2d737feab20668af8a7c2ff667dec07941bc95f4`
+- Draft PR: [#92](https://github.com/hrxlou/OpenSimCity/pull/92)
 - 성장 도시 canonical JSON: UTF-8 `7,444 bytes`, FNV-1a `262B9801635F35BD`
 - EditMode:
   `powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\run-unity-tests.ps1 edit`
