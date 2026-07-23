@@ -212,6 +212,39 @@
     margin: var(--osc-space-2);
 }
 
+.osc-save-panel {
+    display: none;
+    width: var(--osc-context-inspector-width);
+    align-self: flex-end;
+    margin: var(--osc-space-2);
+}
+
+.osc-save-panel__header,
+.osc-save-panel__slot,
+.osc-save-panel__actions {
+    flex-direction: row;
+    align-items: center;
+}
+
+.osc-save-panel__header,
+.osc-save-panel__slot {
+    justify-content: space-between;
+}
+
+.osc-save-panel__slot {
+    margin-bottom: var(--osc-space-2);
+}
+
+.osc-save-panel__metadata {
+    flex-grow: 1;
+    white-space: normal;
+}
+
+.osc-save-panel__feedback {
+    white-space: normal;
+    margin-bottom: var(--osc-space-2);
+}
+
 .osc-hud-summary-row {
     flex-direction: row;
     flex-wrap: nowrap;

@@ -121,6 +121,16 @@ Tool Rail·Context Inspector·SimulationControls는 화면 모서리에서 spaci
 
 component의 상태는 최소 `default`, `hover`, `focus`, `selected`, `disabled`, `warning`, `error`를 정의한다. motion은 상태 전환을 설명하는 짧은 feedback에만 사용하며 simulation tick이나 명령 완료 시점과 결합하지 않는다.
 
+#### P4-03 저장 panel
+
+저장/불러오기는 별도 대시보드나 출시 메뉴를 앞당기지 않고 Simulation Controls의
+`저장/불러오기` 진입점과 우하단 elevated panel로 제공한다. panel은 `수동 저장`과 `자동 저장`
+두 slot의 기간·format version·저장 시간을 Application ViewModel 그대로 표시한다. 작업 중에는
+버튼과 world command 입력을 함께 disable하고 `저장 중`/`불러오는 중` 문구를 표시한다.
+손상·unknown version은 danger 색만 사용하지 않고 원인 문구, 기존 도시 유지 설명,
+`다시 시도`와 `현재 도시 계속하기` label을 함께 제공한다. UI가 save bytes나 경로를 읽거나
+GameObject 복원을 지시하지 않는다.
+
 ### 3.5 타이포그래피·아이콘
 
 한글과 숫자가 함께 읽히는 글꼴을 사용한다. P3-06에서 실제 font asset을 가져오기 전에 다음을 확정한다.

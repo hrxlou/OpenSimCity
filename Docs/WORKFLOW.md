@@ -122,6 +122,15 @@ Blender/Source
 header version, byte count와 FNV-1a checksum을 함께 검증한다. 다른 장비 인계 시 같은 fixture의
 load→save 결과와 checksum을 기록한다.
 
+P4-03 교차 플랫폼 save gate는
+`Assets/OpenSimCity/Tests/Fixtures/Persistence/p4-v1-roundtrip-windows.json`을 사용한다.
+파일 끝의 LF는 repository fixture 형식이고 실제 `.osc-save` payload 비교에서는 제외한다.
+Windows 기준 payload는 `5,664 bytes`, FNV-1a `6039FE7670E3C298`이며 정상 전력 복구 command를
+실행하고 다음 월까지 진행한 snapshot checksum은 `68BE53564A1F46A7`이다. Verify 장비는 fixture를
+load한 직후 `DevelopmentStatusViewModel`의 기간, stable 순서의 상위 reason, 실행 가능 필지 수와
+recovery command preview를 기록하고, 다음 월 checksum을 비교한다. 그 뒤 같은 scenario를 해당
+플랫폼에서 저장해 반대 장비용 `.osc-save` artifact, byte count와 checksum을 함께 전달한다.
+
 ### PlayMode
 
 - Bootstrap 및 Scene 초기화

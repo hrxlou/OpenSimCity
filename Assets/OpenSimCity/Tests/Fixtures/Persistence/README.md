@@ -6,3 +6,4 @@
 - A migration test must clone the source bytes, assert that the source is unchanged, compare the migrated bytes with the golden target, and verify the target header version.
 - JSON field order and numeric representation follow the snapshot contract in `Docs/ARCHITECTURE.md`.
 - Cross-platform handoff records the fixture byte count and FNV-1a checksum before loading and after re-saving.
+- `p4-v1-roundtrip-windows.json` is the P4-03 growing-city handoff fixture. Its final LF is repository formatting; the save payload before that LF is 5,664 bytes with FNV-1a `6039FE7670E3C298`, and the normal power-recovery command followed by one month produces `68BE53564A1F46A7`.

@@ -35,6 +35,7 @@ namespace OpenSimCity.UI.Foundation
         public const string DataOverlayLegendClass = "osc-data-overlay-legend";
         public const string GlobalHudClass = "osc-global-hud";
         public const string SimulationControlsClass = "osc-simulation-controls";
+        public const string SavePanelClass = "osc-save-panel";
 
         public const string RootName = "osc-root";
         public const string ToolRailName = "osc-tool-rail";
@@ -43,5 +44,6 @@ namespace OpenSimCity.UI.Foundation
         public const string DataOverlayLegendName = "osc-data-overlay-legend";
         public const string GlobalHudName = "osc-global-hud";
         public const string SimulationControlsName = "osc-simulation-controls";
+        public const string SavePanelName = "osc-save-panel";
     }
 }

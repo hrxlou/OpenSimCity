@@ -190,6 +190,14 @@ namespace OpenSimCity.Application.World
         public DevelopmentStatusViewModel DevelopmentStatus { get; }
         public MunicipalHudViewModel HudModel { get; }
 
+        /// <summary>
+        /// Raised only after the application clock has committed every tick
+        /// processed by one presentation advance. Persistence listeners can take
+        /// a snapshot here without observing a scheduler result paired with the
+        /// previous clock tick.
+        /// </summary>
+        public event Action<int> SimulationAdvanceCompleted;
+
         public StableId DefaultRoadDefinitionId { get; }
         public StableId DefaultPowerPlantDefinitionId { get; }
         public CommandSequence NextCommandSequence => _sequence;
@@ -217,7 +225,10 @@ namespace OpenSimCity.Application.World
         /// </summary>
         public int AdvanceSimulation(double realDeltaSeconds)
         {
-            return Clock.Advance(realDeltaSeconds, ProcessSimulationTick);
+            var processedTicks = Clock.Advance(realDeltaSeconds, ProcessSimulationTick);
+            if (processedTicks > 0)
+                SimulationAdvanceCompleted?.Invoke(processedTicks);
+            return processedTicks;
         }
 
         /// <summary>Explicit tick seam used by deterministic fixtures and the runtime host.</summary>

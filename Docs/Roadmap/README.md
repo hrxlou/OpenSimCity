@@ -137,6 +137,16 @@ adapter에서 처리한다. 파일 저장은 같은 디렉터리의 temp write�
 version을 공통 error result로 거부한다. v1→vNext golden fixture는 source bytes 불변과 target
 checksum을 검증하며 실제 v2 schema·정책은 후속 version 계약 전까지 만들지 않는다.
 
+P4-03은 Application의 `CityPersistenceController`가 `manual-1`/`autosave` slot metadata,
+manual save/load command, 진행·오류 feedback과 매월 autosave cadence를 소유한다. autosave는
+clock이 처리한 tick을 완전히 commit한 경계에서 예약되고 작업 중 clock과 player command 입력을
+pause한다. load는 전체 restore 성공 전 기존 도시를 유지하며 성공 뒤
+`CityRuntimeHost.ReplaceRuntime`이 새 ambient context를 publish해 중앙 pooled renderer가
+stable-ID read model에서 view/cache를 다시 만든다. 손상·unknown version은 partial apply 없이
+`다시 시도`/`현재 도시 계속하기`를 제공한다. Windows v1 gate fixture payload는
+`5,664 bytes`, FNV-1a `6039FE7670E3C298`, 정상 전력 복구 뒤 다음 월 checksum
+`68BE53564A1F46A7`로 고정하며 macOS가 같은 결과와 역방향 save artifact를 검증해야 P4 gate가 닫힌다.
+
 ## 디자인·아트 단계 적용
 
 | 시점 | 제품 화면에 적용 | 준비 작업 |

@@ -16,7 +16,7 @@ namespace OpenSimCity.Application.World
     /// reload.
     /// </para>
     /// </summary>
-    public sealed class CityRuntimeContext
+    public sealed class CityRuntimeContext : IDisposable
     {
         private static CityRuntimeContext _current;
 
@@ -74,7 +74,14 @@ namespace OpenSimCity.Application.World
 
         public static void Reset()
         {
+            _current?.Dispose();
             _current = null;
+        }
+
+        public void Dispose()
+        {
+            Tool.PreviewChanged -= HandlePreviewChanged;
+            Tool.Committed -= HandleCommitted;
         }
 
         public void SetWorldBounds(WorldBoundsReadModel bounds)

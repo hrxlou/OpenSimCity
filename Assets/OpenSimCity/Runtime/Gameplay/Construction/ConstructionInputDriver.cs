@@ -28,10 +28,12 @@ namespace OpenSimCity.Gameplay.Construction
 
         private bool _uiPointerBlocked;
         private bool _pointerDown;
+        private bool _interactionEnabled = true;
 
         public IsometricCameraRig CameraRig => cameraRig;
 
         public CityRuntimeContext Context => CityRuntimeContext.Current;
+        public bool InteractionEnabled => _interactionEnabled;
 
         public void ConfigureReferences(IsometricCameraRig rig)
         {
@@ -43,6 +45,13 @@ namespace OpenSimCity.Gameplay.Construction
         {
             _uiPointerBlocked = isBlocked;
             if (isBlocked && _pointerDown)
+                CancelDrag();
+        }
+
+        public void SetInteractionEnabled(bool isEnabled)
+        {
+            _interactionEnabled = isEnabled;
+            if (!isEnabled && _pointerDown)
                 CancelDrag();
         }
 
@@ -90,6 +99,7 @@ namespace OpenSimCity.Gameplay.Construction
         private bool CanPlace()
         {
             return enableInput &&
+                   _interactionEnabled &&
                    !_uiPointerBlocked &&
                    !UiInputBoundary.Current.IsPointerOverUi &&
                    Context != null &&
@@ -110,7 +120,7 @@ namespace OpenSimCity.Gameplay.Construction
 
         private void Update()
         {
-            if (!enableInput || Context == null)
+            if (!enableInput || !_interactionEnabled || Context == null)
                 return;
 
             HandleKeyboardToolSelection();

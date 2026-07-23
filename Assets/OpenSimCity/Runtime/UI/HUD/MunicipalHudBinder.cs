@@ -3,6 +3,7 @@ using OpenSimCity.Application.Bootstrap;
 using OpenSimCity.Application.Commands;
 using OpenSimCity.Application.Construction;
 using OpenSimCity.Application.Overlays;
+using OpenSimCity.Application.Persistence;
 using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.World;
 using OpenSimCity.UI.Foundation;
@@ -288,6 +289,9 @@ namespace OpenSimCity.UI.HUD
         /// <summary>Shared UI action seam used by the tax buttons and PlayMode wiring smoke.</summary>
         private void RequestTaxIncrease(TaxSector sector)
         {
+            if (CityPersistenceContext.Current?.ViewModel.IsBusy == true)
+                return;
+
             var context = CityRuntimeContext.Current;
             if (context == null)
                 return;
@@ -344,6 +348,9 @@ namespace OpenSimCity.UI.HUD
 
         public void RequestSimulationSpeed(SimulationSpeed speed)
         {
+            if (CityPersistenceContext.Current?.ViewModel.IsBusy == true)
+                return;
+
             CityRuntimeContext.Current?.Runtime.SetSimulationSpeed(speed);
             _lastRefreshKey = null;
         }

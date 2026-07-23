@@ -231,4 +231,37 @@ namespace OpenSimCity.Application.Persistence
         public bool WasMigrated { get; }
         public int SourceFormatVersion { get; }
     }
+
+    public sealed class CitySaveMetadataResult
+    {
+        internal CitySaveMetadataResult(
+            CityPersistenceError error,
+            int formatVersion,
+            string gameVersion,
+            long createdUtcTicks,
+            long currentTick,
+            int nextMonthYear,
+            int nextMonth,
+            int payloadByteCount)
+        {
+            Error = error;
+            FormatVersion = formatVersion;
+            GameVersion = gameVersion ?? string.Empty;
+            CreatedUtcTicks = createdUtcTicks;
+            CurrentTick = currentTick;
+            NextMonthYear = nextMonthYear;
+            NextMonth = nextMonth;
+            PayloadByteCount = payloadByteCount;
+        }
+
+        public bool IsSuccess => Error == CityPersistenceError.None;
+        public CityPersistenceError Error { get; }
+        public int FormatVersion { get; }
+        public string GameVersion { get; }
+        public long CreatedUtcTicks { get; }
+        public long CurrentTick { get; }
+        public int NextMonthYear { get; }
+        public int NextMonth { get; }
+        public int PayloadByteCount { get; }
+    }
 }

@@ -1,6 +1,7 @@
 using OpenSimCity.Application.Input;
 using OpenSimCity.UI.Components;
 using OpenSimCity.UI.HUD;
+using OpenSimCity.UI.Persistence;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -39,6 +40,8 @@ namespace OpenSimCity.UI.Foundation
         public GlobalHudView GlobalHud { get; private set; }
 
         public SimulationControlsView SimulationControls { get; private set; }
+
+        public SavePanelView SavePanel { get; private set; }
 
         public StyleSheet ConfiguredTokensStyleSheet => tokensStyleSheet;
 
@@ -120,6 +123,7 @@ namespace OpenSimCity.UI.Foundation
             BuildPalette = new BuildPaletteView();
             GlobalHud = new GlobalHudView();
             SimulationControls = new SimulationControlsView();
+            SavePanel = new SavePanelView();
 
             var centre = new VisualElement { name = "osc-world-view-spacer" };
             centre.pickingMode = PickingMode.Ignore;
@@ -136,6 +140,7 @@ namespace OpenSimCity.UI.Foundation
             var rightBottom = new VisualElement { name = "osc-right-bottom" };
             rightBottom.pickingMode = PickingMode.Ignore;
             rightBottom.style.flexDirection = FlexDirection.Column;
+            rightBottom.Add(SavePanel);
             rightBottom.Add(DataOverlayLegend);
             rightBottom.Add(SimulationControls);
             rightColumn.Add(ContextInspector);
@@ -157,6 +162,7 @@ namespace OpenSimCity.UI.Foundation
             _bridge.AddPointerSource(DataOverlayLegend);
             _bridge.AddPointerSource(GlobalHud);
             _bridge.AddPointerSource(SimulationControls);
+            _bridge.AddPointerSource(SavePanel);
             _bridge.Attach();
         }
 

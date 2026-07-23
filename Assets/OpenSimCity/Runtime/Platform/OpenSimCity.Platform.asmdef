@@ -2,7 +2,8 @@
   "name": "OpenSimCity.Platform",
   "rootNamespace": "OpenSimCity.Platform",
   "references": [
-    "OpenSimCity.Application"
+    "OpenSimCity.Application",
+    "OpenSimCity.Gameplay"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

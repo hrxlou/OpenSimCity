@@ -8,9 +8,11 @@ using OpenSimCity.Presentation;
 using OpenSimCity.Presentation.Buildings;
 using OpenSimCity.Presentation.Roads;
 using OpenSimCity.Presentation.Utilities;
+using OpenSimCity.Platform.Persistence;
 using OpenSimCity.UI.Foundation;
 using OpenSimCity.UI.HUD;
 using OpenSimCity.UI.Placement;
+using OpenSimCity.UI.Persistence;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -73,6 +75,13 @@ namespace OpenSimCity.Editor
                 driver.ConfigureReferences(rig);
                 ApplyReferences(driver, ("cameraRig", rig));
 
+                var persistenceHost = EnsureComponent<CityPersistenceHost>(runtimeObject, ref sceneChanged);
+                persistenceHost.ConfigureReferences(host, driver);
+                ApplyReferences(
+                    persistenceHost,
+                    ("runtimeHost", host),
+                    ("inputDriver", driver));
+
                 var overlayObject = EnsureChild(root.transform, OverlayRendererName, ref sceneChanged);
                 EnsureComponent<PlacementOverlayRenderer>(overlayObject, ref sceneChanged);
 
@@ -121,6 +130,10 @@ namespace OpenSimCity.Editor
             var municipalHud = EnsureComponent<MunicipalHudBinder>(documentObject, ref sceneChanged);
             municipalHud.ConfigureReferences(bootstrap);
             ApplyReferences(municipalHud, ("bootstrap", bootstrap));
+
+            var saveUi = EnsureComponent<SaveUiBinder>(documentObject, ref sceneChanged);
+            saveUi.ConfigureReferences(bootstrap);
+            ApplyReferences(saveUi, ("bootstrap", bootstrap));
         }
 
         public static void Validate(ICollection<string> issues)
@@ -150,6 +163,10 @@ namespace OpenSimCity.Editor
                 {
                     issues.Add("CityPrototype CityRuntime object has no ConstructionInputDriver.");
                 }
+                else if (runtime.GetComponent<CityPersistenceHost>() == null)
+                {
+                    issues.Add("CityPrototype CityRuntime object has no CityPersistenceHost.");
+                }
 
                 var overlay = root.transform.Find(OverlayRendererName)?.GetComponent<PlacementOverlayRenderer>();
                 if (overlay == null)
@@ -176,6 +193,8 @@ namespace OpenSimCity.Editor
                     issues.Add("CityPrototype UIDocument has no PlacementUiBinder.");
                 else if (document.GetComponent<MunicipalHudBinder>() == null)
                     issues.Add("CityPrototype UIDocument has no MunicipalHudBinder.");
+                else if (document.GetComponent<SaveUiBinder>() == null)
+                    issues.Add("CityPrototype UIDocument has no SaveUiBinder.");
             }
             finally
             {
