@@ -20,32 +20,86 @@ namespace OpenSimCity.Editor
         private static readonly DefinitionSeed[] Seeds =
         {
             new DefinitionSeed(
-                "ResidentialLow.asset",
+                "ResidentialLowA.asset",
                 0xB100000000000001UL,
                 ZoneType.ResidentialLow,
                 2,
                 2,
                 4,
                 0,
-                "building.residential.low.placeholder"),
+                "building.residential.low.a"),
             new DefinitionSeed(
-                "CommercialLow.asset",
+                "CommercialLowA.asset",
                 0xB100000000000002UL,
                 ZoneType.CommercialLow,
                 2,
                 2,
                 0,
                 6,
-                "building.commercial.low.placeholder"),
+                "building.commercial.low.a"),
             new DefinitionSeed(
-                "IndustrialLow.asset",
+                "IndustrialLowA.asset",
                 0xB100000000000003UL,
                 ZoneType.IndustrialLow,
                 2,
                 2,
                 0,
                 8,
-                "building.industrial.low.placeholder")
+                "building.industrial.low.a"),
+            new DefinitionSeed(
+                "ResidentialLowB.asset",
+                0xB100000000000004UL,
+                ZoneType.ResidentialLow,
+                2,
+                1,
+                8,
+                0,
+                "building.residential.low.b"),
+            new DefinitionSeed(
+                "CommercialLowB.asset",
+                0xB100000000000005UL,
+                ZoneType.CommercialLow,
+                2,
+                1,
+                0,
+                4,
+                "building.commercial.low.b"),
+            new DefinitionSeed(
+                "IndustrialLowB.asset",
+                0xB100000000000006UL,
+                ZoneType.IndustrialLow,
+                2,
+                1,
+                0,
+                6,
+                "building.industrial.low.b"),
+            new DefinitionSeed(
+                "ResidentialLowC.asset",
+                0xB100000000000007UL,
+                ZoneType.ResidentialLow,
+                1,
+                1,
+                12,
+                0,
+                "building.residential.low.c"),
+            new DefinitionSeed(
+                "CommercialLowC.asset",
+                0xB100000000000008UL,
+                ZoneType.CommercialLow,
+                1,
+                1,
+                0,
+                10,
+                "building.commercial.low.c"),
+            new DefinitionSeed(
+                "IndustrialLowC.asset",
+                0xB100000000000009UL,
+                ZoneType.IndustrialLow,
+                1,
+                1,
+                0,
+                12,
+                "building.industrial.low.c")
         };
 
         [MenuItem("OpenSimCity/Setup/Configure Building Definitions")]
@@ -98,8 +152,9 @@ namespace OpenSimCity.Editor
             for (var index = 0; index < requiredZones.Length; index++)
             {
                 var zone = requiredZones[index];
-                if (definitions.All(definition => definition.ZoneType != zone))
-                    issues.Add($"A minimum {zone} BuildingDefinition asset is required.");
+                var count = definitions.Count(definition => definition.ZoneType == zone);
+                if (count != 3)
+                    issues.Add($"Exactly three {zone} BuildingDefinition assets are required; found {count}.");
             }
 
             if (issues.Count != 0)
@@ -147,6 +202,7 @@ namespace OpenSimCity.Editor
 
         private static void ApplySeed(BuildingDefinition definition, DefinitionSeed seed)
         {
+            definition.name = System.IO.Path.GetFileNameWithoutExtension(seed.FileName);
             var serialized = new SerializedObject(definition);
             serialized.FindProperty("definitionId").ulongValue = seed.Id;
             serialized.FindProperty("zoneType").intValue = (int)seed.ZoneType;

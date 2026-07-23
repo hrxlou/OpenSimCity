@@ -122,6 +122,7 @@ namespace OpenSimCity.Tests.EditMode
             Assert.That(definitions.Select(definition => definition.ZoneType), Does.Contain(ZoneType.IndustrialLow));
             Assert.That(new BuildingDefinitionCatalog(definitions.Select(definition => definition.ToData())).Count,
                 Is.EqualTo(definitions.Count));
+            Assert.That(definitions, Has.Count.EqualTo(9));
         }
 
         private static BuildingDefinitionData Data(ulong id, ZoneType zoneType)

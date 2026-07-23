@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 56512971c704449798f5964f2b30b259, type: 3}
-  m_Name: ResidentialLow
+  m_Name: CommercialLowB
   m_EditorClassIdentifier: OpenSimCity.Definitions::OpenSimCity.Definitions.Buildings.BuildingDefinition
-  definitionId: 12754194144713244673
-  zoneType: 1
+  definitionId: 12754194144713244677
+  zoneType: 2
   footprintWidth: 2
-  footprintHeight: 2
-  occupancyCapacity: 4
-  jobCapacity: 0
+  footprintHeight: 1
+  occupancyCapacity: 0
+  jobCapacity: 4
   powerDemand: 4
-  presentationKey: building.residential.low.placeholder
+  presentationKey: building.commercial.low.b

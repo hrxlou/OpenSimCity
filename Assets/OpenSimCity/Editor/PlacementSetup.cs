@@ -4,6 +4,9 @@ using System.Linq;
 using OpenSimCity.Gameplay.Camera;
 using OpenSimCity.Gameplay.Construction;
 using OpenSimCity.Presentation.Overlays;
+using OpenSimCity.Presentation;
+using OpenSimCity.Presentation.Buildings;
+using OpenSimCity.Presentation.Roads;
 using OpenSimCity.Presentation.Utilities;
 using OpenSimCity.UI.Foundation;
 using OpenSimCity.UI.HUD;
@@ -26,6 +29,8 @@ namespace OpenSimCity.Editor
         public const string RuntimeRootName = "CityRuntime";
         public const string OverlayRendererName = "PlacementOverlay";
         public const string PowerRendererName = "PowerProducerViews";
+        public const string BuildingRendererName = "BuildingViews";
+        public const string RoadRendererName = "RoadViews";
 
         [MenuItem("OpenSimCity/Setup/Configure Placement")]
         public static void ConfigurePlacementMenu()
@@ -37,6 +42,12 @@ namespace OpenSimCity.Editor
         }
 
         public static void ConfigureCityPrototype()
+        {
+            ConfigureCityPrototype(AssetDatabase.LoadAssetAtPath<PlaceholderArtCatalog>(
+                PlaceholderArtSetup.CatalogPath));
+        }
+
+        public static void ConfigureCityPrototype(PlaceholderArtCatalog placeholderCatalog)
         {
             var scene = GetOrOpenScene(IsometricCameraRigSetup.CityPrototypeScenePath, out var ownsScene);
             try
@@ -66,7 +77,19 @@ namespace OpenSimCity.Editor
                 EnsureComponent<PlacementOverlayRenderer>(overlayObject, ref sceneChanged);
 
                 var powerObject = EnsureChild(root.transform, PowerRendererName, ref sceneChanged);
-                EnsureComponent<PowerProducerViewRenderer>(powerObject, ref sceneChanged);
+                var powerRenderer = EnsureComponent<PowerProducerViewRenderer>(powerObject, ref sceneChanged);
+                powerRenderer.Configure(placeholderCatalog);
+                ApplyReferences(powerRenderer, ("catalog", placeholderCatalog));
+
+                var buildingObject = EnsureChild(root.transform, BuildingRendererName, ref sceneChanged);
+                var buildingRenderer = EnsureComponent<BuildingViewRenderer>(buildingObject, ref sceneChanged);
+                buildingRenderer.Configure(placeholderCatalog);
+                ApplyReferences(buildingRenderer, ("catalog", placeholderCatalog));
+
+                var roadObject = EnsureChild(root.transform, RoadRendererName, ref sceneChanged);
+                var roadRenderer = EnsureComponent<RoadViewRenderer>(roadObject, ref sceneChanged);
+                roadRenderer.Configure(placeholderCatalog);
+                ApplyReferences(roadRenderer, ("catalog", placeholderCatalog));
 
                 ConfigureUiBinder(root, ref sceneChanged);
 
@@ -138,6 +161,14 @@ namespace OpenSimCity.Editor
                 var powerRenderer = root.transform.Find(PowerRendererName)?.GetComponent<PowerProducerViewRenderer>();
                 if (powerRenderer == null)
                     issues.Add($"CityPrototype is missing '{PowerRendererName}' with a PowerProducerViewRenderer.");
+
+                var buildingRenderer = root.transform.Find(BuildingRendererName)?.GetComponent<BuildingViewRenderer>();
+                if (buildingRenderer == null)
+                    issues.Add($"CityPrototype is missing '{BuildingRendererName}' with a BuildingViewRenderer.");
+
+                var roadRenderer = root.transform.Find(RoadRendererName)?.GetComponent<RoadViewRenderer>();
+                if (roadRenderer == null)
+                    issues.Add($"CityPrototype is missing '{RoadRendererName}' with a RoadViewRenderer.");
 
                 var uiRoot = root.transform.Find(UiFoundationSetup.UiRootName);
                 var document = uiRoot?.Find(UiFoundationSetup.UiDocumentName)?.gameObject;
