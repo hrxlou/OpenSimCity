@@ -192,6 +192,7 @@ namespace OpenSimCity.Application.World
 
         public StableId DefaultRoadDefinitionId { get; }
         public StableId DefaultPowerPlantDefinitionId { get; }
+        public CommandSequence NextCommandSequence => _sequence;
 
         public StableId PowerProducerIdFor(CellCoord anchor)
         {
@@ -229,6 +230,21 @@ namespace OpenSimCity.Application.World
         public void SetSimulationSpeed(SimulationSpeed speed)
         {
             Clock.SetSpeed(speed);
+        }
+
+        internal void RestoreApplicationState(
+            CommandSequence nextSequence,
+            SimulationTick currentTick,
+            SimulationSpeed speed,
+            double accumulatedSeconds,
+            bool wasCatchUpClamped,
+            int completedMonths,
+            SimulationDate nextMonth,
+            SimulationTick nextSchedulerRunTick)
+        {
+            _sequence = nextSequence;
+            Clock.RestoreState(currentTick, speed, accumulatedSeconds, wasCatchUpClamped);
+            MonthlyScheduler.RestoreState(completedMonths, nextMonth, nextSchedulerRunTick);
         }
 
         // --- Preview seams (never mutate simulation state) ---
@@ -336,7 +352,7 @@ namespace OpenSimCity.Application.World
 
         public int Height { get; set; } = WorldState.DefaultHeight;
 
-        public int Seed { get; set; }
+        public ulong Seed { get; set; }
 
         public int InitialFunds { get; set; } = DefaultInitialFunds;
 

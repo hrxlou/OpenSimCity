@@ -172,6 +172,29 @@ namespace OpenSimCity.Simulation.Development
             StartedThisMonth = StartedThisMonth,
             HasUnmetDemand = HasUnmetDemand
         };
+
+        public static DevelopmentSectorSummary FromDto(DevelopmentSectorSummaryDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+            if (dto.Sector < byte.MinValue ||
+                dto.Sector > byte.MaxValue ||
+                !Enum.IsDefined(typeof(EconomicSector), (EconomicSector)dto.Sector))
+                throw new ArgumentException("A development summary DTO has an unknown sector.", nameof(dto));
+            if (dto.FeasibleParcelCount < 0 || dto.StartedThisMonth < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(dto),
+                    "Development summary counts cannot be negative.");
+            }
+
+            return new DevelopmentSectorSummary(
+                (EconomicSector)dto.Sector,
+                dto.SmoothedDemand,
+                dto.FeasibleParcelCount,
+                dto.StartedThisMonth,
+                dto.HasUnmetDemand);
+        }
     }
 
     [Serializable]

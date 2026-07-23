@@ -127,6 +127,28 @@ namespace OpenSimCity.Application.Bootstrap
             return availableTicks;
         }
 
+        internal void RestoreState(
+            SimulationTick currentTick,
+            SimulationSpeed speed,
+            double accumulatedSeconds,
+            bool wasCatchUpClamped)
+        {
+            if (double.IsNaN(accumulatedSeconds) ||
+                double.IsInfinity(accumulatedSeconds) ||
+                accumulatedSeconds < 0d ||
+                accumulatedSeconds >= _fixedDeltaSeconds)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(accumulatedSeconds),
+                    "Saved clock accumulation must be within one fixed-tick interval.");
+            }
+
+            CurrentTick = currentTick;
+            _speed = ValidateSpeed(speed);
+            _accumulatedSeconds = accumulatedSeconds;
+            WasCatchUpClamped = wasCatchUpClamped;
+        }
+
         private static void ValidateDelta(double realDeltaSeconds)
         {
             if (double.IsNaN(realDeltaSeconds) || double.IsInfinity(realDeltaSeconds) || realDeltaSeconds < 0d)

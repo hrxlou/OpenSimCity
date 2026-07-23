@@ -555,6 +555,37 @@ authoritative state를 FNV-1a checksum으로 기록하고, presentation read mod
 - 자동 저장은 임시 파일에 쓴 뒤 성공 시 교체한다.
 - 런타임 상태와 화면용 차량/파티클/뷰 풀은 분리하여 후자는 저장하지 않는다.
 
+### P4-01 snapshot v1 계약
+
+`CitySnapshotSerializer`는 파일을 열지 않고 `CityRuntime`과 field-only
+`CitySnapshotDto`를 왕복한다. JSON text encoding과 원자적 파일 교체, migration 실행은 P4-02
+범위다. v1 top-level field order는 `Header`, `World`, `Timeline`, `Roads`, `Zones`, `Parcels`,
+`ExternalConnections`, `Buildings`, `PowerProducers`, `Growth`, `PopulationEmployment`,
+`UrbanEconomy`, `MunicipalFinance`다. 같은 version 안에서 이 필드의 의미나 단위를 바꾸지 않는다.
+loader는 `Magic`과 정확한 `FormatVersion=1`만 받고, 알 수 없는 version은 migration을 추측하지
+않고 거부한다.
+
+수치 표현은 stable ID와 command sequence/RNG state/world seed를 unsigned 64-bit, simulation
+tick과 UTC tick을 signed 64-bit, 셀 index·좌표·수량·세율·enum code를 signed 32-bit로 고정한다.
+clock fixed delta와 frame accumulator만 IEEE-754 64-bit 값을 사용하고 도시 규칙과 월간 경제에는
+부동소수점을 저장하지 않는다. 도로·구역은 world row-major cell index 순서, 필지·건물·발전소·
+건설 현장은 stable ID 순서, 원장은 월 오름차순 배열이다. `CreatedUtcTicks`는 호출자가 공급하며
+결정성 fixture는 고정값을 사용한다.
+
+저장 대상은 world 크기/chunk size/seed, sparse 도로·구역 셀, 필지 identity/topology 검증 행,
+external gate, 건물·건설 현장·발전소, 인구/고용/이주, market/RCI, 시 재정과 진행 중 공사비,
+growth RNG state, clock tick/accumulator/speed, 다음 command sequence, scheduler의 다음 월·다음
+run tick이다. 필지 행은 stable ID, zone, anchor, width/height만 저장하며 load 시 zone/road로
+재구축한 결과와 대조한다.
+
+저장하지 않는 재구축 대상은 world cell/chunk index와 dirty flag, road graph component·거리·dirty
+cache, 필지 cell/frontage/외부 접근성·dirty/version cache, power component·배분 결과, 각
+Simulation/Application version counter와 read model, command preview, 모든 GameObject/View/prefab/
+Material/ScriptableObject reference다. load는 sparse authoritative state를 먼저 적용하고 이 cache를
+중앙 refresh 경로에서 다시 만든다. `SnapshotContractValidator`는 DTO graph를 reflection으로
+검사해 scalar/string/DTO/DTO array 외의 타입과 Presentation/Gameplay/UI/Editor/Definitions
+계층을 거부한다.
+
 ## 11. 첫 번째 기술 결정
 
 확정:

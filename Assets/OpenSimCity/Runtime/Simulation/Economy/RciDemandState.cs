@@ -135,6 +135,40 @@ namespace OpenSimCity.Simulation.Economy
                 Industrial = Industrial.ToDto()
             };
         }
+
+        public void RestoreFromDto(RciDemandStateDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+
+            RestoreSector(Residential, dto.Residential);
+            RestoreSector(Commercial, dto.Commercial);
+            RestoreSector(Industrial, dto.Industrial);
+        }
+
+        private static void RestoreSector(RciSectorDemand target, RciSectorDemandDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentException("An RCI sector DTO cannot be null.", nameof(dto));
+            if (dto.Sector != (int)target.Sector)
+                throw new ArgumentException("An RCI sector DTO has the wrong stable sector code.", nameof(dto));
+
+            var source = dto.Factors ?? Array.Empty<RciDemandFactorDto>();
+            var factors = new RciDemandFactor[source.Length];
+            var raw = 0;
+            for (var index = 0; index < source.Length; index++)
+            {
+                if (source[index] == null)
+                    throw new ArgumentException("An RCI factor DTO cannot be null.", nameof(dto));
+                factors[index] = new RciDemandFactor(source[index].Name, source[index].Contribution);
+                raw = checked(raw + source[index].Contribution);
+            }
+
+            if (raw != dto.RawPressure)
+                throw new ArgumentException("RCI factor contributions do not match raw pressure.", nameof(dto));
+
+            target.Set(factors, dto.RawPressure, dto.ClampedPressure, dto.SmoothedDemand);
+        }
     }
 
     [Serializable]

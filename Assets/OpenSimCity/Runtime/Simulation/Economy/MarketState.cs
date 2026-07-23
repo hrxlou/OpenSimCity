@@ -78,6 +78,22 @@ namespace OpenSimCity.Simulation.Economy
                 BusinessUtilizationPermille = BusinessUtilizationPermille
             };
         }
+
+        public void RestoreFromDto(MarketStateDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+
+            Set(dto.GoodsSupply, dto.ConsumptionPower, dto.CommercialThroughputCapacity);
+            if (GoodsSold != dto.GoodsSold ||
+                GoodsShortage != dto.GoodsShortage ||
+                GoodsSurplus != dto.GoodsSurplus ||
+                CommercialThroughput != dto.CommercialThroughput ||
+                BusinessUtilizationPermille != dto.BusinessUtilizationPermille)
+            {
+                throw new ArgumentException("Market DTO derived values are inconsistent.", nameof(dto));
+            }
+        }
     }
 
     [Serializable]

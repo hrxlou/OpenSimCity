@@ -19,6 +19,7 @@ namespace OpenSimCity.Application.Bootstrap
         private readonly IMonthlySimulationSystem[] _monthlySystems;
         private readonly int _ticksPerMonth;
         private SimulationDate _nextMonth;
+        private SimulationTick _nextRunTick;
 
         public MonthlySimulationScheduler(
             PopulationEmploymentMigrationSystem populationSystem,
@@ -53,26 +54,60 @@ namespace OpenSimCity.Application.Bootstrap
             _nextMonth = firstMonth == default(SimulationDate)
                 ? new SimulationDate(1, 1)
                 : firstMonth;
+            _nextRunTick = new SimulationTick(ticksPerMonth - 1L);
         }
 
         public int TicksPerMonth => _ticksPerMonth;
         public int CompletedMonths { get; private set; }
         public SimulationDate NextMonth => _nextMonth;
+        public SimulationTick NextRunTick => _nextRunTick;
 
         public event Action<SimulationDate> MonthCompleted;
 
         public void ProcessTick(SimulationTick tick)
         {
-            if (tick.Value % _ticksPerMonth != _ticksPerMonth - 1L)
+            if (tick < _nextRunTick)
                 return;
+            if (tick > _nextRunTick)
+            {
+                throw new InvalidOperationException(
+                    $"Monthly scheduler missed its next run tick {_nextRunTick}; received {tick}.");
+            }
 
             var completedMonth = _nextMonth;
             for (var index = 0; index < _monthlySystems.Length; index++)
                 _monthlySystems[index].RunMonth(completedMonth);
             _nextMonth = _nextMonth.AddMonths(1);
             CompletedMonths = checked(CompletedMonths + 1);
+            _nextRunTick = AddTicks(tick, _ticksPerMonth);
             if (MonthCompleted != null)
                 MonthCompleted(completedMonth);
+        }
+
+        internal void RestoreState(
+            int completedMonths,
+            SimulationDate nextMonth,
+            SimulationTick nextRunTick)
+        {
+            if (completedMonths < 0)
+                throw new ArgumentOutOfRangeException(nameof(completedMonths));
+            if (nextRunTick.Value % _ticksPerMonth != _ticksPerMonth - 1L)
+            {
+                throw new ArgumentException(
+                    "The saved scheduler tick does not align with the monthly cadence.",
+                    nameof(nextRunTick));
+            }
+
+            CompletedMonths = completedMonths;
+            _nextMonth = nextMonth;
+            _nextRunTick = nextRunTick;
+        }
+
+        private static SimulationTick AddTicks(SimulationTick tick, int count)
+        {
+            if (tick.Value > long.MaxValue - count)
+                throw new OverflowException("The monthly scheduler cannot advance past Int64.MaxValue.");
+            return new SimulationTick(tick.Value + count);
         }
     }
 }

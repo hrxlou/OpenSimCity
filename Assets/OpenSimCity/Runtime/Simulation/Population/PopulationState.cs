@@ -107,6 +107,39 @@ namespace OpenSimCity.Simulation.Population
                 Buildings = rows
             };
         }
+
+        public void RestoreFromDto(PopulationStateDto dto)
+        {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
+
+            var source = dto.Buildings ?? Array.Empty<BuildingPopulationStateDto>();
+            var rows = new BuildingPopulationState[source.Length];
+            var previousId = StableId.Invalid;
+            for (var index = 0; index < source.Length; index++)
+            {
+                if (source[index] == null)
+                    throw new ArgumentException("A population DTO row cannot be null.", nameof(dto));
+
+                var buildingId = new StableId(source[index].BuildingId);
+                if (index > 0 && buildingId <= previousId)
+                {
+                    throw new ArgumentException(
+                        "Population DTO rows must use unique ascending building IDs.",
+                        nameof(dto));
+                }
+
+                rows[index] = new BuildingPopulationState(
+                    buildingId,
+                    source[index].Residents,
+                    source[index].Capacity);
+                previousId = buildingId;
+            }
+
+            Set(rows);
+            if (TotalPopulation != dto.TotalPopulation || HousingCapacity != dto.HousingCapacity)
+                throw new ArgumentException("Population DTO aggregate values do not match its rows.", nameof(dto));
+        }
     }
 
     [Serializable]
