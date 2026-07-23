@@ -234,6 +234,7 @@ OpenSimCity/
 - Unity runtime asset은 source 소유권에 따라 나눈다. vendor 원본과 호환성 정규화 mesh/texture는 `Assets/ThirdParty`, 자체 제작 art와 프로젝트 wrapper prefab/material/definition은 `Assets/OpenSimCity`에 둔다.
 - 외부 source는 `Blender/Source/External`, 자체 제작·변형 source는 `Blender/Source/OpenSimCity`에 둔다. 임시 art 결과와 report는 gitignore된 `Artifacts/Art`를 사용한다.
 - vendor runtime asset과 호환성 정규화 결과는 `Assets/ThirdParty`에 두고 source URL, hash, license와 변형 provenance를 보존한다.
+- P3-08 representative art는 `Assets/ThirdParty/Quaternius/DowntownCityMegaKit/Standard`의 선별 source/normalized mesh/texture와 `Assets/OpenSimCity/Content`의 stable-ID wrapper로 분리한다. `RepresentativeArtCatalog`와 중앙 반복 fixture는 `Benchmark` scene의 presentation 측정 입력이며 simulation state나 `CityPrototype` gameplay catalog를 소유하거나 변경하지 않는다.
 - 에셋 파일명은 definition ID나 prefab key가 아니다. 런타임과 저장 데이터는 이동·rename에 안정적인 ID를 사용한다.
 - ScriptableObject는 정적 정의다. 인구, 점유율, 현재 전력 같은 런타임 상태를 저장하지 않는다.
 - 공용 `Scripts/Managers`, `Misc`, `Utils` 폴더를 만들지 않는다. 책임이 드러나는 모듈에 둔다.

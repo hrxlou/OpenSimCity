@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54789b9fe6e21af4e961fa06f59b4e8d, type: 3}
+  m_Name: RepresentativeArtCatalog
+  m_EditorClassIdentifier: OpenSimCity.Presentation::OpenSimCity.Presentation.RepresentativeArtCatalog
+  bindings:
+  - definition: {fileID: 11400000, guid: 99ceeebca67cc044981b41691d2cc9fb, type: 2}
+    prefab: {fileID: 9054717001966979843, guid: 45cb404f766b82c4490d9cff33d49934, type: 3}
+    placeholderPresentationKey: building.residential.low.a
+  - definition: {fileID: 11400000, guid: a137b597641e7a143b22461ebe7713ec, type: 2}
+    prefab: {fileID: 7616582284001296013, guid: d7ae803783875714ab2e622ba29ddabc, type: 3}
+    placeholderPresentationKey: building.residential.low.b
+  - definition: {fileID: 11400000, guid: e0923e6b10790564587009518b225b71, type: 2}
+    prefab: {fileID: 4689527450030830807, guid: a9deced8bf6064143ab529f1393ec5ba, type: 3}
+    placeholderPresentationKey: building.residential.low.c
+  - definition: {fileID: 11400000, guid: cbeaf8750f7fc0a42a556f722344a897, type: 2}
+    prefab: {fileID: 6134072161439008669, guid: aad7e80687c7ed54384d5886a2f736a9, type: 3}
+    placeholderPresentationKey: road.street.placeholder
+  - definition: {fileID: 11400000, guid: cf7566d31164ee34681635425f86ebde, type: 2}
+    prefab: {fileID: 1996817694624115300, guid: ada5dc1a6edc60f4db34699239b38793, type: 3}
+    placeholderPresentationKey: building.commercial.low.a
+  - definition: {fileID: 11400000, guid: e51d2cd6269d61c40b20962236eaa1ff, type: 2}
+    prefab: {fileID: 4620350629774760622, guid: e770b70480ba04946ad2a38a221833dc, type: 3}
+    placeholderPresentationKey: utility.power.plant.placeholder

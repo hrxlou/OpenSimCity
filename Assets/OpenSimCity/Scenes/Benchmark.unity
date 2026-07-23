@@ -225,6 +225,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1384901247}
+  - component: {fileID: 1384901248}
   m_Layer: 0
   m_Name: OpenSimCity.Benchmark
   m_TagString: Untagged
@@ -247,6 +248,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1384901248
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1384901246}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fdb838ae2669e2478721555585b4fb6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: OpenSimCity.Presentation::OpenSimCity.Presentation.RepresentativeArtBenchmarkFixture
+  representativeCatalog: {fileID: 11400000, guid: 8cd23fd2872c5ec4aa2704444835b201, type: 2}
+  placeholderCatalog: {fileID: 11400000, guid: 7761049431034154c92332b982d3e658, type: 2}
+  initialMode: 1
+  repeatsPerAsset: 4
+  assetSpacingMeters: 32
+  repeatSpacingMeters: 36
 --- !u!1 &1935429082
 GameObject:
   m_ObjectHideFlags: 0
@@ -307,8 +326,8 @@ Camera:
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
-  orthographic: 0
-  orthographic size: 5
+  orthographic: 1
+  orthographic size: 115
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -332,8 +351,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1935429082}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: 0.23344536, y: 0, z: 0, w: 0.9723699}
+  m_LocalPosition: {x: 0, y: 105, z: -180}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
