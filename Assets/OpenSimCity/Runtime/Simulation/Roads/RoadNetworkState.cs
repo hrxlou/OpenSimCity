@@ -10,10 +10,25 @@ namespace OpenSimCity.Simulation.Roads
     public readonly struct RoadCellState : IEquatable<RoadCellState>
     {
         public RoadCellState(CellCoord coordinate, int index, StableId definitionId)
+            : this(coordinate, index, definitionId, RoadTravelDirection.Bidirectional)
         {
+        }
+
+        public RoadCellState(
+            CellCoord coordinate,
+            int index,
+            StableId definitionId,
+            RoadTravelDirection travelDirection)
+        {
+            if (!RoadTravelDirectionRules.IsDefined(travelDirection))
+                throw new ArgumentOutOfRangeException(nameof(travelDirection));
+
             Coordinate = coordinate;
             Index = index;
             DefinitionId = definitionId;
+            TravelDirection = definitionId.IsValid
+                ? travelDirection
+                : RoadTravelDirection.Bidirectional;
         }
 
         public CellCoord Coordinate { get; }
@@ -26,11 +41,16 @@ namespace OpenSimCity.Simulation.Roads
 
         public StableId RoadDefinitionId => DefinitionId;
 
+        public RoadTravelDirection TravelDirection { get; }
+
         public bool IsOccupied => DefinitionId.IsValid;
 
         public bool Equals(RoadCellState other)
         {
-            return Coordinate == other.Coordinate && Index == other.Index && DefinitionId == other.DefinitionId;
+            return Coordinate == other.Coordinate &&
+                   Index == other.Index &&
+                   DefinitionId == other.DefinitionId &&
+                   TravelDirection == other.TravelDirection;
         }
 
         public override bool Equals(object obj) => obj is RoadCellState other && Equals(other);
@@ -39,7 +59,10 @@ namespace OpenSimCity.Simulation.Roads
         {
             unchecked
             {
-                return ((Coordinate.GetHashCode() * 397) ^ Index) * 397 ^ DefinitionId.GetHashCode();
+                var hashCode = Coordinate.GetHashCode();
+                hashCode = (hashCode * 397) ^ Index;
+                hashCode = (hashCode * 397) ^ DefinitionId.GetHashCode();
+                return (hashCode * 397) ^ (int)TravelDirection;
             }
         }
 
@@ -50,15 +73,20 @@ namespace OpenSimCity.Simulation.Roads
 
     /// <summary>
     /// Runtime road occupancy indexed by the world's row-major cell index.
-    /// Presentation and input code cannot access the backing array; application
+    /// Presentation and input code cannot access the backing arrays; application
     /// command handlers apply validated batches through the methods below.
     /// </summary>
     [Serializable]
     public sealed class RoadNetworkState
     {
+        private const ulong FnvOffsetBasis64 = 14695981039346656037UL;
+        private const ulong FnvPrime64 = 1099511628211UL;
+
         private readonly StableId[] _definitionIds;
+        private readonly RoadTravelDirection[] _travelDirections;
         private readonly RoadCellState[] _cells;
         private readonly IReadOnlyList<StableId> _readOnlyDefinitionIds;
+        private readonly IReadOnlyList<RoadTravelDirection> _readOnlyTravelDirections;
         private readonly IReadOnlyList<RoadCellState> _readOnlyCells;
 
         public RoadNetworkState()
@@ -78,8 +106,10 @@ namespace OpenSimCity.Simulation.Roads
             Height = height;
             CellCount = cellCount;
             _definitionIds = new StableId[cellCount];
+            _travelDirections = new RoadTravelDirection[cellCount];
             _cells = new RoadCellState[cellCount];
             _readOnlyDefinitionIds = Array.AsReadOnly(_definitionIds);
+            _readOnlyTravelDirections = Array.AsReadOnly(_travelDirections);
             _readOnlyCells = Array.AsReadOnly(_cells);
 
             for (var y = 0; y < height; y++)
@@ -87,10 +117,7 @@ namespace OpenSimCity.Simulation.Roads
                 for (var x = 0; x < width; x++)
                 {
                     var index = y * width + x;
-                    _cells[index] = new RoadCellState(
-                        new CellCoord(x, y),
-                        index,
-                        StableId.Invalid);
+                    _cells[index] = EmptyCell(new CellCoord(x, y), index);
                 }
             }
         }
@@ -107,14 +134,16 @@ namespace OpenSimCity.Simulation.Roads
         public int CellCount { get; }
 
         /// <summary>
-        /// Increments once for each successfully applied placement or demolition
-        /// batch. It is available for later graph invalidation in P2-02.
+        /// Increments exactly once for each successful placement, demolition, or
+        /// definition/direction replacement batch.
         /// </summary>
         public int Version { get; private set; }
 
         public IReadOnlyList<StableId> DefinitionIds => _readOnlyDefinitionIds;
 
         public IReadOnlyList<StableId> RoadDefinitionIds => _readOnlyDefinitionIds;
+
+        public IReadOnlyList<RoadTravelDirection> TravelDirections => _readOnlyTravelDirections;
 
         public IReadOnlyList<RoadCellState> Cells => _readOnlyCells;
 
@@ -175,6 +204,11 @@ namespace OpenSimCity.Simulation.Roads
             return GetRoadDefinitionId(coordinate);
         }
 
+        public RoadTravelDirection GetTravelDirection(CellCoord coordinate)
+        {
+            return _travelDirections[GetIndex(coordinate)];
+        }
+
         public bool IsOccupied(CellCoord coordinate)
         {
             return GetRoadDefinitionId(coordinate).IsValid;
@@ -202,9 +236,39 @@ namespace OpenSimCity.Simulation.Roads
             return _cells[GetIndex(coordinate)];
         }
 
+        public bool CanTravel(CellCoord from, CellCoord to)
+        {
+            if (!TryGetIndex(from, out var fromIndex) ||
+                !TryGetIndex(to, out var toIndex) ||
+                !_definitionIds[fromIndex].IsValid ||
+                !_definitionIds[toIndex].IsValid)
+            {
+                return false;
+            }
+
+            return RoadTravelDirectionRules.AllowsTravel(
+                _travelDirections[fromIndex],
+                from,
+                to);
+        }
+
         public bool TryPlaceRoad(CellCoord coordinate, StableId definitionId)
         {
-            return TryApplyPlacement(new[] { coordinate }, definitionId);
+            return TryPlaceRoad(
+                coordinate,
+                definitionId,
+                RoadTravelDirection.Bidirectional);
+        }
+
+        public bool TryPlaceRoad(
+            CellCoord coordinate,
+            StableId definitionId,
+            RoadTravelDirection travelDirection)
+        {
+            return TryApplyPlacement(
+                new[] { coordinate },
+                definitionId,
+                travelDirection);
         }
 
         public bool TryDemolishRoad(CellCoord coordinate)
@@ -213,25 +277,62 @@ namespace OpenSimCity.Simulation.Roads
         }
 
         /// <summary>
-        /// Applies a complete placement atomically. All cells are checked before
-        /// any backing storage is changed, so a failed batch cannot partially
-        /// install a road.
+        /// Applies a complete placement atomically. New roads are bidirectional by
+        /// default for backward compatibility.
         /// </summary>
         public bool TryApplyPlacement(IReadOnlyList<CellCoord> cells, StableId definitionId)
         {
-            if (!definitionId.IsValid || cells == null || cells.Count == 0)
+            return TryApplyPlacement(
+                cells,
+                definitionId,
+                RoadTravelDirection.Bidirectional);
+        }
+
+        public bool TryApplyPlacement(
+            IReadOnlyList<CellCoord> cells,
+            StableId definitionId,
+            RoadTravelDirection travelDirection)
+        {
+            if (!definitionId.IsValid ||
+                !RoadTravelDirectionRules.IsDefined(travelDirection) ||
+                cells == null ||
+                cells.Count == 0)
+            {
                 return false;
+            }
             if (!CanApplyPlacement(cells))
                 return false;
 
             for (var index = 0; index < cells.Count; index++)
+                SetCell(cells[index], definitionId, travelDirection);
+
+            Version = checked(Version + 1);
+            return true;
+        }
+
+        /// <summary>
+        /// Replaces definition and direction on existing cells without removing
+        /// occupancy. Every input is validated before any state mutation.
+        /// </summary>
+        public bool TryApplyReplacement(
+            IReadOnlyList<CellCoord> cells,
+            StableId definitionId,
+            IReadOnlyList<RoadTravelDirection> travelDirections)
+        {
+            if (!definitionId.IsValid ||
+                cells == null ||
+                travelDirections == null ||
+                cells.Count == 0 ||
+                cells.Count != travelDirections.Count ||
+                !CanApplyReplacement(cells, travelDirections))
             {
-                var cellIndex = GetIndex(cells[index]);
-                _definitionIds[cellIndex] = definitionId;
-                _cells[cellIndex] = new RoadCellState(cells[index], cellIndex, definitionId);
+                return false;
             }
 
-            Version++;
+            for (var index = 0; index < cells.Count; index++)
+                SetCell(cells[index], definitionId, travelDirections[index]);
+
+            Version = checked(Version + 1);
             return true;
         }
 
@@ -250,10 +351,11 @@ namespace OpenSimCity.Simulation.Roads
             {
                 var cellIndex = GetIndex(cells[index]);
                 _definitionIds[cellIndex] = StableId.Invalid;
-                _cells[cellIndex] = new RoadCellState(cells[index], cellIndex, StableId.Invalid);
+                _travelDirections[cellIndex] = RoadTravelDirection.Bidirectional;
+                _cells[cellIndex] = EmptyCell(cells[index], cellIndex);
             }
 
-            Version++;
+            Version = checked(Version + 1);
             return true;
         }
 
@@ -265,6 +367,40 @@ namespace OpenSimCity.Simulation.Roads
         public bool CanApplyDemolition(IReadOnlyList<CellCoord> cells)
         {
             return CanApplyBatch(cells, requireOccupied: true);
+        }
+
+        public bool CanApplyReplacement(
+            IReadOnlyList<CellCoord> cells,
+            IReadOnlyList<RoadTravelDirection> travelDirections)
+        {
+            if (cells == null ||
+                travelDirections == null ||
+                cells.Count == 0 ||
+                cells.Count != travelDirections.Count ||
+                !CanApplyBatch(cells, requireOccupied: true))
+            {
+                return false;
+            }
+
+            for (var index = 0; index < travelDirections.Count; index++)
+            {
+                if (!RoadTravelDirectionRules.IsDefined(travelDirections[index]))
+                    return false;
+            }
+            return true;
+        }
+
+        public ulong ComputeChecksum()
+        {
+            var hash = FnvOffsetBasis64;
+            AddInt(ref hash, Width);
+            AddInt(ref hash, Height);
+            for (var index = 0; index < _cells.Length; index++)
+            {
+                AddUlong(ref hash, _definitionIds[index].Value);
+                AddByte(ref hash, (byte)_travelDirections[index]);
+            }
+            return hash;
         }
 
         private bool CanApplyBatch(IReadOnlyList<CellCoord> cells, bool requireOccupied)
@@ -287,6 +423,30 @@ namespace OpenSimCity.Simulation.Roads
             return true;
         }
 
+        private void SetCell(
+            CellCoord coordinate,
+            StableId definitionId,
+            RoadTravelDirection travelDirection)
+        {
+            var cellIndex = GetIndex(coordinate);
+            _definitionIds[cellIndex] = definitionId;
+            _travelDirections[cellIndex] = travelDirection;
+            _cells[cellIndex] = new RoadCellState(
+                coordinate,
+                cellIndex,
+                definitionId,
+                travelDirection);
+        }
+
+        private static RoadCellState EmptyCell(CellCoord coordinate, int index)
+        {
+            return new RoadCellState(
+                coordinate,
+                index,
+                StableId.Invalid,
+                RoadTravelDirection.Bidirectional);
+        }
+
         private static int GetWidth(WorldState world)
         {
             if (world == null)
@@ -299,6 +459,29 @@ namespace OpenSimCity.Simulation.Roads
             if (world == null)
                 throw new ArgumentNullException(nameof(world));
             return world.Height;
+        }
+
+        private static void AddByte(ref ulong hash, byte value)
+        {
+            hash ^= value;
+            hash *= FnvPrime64;
+        }
+
+        private static void AddInt(ref ulong hash, int value)
+        {
+            unchecked
+            {
+                AddByte(ref hash, (byte)value);
+                AddByte(ref hash, (byte)(value >> 8));
+                AddByte(ref hash, (byte)(value >> 16));
+                AddByte(ref hash, (byte)(value >> 24));
+            }
+        }
+
+        private static void AddUlong(ref ulong hash, ulong value)
+        {
+            for (var shift = 0; shift < 64; shift += 8)
+                AddByte(ref hash, (byte)(value >> shift));
         }
     }
 }

@@ -13,6 +13,7 @@ namespace OpenSimCity.Simulation.Roads
     {
         public const int DefaultCapacityPerMonth = 1000;
         public const int DefaultFreeFlowSpeedCellsPerHour = 30;
+        public const int DefaultNoiseEmission = 30;
 
         public RoadDefinition(StableId id, int buildCost)
             : this(id, buildCost, string.Empty)
@@ -25,7 +26,8 @@ namespace OpenSimCity.Simulation.Roads
             string presentationKey,
             int monthlyMaintenanceCost = 0,
             int capacityPerMonth = DefaultCapacityPerMonth,
-            int freeFlowSpeedCellsPerHour = DefaultFreeFlowSpeedCellsPerHour)
+            int freeFlowSpeedCellsPerHour = DefaultFreeFlowSpeedCellsPerHour,
+            int noiseEmission = DefaultNoiseEmission)
         {
             if (!id.IsValid)
                 throw new ArgumentException("A road definition must have a valid stable ID.", nameof(id));
@@ -41,12 +43,15 @@ namespace OpenSimCity.Simulation.Roads
                     nameof(freeFlowSpeedCellsPerHour),
                     "Road free-flow speed must be positive.");
             }
+            if (noiseEmission < 0)
+                throw new ArgumentOutOfRangeException(nameof(noiseEmission), "Road noise cannot be negative.");
 
             Id = id;
             BuildCost = buildCost;
             MonthlyMaintenanceCost = monthlyMaintenanceCost;
             CapacityPerMonth = capacityPerMonth;
             FreeFlowSpeedCellsPerHour = freeFlowSpeedCellsPerHour;
+            NoiseEmission = noiseEmission;
             PresentationKey = presentationKey ?? string.Empty;
         }
 
@@ -56,14 +61,16 @@ namespace OpenSimCity.Simulation.Roads
             string presentationKey = null,
             int monthlyMaintenanceCost = 0,
             int capacityPerMonth = DefaultCapacityPerMonth,
-            int freeFlowSpeedCellsPerHour = DefaultFreeFlowSpeedCellsPerHour)
+            int freeFlowSpeedCellsPerHour = DefaultFreeFlowSpeedCellsPerHour,
+            int noiseEmission = DefaultNoiseEmission)
             : this(
                 new StableId(id),
                 buildCost,
                 presentationKey,
                 monthlyMaintenanceCost,
                 capacityPerMonth,
-                freeFlowSpeedCellsPerHour)
+                freeFlowSpeedCellsPerHour,
+                noiseEmission)
         {
         }
 
@@ -83,6 +90,9 @@ namespace OpenSimCity.Simulation.Roads
         /// <summary>Deterministic free-flow speed measured in road cells per hour.</summary>
         public int FreeFlowSpeedCellsPerHour { get; }
 
+        /// <summary>Abstract non-negative noise input consumed by later location systems.</summary>
+        public int NoiseEmission { get; }
+
         public string PresentationKey { get; }
 
         public bool Equals(RoadDefinition other)
@@ -93,6 +103,7 @@ namespace OpenSimCity.Simulation.Roads
                    MonthlyMaintenanceCost == other.MonthlyMaintenanceCost &&
                    CapacityPerMonth == other.CapacityPerMonth &&
                    FreeFlowSpeedCellsPerHour == other.FreeFlowSpeedCellsPerHour &&
+                   NoiseEmission == other.NoiseEmission &&
                    string.Equals(PresentationKey, other.PresentationKey, StringComparison.Ordinal);
         }
 
@@ -107,13 +118,14 @@ namespace OpenSimCity.Simulation.Roads
                 hashCode = (hashCode * 397) ^ MonthlyMaintenanceCost;
                 hashCode = (hashCode * 397) ^ CapacityPerMonth;
                 hashCode = (hashCode * 397) ^ FreeFlowSpeedCellsPerHour;
+                hashCode = (hashCode * 397) ^ NoiseEmission;
                 return (hashCode * 397) ^ StringComparer.Ordinal.GetHashCode(PresentationKey);
             }
         }
 
         public override string ToString() =>
             $"{Id} [buildCost={BuildCost}, maintenance={MonthlyMaintenanceCost}, capacity={CapacityPerMonth}, " +
-            $"speed={FreeFlowSpeedCellsPerHour}, key={PresentationKey}]";
+            $"speed={FreeFlowSpeedCellsPerHour}, noise={NoiseEmission}, key={PresentationKey}]";
     }
 
     /// <summary>

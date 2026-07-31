@@ -15,6 +15,7 @@ using OpenSimCity.Core.Time;
 using OpenSimCity.Platform.Persistence;
 using OpenSimCity.Simulation.Development;
 using OpenSimCity.Simulation.Parcels;
+using OpenSimCity.Simulation.Roads;
 using OpenSimCity.Simulation.Zones;
 using UnityEngine;
 
@@ -179,52 +180,59 @@ namespace OpenSimCity.Tests.EditMode
         }
 
         [Test]
-        public void VersionOneCrossPlatformGoldenSaveHasStableStateAndNextMonthChecksum()
+        public void VersionOneCrossPlatformGoldenSaveMigratesAndContinuesDeterministically()
         {
+            var committedFixture = File.ReadAllBytes(FixturePath("p4-v1-roundtrip-windows.json"));
+            Assert.That(committedFixture[committedFixture.Length - 1], Is.EqualTo((byte)'\n'));
+            var versionOnePayload = committedFixture.Take(committedFixture.Length - 1).ToArray();
+            Assert.That(Fnv1a64(versionOnePayload), Is.EqualTo(ExpectedCrossPlatformFixtureChecksum));
+
             var storage = new MemorySaveStorage();
+            Assert.That(storage.WriteAtomically(
+                CityPersistenceController.ManualSaveKey,
+                versionOnePayload).IsSuccess, Is.True);
             var codec = new UnityJsonCitySnapshotPayloadCodec();
             var service = new CityPersistenceService(storage, codec);
-            var runtime = CreateGateRuntime();
 
-            Assert.That(service.Save(
-                CityPersistenceController.ManualSaveKey,
-                runtime,
-                FixtureGameVersion,
-                FixtureUtcTicks).IsSuccess, Is.True);
-            var payload = storage.Read(CityPersistenceController.ManualSaveKey).Payload;
-            var loaded = service.Load(CityPersistenceController.ManualSaveKey).Runtime;
-            var recoveryCell = new CellCoord(0, 4);
-            ApplyRecoveryAndAdvance(runtime, recoveryCell);
-            ApplyRecoveryAndAdvance(loaded, recoveryCell);
-            var nextMonthPayload = codec.Encode(CitySnapshotSerializer.Capture(
-                loaded,
+            var load = service.Load(CityPersistenceController.ManualSaveKey);
+
+            Assert.That(load.IsSuccess, Is.True, load.Error.ToString());
+            Assert.That(load.WasMigrated, Is.True);
+            Assert.That(load.SourceFormatVersion, Is.EqualTo(1));
+            Assert.That(load.Runtime, Is.Not.Null);
+            Assert.That(load.Runtime.Roads.Cells
+                .Where(cell => cell.IsOccupied)
+                .All(cell => cell.TravelDirection == RoadTravelDirection.Bidirectional), Is.True);
+
+            var baseline = CreateGateRuntime();
+            var migratedPayload = codec.Encode(CitySnapshotSerializer.Capture(
+                load.Runtime,
                 FixtureGameVersion,
                 FixtureUtcTicks)).Payload;
-            var checksum = Fnv1a64(payload);
-            var nextMonthChecksum = Fnv1a64(nextMonthPayload);
-            var committedFixture = File.ReadAllBytes(FixturePath("p4-v1-roundtrip-windows.json"));
+            var baselinePayload = codec.Encode(CitySnapshotSerializer.Capture(
+                baseline,
+                FixtureGameVersion,
+                FixtureUtcTicks)).Payload;
+            Assert.That(migratedPayload, Is.EqualTo(baselinePayload));
 
-            var artifactDirectory = Path.Combine(
-                Directory.GetParent(UnityEngine.Application.dataPath).FullName,
-                "TestResults");
-            Directory.CreateDirectory(artifactDirectory);
-            var artifactPath = Path.Combine(artifactDirectory, "p4-v1-roundtrip-windows.osc-save");
-            File.WriteAllBytes(artifactPath, payload);
+            var recoveryCell = new CellCoord(0, 4);
+            ApplyRecoveryAndAdvance(baseline, recoveryCell);
+            ApplyRecoveryAndAdvance(load.Runtime, recoveryCell);
+            var expectedNextMonth = codec.Encode(CitySnapshotSerializer.Capture(
+                baseline,
+                FixtureGameVersion,
+                FixtureUtcTicks)).Payload;
+            var migratedNextMonth = codec.Encode(CitySnapshotSerializer.Capture(
+                load.Runtime,
+                FixtureGameVersion,
+                FixtureUtcTicks)).Payload;
 
             TestContext.WriteLine(
-                $"P4-03 Windows golden: version={CitySnapshotFormat.CurrentVersion}; " +
-                $"bytes={payload.Length}; checksum={checksum:X16}; " +
-                $"nextMonthChecksum={nextMonthChecksum:X16}; artifact={artifactPath}; " +
+                $"P5-04A v1 migration golden: sourceChecksum={Fnv1a64(versionOnePayload):X16}; " +
+                $"migratedChecksum={Fnv1a64(migratedPayload):X16}; " +
+                $"nextMonthChecksum={Fnv1a64(migratedNextMonth):X16}; " +
                 $"Unity={UnityEngine.Application.unityVersion}; platform={UnityEngine.Application.platform}");
-            Assert.That(committedFixture[committedFixture.Length - 1], Is.EqualTo((byte)'\n'));
-            Assert.That(
-                committedFixture.Take(committedFixture.Length - 1).ToArray(),
-                Is.EqualTo(payload));
-            Assert.That(checksum, Is.EqualTo(ExpectedCrossPlatformFixtureChecksum));
-            Assert.That(codec.Encode(CitySnapshotSerializer.Capture(
-                runtime,
-                FixtureGameVersion,
-                FixtureUtcTicks)).Payload, Is.EqualTo(nextMonthPayload));
+            Assert.That(migratedNextMonth, Is.EqualTo(expectedNextMonth));
         }
 
         private static void AssertSafeLoadFailure(

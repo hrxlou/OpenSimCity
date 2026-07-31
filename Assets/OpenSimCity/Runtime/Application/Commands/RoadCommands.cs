@@ -22,19 +22,12 @@ namespace OpenSimCity.Application.Commands
         }
 
         public StableId RoadDefinitionId { get; }
-
         public StableId DefinitionId => RoadDefinitionId;
-
         public IReadOnlyList<CellCoord> Cells => _cells;
-
         public IReadOnlyList<CellCoord> Path => _cells;
-
         public IReadOnlyList<CellCoord> RoadCells => _cells;
-
         public bool IsEmpty => _cells.Count == 0;
-
         public CellCoord Start => IsEmpty ? CellCoord.Zero : _cells[0];
-
         public CellCoord End => IsEmpty ? CellCoord.Zero : _cells[_cells.Count - 1];
     }
 
@@ -53,22 +46,67 @@ namespace OpenSimCity.Application.Commands
         }
 
         public IReadOnlyList<CellCoord> Cells => _cells;
-
         public IReadOnlyList<CellCoord> Path => _cells;
-
         public IReadOnlyList<CellCoord> RoadCells => _cells;
-
         public bool IsEmpty => _cells.Count == 0;
-
         public CellCoord Start => IsEmpty ? CellCoord.Zero : _cells[0];
+        public CellCoord End => IsEmpty ? CellCoord.Zero : _cells[_cells.Count - 1];
+    }
 
+    public enum RoadDirectionMode : byte
+    {
+        Bidirectional = 0,
+        Forward = 1,
+        Reverse = 2
+    }
+
+    /// <summary>
+    /// Replaces the static road definition and/or travel direction on an existing
+    /// straight path. Occupancy is never removed and no demolition command is
+    /// synthesized internally.
+    /// </summary>
+    public sealed class UpgradeRoadCommand : ICityCommand
+    {
+        private readonly IReadOnlyList<CellCoord> _cells;
+
+        public UpgradeRoadCommand(
+            StableId targetRoadDefinitionId,
+            RoadDirectionMode directionMode,
+            IEnumerable<CellCoord> cells)
+        {
+            TargetRoadDefinitionId = targetRoadDefinitionId;
+            DirectionMode = directionMode;
+            _cells = RoadCommandCells.Copy(cells);
+        }
+
+        public UpgradeRoadCommand(
+            StableId targetRoadDefinitionId,
+            RoadDirectionMode directionMode,
+            CellCoord start,
+            CellCoord end)
+            : this(
+                targetRoadDefinitionId,
+                directionMode,
+                StraightRoadPathCalculator.Calculate(start, end).Cells)
+        {
+        }
+
+        public StableId TargetRoadDefinitionId { get; }
+        public StableId RoadDefinitionId => TargetRoadDefinitionId;
+        public RoadDirectionMode DirectionMode { get; }
+        public IReadOnlyList<CellCoord> Cells => _cells;
+        public IReadOnlyList<CellCoord> Path => _cells;
+        public IReadOnlyList<CellCoord> RoadCells => _cells;
+        public bool IsEmpty => _cells.Count == 0;
+        public CellCoord Start => IsEmpty ? CellCoord.Zero : _cells[0];
         public CellCoord End => IsEmpty ? CellCoord.Zero : _cells[_cells.Count - 1];
     }
 
     public enum RoadCommandOperation
     {
         Place,
-        Demolish
+        Demolish,
+        Upgrade
     }
 
     public enum RoadCommandResultStatus
@@ -89,16 +127,14 @@ namespace OpenSimCity.Application.Commands
         DuplicateCell,
         RoadAlreadyExists,
         NoRoad,
+        InvalidDirection,
+        DirectionRequiresPath,
+        NoChange,
         CostOverflow,
         InsufficientFunds,
         StateChangedBeforeCommit
     }
 
-    /// <summary>
-    /// Shared preview/commit DTO. A valid preview and its subsequent commit carry
-    /// the same cost, reason-free cell set, and requested path. Only the commit
-    /// changes status to Applied and deducts funds.
-    /// </summary>
     [Serializable]
     public sealed class RoadCommandResult
     {
@@ -107,6 +143,7 @@ namespace OpenSimCity.Application.Commands
             RoadCommandResultStatus status,
             RoadCommandFailureReason failureReason,
             StableId roadDefinitionId,
+            RoadDirectionMode directionMode,
             int cost,
             int fundsBefore,
             int fundsAfter,
@@ -118,6 +155,7 @@ namespace OpenSimCity.Application.Commands
             Status = status;
             FailureReason = failureReason;
             RoadDefinitionId = roadDefinitionId;
+            DirectionMode = directionMode;
             Cost = cost;
             FundsBefore = fundsBefore;
             FundsAfter = fundsAfter;
@@ -127,31 +165,19 @@ namespace OpenSimCity.Application.Commands
         }
 
         public RoadCommandOperation Operation { get; }
-
         public RoadCommandResultStatus Status { get; }
-
         public RoadCommandFailureReason FailureReason { get; }
-
         public bool IsValid => FailureReason == RoadCommandFailureReason.None;
-
         public bool IsApplied => Status == RoadCommandResultStatus.Applied;
-
         public bool StateChanged => IsApplied;
-
         public StableId RoadDefinitionId { get; }
-
+        public RoadDirectionMode DirectionMode { get; }
         public int Cost { get; }
-
         public int FundsBefore { get; }
-
         public int FundsAfter { get; }
-
         public IReadOnlyList<CellCoord> RequestedCells { get; }
-
         public IReadOnlyList<CellCoord> ChangedCells { get; }
-
         public IReadOnlyList<CellCoord> AffectedCells => ChangedCells;
-
         public string Message { get; }
 
         internal static RoadCommandResult Preview(
@@ -159,13 +185,15 @@ namespace OpenSimCity.Application.Commands
             StableId roadDefinitionId,
             int cost,
             int funds,
-            IReadOnlyList<CellCoord> requestedCells)
+            IReadOnlyList<CellCoord> requestedCells,
+            RoadDirectionMode directionMode = RoadDirectionMode.Bidirectional)
         {
             return new RoadCommandResult(
                 operation,
                 RoadCommandResultStatus.Valid,
                 RoadCommandFailureReason.None,
                 roadDefinitionId,
+                directionMode,
                 cost,
                 funds,
                 funds,
@@ -180,13 +208,15 @@ namespace OpenSimCity.Application.Commands
             int cost,
             int fundsBefore,
             int fundsAfter,
-            IReadOnlyList<CellCoord> requestedCells)
+            IReadOnlyList<CellCoord> requestedCells,
+            RoadDirectionMode directionMode = RoadDirectionMode.Bidirectional)
         {
             return new RoadCommandResult(
                 operation,
                 RoadCommandResultStatus.Applied,
                 RoadCommandFailureReason.None,
                 roadDefinitionId,
+                directionMode,
                 cost,
                 fundsBefore,
                 fundsAfter,
@@ -201,13 +231,15 @@ namespace OpenSimCity.Application.Commands
             RoadCommandFailureReason reason,
             int cost,
             int funds,
-            IReadOnlyList<CellCoord> requestedCells)
+            IReadOnlyList<CellCoord> requestedCells,
+            RoadDirectionMode directionMode = RoadDirectionMode.Bidirectional)
         {
             return new RoadCommandResult(
                 operation,
                 RoadCommandResultStatus.Rejected,
                 reason,
                 roadDefinitionId,
+                directionMode,
                 cost,
                 funds,
                 funds,
@@ -227,7 +259,6 @@ namespace OpenSimCity.Application.Commands
                 foreach (var cell in cells)
                     copy.Add(cell);
             }
-
             return copy.AsReadOnly();
         }
     }
@@ -254,10 +285,16 @@ namespace OpenSimCity.Application.Commands
                     return "At least one selected cell already contains a road.";
                 case RoadCommandFailureReason.NoRoad:
                     return "At least one selected cell does not contain a road.";
+                case RoadCommandFailureReason.InvalidDirection:
+                    return "The requested road direction is not supported.";
+                case RoadCommandFailureReason.DirectionRequiresPath:
+                    return "A one-way direction requires at least two distinct road cells.";
+                case RoadCommandFailureReason.NoChange:
+                    return "The selected roads already use the requested definition and direction.";
                 case RoadCommandFailureReason.CostOverflow:
                     return "The road cost is too large to represent safely.";
                 case RoadCommandFailureReason.InsufficientFunds:
-                    return "The city does not have enough funds for this road.";
+                    return "The city does not have enough funds for this road change.";
                 case RoadCommandFailureReason.StateChangedBeforeCommit:
                     return "The road state changed before the command could be committed.";
                 default:

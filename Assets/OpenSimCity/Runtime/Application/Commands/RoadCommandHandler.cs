@@ -8,9 +8,9 @@ using OpenSimCity.Simulation.Roads;
 namespace OpenSimCity.Application.Commands
 {
     /// <summary>
-    /// Application boundary for road placement and demolition. It owns neither
-    /// presentation objects nor raw simulation arrays; all state changes go
-    /// through RoadNetworkState's validated batch methods.
+    /// Application boundary for road placement, demolition, and no-demolition
+    /// definition/direction replacement. It owns neither presentation objects nor
+    /// raw simulation arrays; all changes use RoadNetworkState atomic batches.
     /// </summary>
     public sealed class RoadCommandHandler : ICityCommandHandler
     {
@@ -50,67 +50,67 @@ namespace OpenSimCity.Application.Commands
         }
 
         public RoadNetworkState RoadNetwork => _roadNetwork;
-
         public RoadDefinitionCatalog Definitions => _definitions;
-
-        /// <summary>Compatibility accessor for P2 callers using a standalone budget.</summary>
         public RoadConstructionBudget Budget => _funds as RoadConstructionBudget;
-
         public IConstructionFunds Funds => _funds;
-
         public RoadCommandResult LastResult { get; private set; }
 
         public bool CanHandle(ICityCommand command)
         {
-            return command is PlaceRoadCommand || command is DemolishRoadCommand;
+            return command is PlaceRoadCommand ||
+                   command is DemolishRoadCommand ||
+                   command is UpgradeRoadCommand;
         }
 
         public RoadCommandResult Preview(PlaceRoadCommand command)
         {
             if (command == null)
             {
-                return RoadCommandResult.Rejected(
+                return Reject(
                     RoadCommandOperation.Place,
                     StableId.Invalid,
                     RoadCommandFailureReason.InvalidCommand,
                     0,
-                    _funds.Funds,
                     null);
             }
 
-            return Evaluate(
-                RoadCommandOperation.Place,
-                command.RoadDefinitionId,
-                command.Cells,
-                requiresDefinition: true);
+            return EvaluatePlacement(command);
         }
 
         public RoadCommandResult Preview(DemolishRoadCommand command)
         {
             if (command == null)
             {
-                return RoadCommandResult.Rejected(
+                return Reject(
                     RoadCommandOperation.Demolish,
                     StableId.Invalid,
                     RoadCommandFailureReason.InvalidCommand,
                     0,
-                    _funds.Funds,
                     null);
             }
 
-            return Evaluate(
-                RoadCommandOperation.Demolish,
-                StableId.Invalid,
-                command.Cells,
-                requiresDefinition: false);
+            return EvaluateDemolition(command);
+        }
+
+        public RoadCommandResult Preview(UpgradeRoadCommand command)
+        {
+            if (command == null)
+            {
+                return Reject(
+                    RoadCommandOperation.Upgrade,
+                    StableId.Invalid,
+                    RoadCommandFailureReason.InvalidCommand,
+                    0,
+                    null);
+            }
+
+            return EvaluateUpgrade(command);
         }
 
         public RoadCommandResult Execute(PlaceRoadCommand command)
         {
             var preview = Preview(command);
-            var result = preview.IsValid
-                ? CommitPlacement(command, preview)
-                : preview;
+            var result = preview.IsValid ? CommitPlacement(command, preview) : preview;
             LastResult = result;
             return result;
         }
@@ -118,20 +118,31 @@ namespace OpenSimCity.Application.Commands
         public RoadCommandResult Execute(DemolishRoadCommand command)
         {
             var preview = Preview(command);
-            var result = preview.IsValid
-                ? CommitDemolition(command, preview)
-                : preview;
+            var result = preview.IsValid ? CommitDemolition(command, preview) : preview;
+            LastResult = result;
+            return result;
+        }
+
+        public RoadCommandResult Execute(UpgradeRoadCommand command)
+        {
+            var preview = Preview(command);
+            var result = preview.IsValid ? CommitUpgrade(command, preview) : preview;
             LastResult = result;
             return result;
         }
 
         public CommandValidationResult Validate(CommandEnvelope command)
         {
-            var result = Preview(command.Command as PlaceRoadCommand);
-            if (command.Command is DemolishRoadCommand demolition)
-                result = Preview(demolition);
             if (command.Command == null || !CanHandle(command.Command))
                 return CommandValidationResult.Unsupported("No road handler can execute this command.");
+
+            RoadCommandResult result;
+            if (command.Command is PlaceRoadCommand placement)
+                result = Preview(placement);
+            else if (command.Command is DemolishRoadCommand demolition)
+                result = Preview(demolition);
+            else
+                result = Preview((UpgradeRoadCommand)command.Command);
 
             return result.IsValid
                 ? CommandValidationResult.Valid
@@ -140,43 +151,36 @@ namespace OpenSimCity.Application.Commands
 
         public CommandExecutionResult Execute(CommandEnvelope command)
         {
+            RoadCommandResult result;
             if (command.Command is PlaceRoadCommand placement)
-            {
-                var result = Execute(placement);
-                return result.IsApplied
-                    ? CommandExecutionResult.Applied(result)
-                    : CommandExecutionResult.Rejected(result.Message).WithDetails(result);
-            }
+                result = Execute(placement);
+            else if (command.Command is DemolishRoadCommand demolition)
+                result = Execute(demolition);
+            else if (command.Command is UpgradeRoadCommand upgrade)
+                result = Execute(upgrade);
+            else
+                return CommandExecutionResult.Unsupported("No road handler can execute this command.");
 
-            if (command.Command is DemolishRoadCommand demolition)
-            {
-                var result = Execute(demolition);
-                return result.IsApplied
-                    ? CommandExecutionResult.Applied(result)
-                    : CommandExecutionResult.Rejected(result.Message).WithDetails(result);
-            }
-
-            return CommandExecutionResult.Unsupported("No road handler can execute this command.");
+            return result.IsApplied
+                ? CommandExecutionResult.Applied(result)
+                : CommandExecutionResult.Rejected(result.Message).WithDetails(result);
         }
 
         private RoadCommandResult CommitPlacement(PlaceRoadCommand command, RoadCommandResult preview)
         {
             if (!_funds.TrySpend(preview.Cost))
             {
-                return RoadCommandResult.Rejected(
+                return Reject(
                     RoadCommandOperation.Place,
                     command.RoadDefinitionId,
                     RoadCommandFailureReason.InsufficientFunds,
                     preview.Cost,
-                    _funds.Funds,
                     command.Cells);
             }
 
             if (_roadNetwork.TryApplyPlacement(command.Cells, command.RoadDefinitionId))
             {
-                _municipalFinance?.RecordConstructionExpense(
-                    MunicipalConstructionCategory.Road,
-                    preview.Cost);
+                RecordRoadExpense(preview.Cost);
                 return RoadCommandResult.Applied(
                     RoadCommandOperation.Place,
                     command.RoadDefinitionId,
@@ -187,12 +191,11 @@ namespace OpenSimCity.Application.Commands
             }
 
             _funds.TryRefund(preview.Cost);
-            return RoadCommandResult.Rejected(
+            return Reject(
                 RoadCommandOperation.Place,
                 command.RoadDefinitionId,
                 RoadCommandFailureReason.StateChangedBeforeCommit,
                 preview.Cost,
-                _funds.Funds,
                 command.Cells);
         }
 
@@ -211,144 +214,356 @@ namespace OpenSimCity.Application.Commands
                     command.Cells);
             }
 
-            return RoadCommandResult.Rejected(
+            return Reject(
                 RoadCommandOperation.Demolish,
                 StableId.Invalid,
                 RoadCommandFailureReason.StateChangedBeforeCommit,
+                0,
+                command.Cells);
+        }
+
+        private RoadCommandResult CommitUpgrade(
+            UpgradeRoadCommand command,
+            RoadCommandResult preview)
+        {
+            if (!_funds.TrySpend(preview.Cost))
+            {
+                return Reject(
+                    RoadCommandOperation.Upgrade,
+                    command.TargetRoadDefinitionId,
+                    RoadCommandFailureReason.InsufficientFunds,
+                    preview.Cost,
+                    command.Cells,
+                    command.DirectionMode);
+            }
+
+            var directions = BuildDirections(command);
+            if (_roadNetwork.TryApplyReplacement(
+                    command.Cells,
+                    command.TargetRoadDefinitionId,
+                    directions))
+            {
+                RecordRoadExpense(preview.Cost);
+                return RoadCommandResult.Applied(
+                    RoadCommandOperation.Upgrade,
+                    command.TargetRoadDefinitionId,
+                    preview.Cost,
+                    preview.FundsBefore,
+                    _funds.Funds,
+                    command.Cells,
+                    command.DirectionMode);
+            }
+
+            _funds.TryRefund(preview.Cost);
+            return Reject(
+                RoadCommandOperation.Upgrade,
+                command.TargetRoadDefinitionId,
+                RoadCommandFailureReason.StateChangedBeforeCommit,
+                preview.Cost,
+                command.Cells,
+                command.DirectionMode);
+        }
+
+        private RoadCommandResult EvaluatePlacement(PlaceRoadCommand command)
+        {
+            var common = ValidateCommon(command.Cells);
+            if (common != RoadCommandFailureReason.None)
+                return Reject(RoadCommandOperation.Place, command.RoadDefinitionId, common, 0, command.Cells);
+            if (!command.RoadDefinitionId.IsValid ||
+                !_definitions.TryGet(command.RoadDefinitionId, out var definition))
+            {
+                return Reject(
+                    RoadCommandOperation.Place,
+                    command.RoadDefinitionId,
+                    RoadCommandFailureReason.InvalidDefinition,
+                    0,
+                    command.Cells);
+            }
+
+            for (var index = 0; index < command.Cells.Count; index++)
+            {
+                if (_roadNetwork.IsOccupied(command.Cells[index]))
+                {
+                    return Reject(
+                        RoadCommandOperation.Place,
+                        command.RoadDefinitionId,
+                        RoadCommandFailureReason.RoadAlreadyExists,
+                        0,
+                        command.Cells);
+                }
+            }
+
+            if (!TryMultiplyCost(definition.BuildCost, command.Cells.Count, out var cost))
+            {
+                return Reject(
+                    RoadCommandOperation.Place,
+                    command.RoadDefinitionId,
+                    RoadCommandFailureReason.CostOverflow,
+                    0,
+                    command.Cells);
+            }
+            if (!_funds.CanAfford(cost))
+            {
+                return Reject(
+                    RoadCommandOperation.Place,
+                    command.RoadDefinitionId,
+                    RoadCommandFailureReason.InsufficientFunds,
+                    cost,
+                    command.Cells);
+            }
+
+            return RoadCommandResult.Preview(
+                RoadCommandOperation.Place,
+                command.RoadDefinitionId,
+                cost,
+                _funds.Funds,
+                command.Cells);
+        }
+
+        private RoadCommandResult EvaluateDemolition(DemolishRoadCommand command)
+        {
+            var common = ValidateCommon(command.Cells);
+            if (common != RoadCommandFailureReason.None)
+                return Reject(RoadCommandOperation.Demolish, StableId.Invalid, common, 0, command.Cells);
+
+            for (var index = 0; index < command.Cells.Count; index++)
+            {
+                if (!_roadNetwork.IsOccupied(command.Cells[index]))
+                {
+                    return Reject(
+                        RoadCommandOperation.Demolish,
+                        StableId.Invalid,
+                        RoadCommandFailureReason.NoRoad,
+                        0,
+                        command.Cells);
+                }
+            }
+
+            return RoadCommandResult.Preview(
+                RoadCommandOperation.Demolish,
+                StableId.Invalid,
                 0,
                 _funds.Funds,
                 command.Cells);
         }
 
-        private RoadCommandResult Evaluate(
-            RoadCommandOperation operation,
-            StableId roadDefinitionId,
-            IReadOnlyList<CellCoord> cells,
-            bool requiresDefinition)
+        private RoadCommandResult EvaluateUpgrade(UpgradeRoadCommand command)
         {
-            var funds = _funds.Funds;
-            if (cells == null || cells.Count == 0)
+            var common = ValidateCommon(command.Cells);
+            if (common != RoadCommandFailureReason.None)
             {
-                return RoadCommandResult.Rejected(
-                    operation,
-                    roadDefinitionId,
-                    RoadCommandFailureReason.EmptyPath,
+                return Reject(
+                    RoadCommandOperation.Upgrade,
+                    command.TargetRoadDefinitionId,
+                    common,
                     0,
-                    funds,
-                    cells);
+                    command.Cells,
+                    command.DirectionMode);
             }
-
-            RoadDefinition definition = null;
-            if (requiresDefinition &&
-                (!roadDefinitionId.IsValid || !_definitions.TryGet(roadDefinitionId, out definition)))
+            if (!command.TargetRoadDefinitionId.IsValid ||
+                !_definitions.TryGet(command.TargetRoadDefinitionId, out var targetDefinition))
             {
-                return RoadCommandResult.Rejected(
-                    operation,
-                    roadDefinitionId,
+                return Reject(
+                    RoadCommandOperation.Upgrade,
+                    command.TargetRoadDefinitionId,
                     RoadCommandFailureReason.InvalidDefinition,
                     0,
-                    funds,
-                    cells);
+                    command.Cells,
+                    command.DirectionMode);
             }
+            if (!IsValidDirectionMode(command.DirectionMode))
+            {
+                return Reject(
+                    RoadCommandOperation.Upgrade,
+                    command.TargetRoadDefinitionId,
+                    RoadCommandFailureReason.InvalidDirection,
+                    0,
+                    command.Cells,
+                    command.DirectionMode);
+            }
+            if (command.DirectionMode != RoadDirectionMode.Bidirectional && command.Cells.Count < 2)
+            {
+                return Reject(
+                    RoadCommandOperation.Upgrade,
+                    command.TargetRoadDefinitionId,
+                    RoadCommandFailureReason.DirectionRequiresPath,
+                    0,
+                    command.Cells,
+                    command.DirectionMode);
+            }
+
+            for (var index = 0; index < command.Cells.Count; index++)
+            {
+                if (!_roadNetwork.IsOccupied(command.Cells[index]))
+                {
+                    return Reject(
+                        RoadCommandOperation.Upgrade,
+                        command.TargetRoadDefinitionId,
+                        RoadCommandFailureReason.NoRoad,
+                        0,
+                        command.Cells,
+                        command.DirectionMode);
+                }
+            }
+
+            if (!TryCalculateUpgradeCost(command.Cells, targetDefinition, out var cost))
+            {
+                return Reject(
+                    RoadCommandOperation.Upgrade,
+                    command.TargetRoadDefinitionId,
+                    RoadCommandFailureReason.CostOverflow,
+                    0,
+                    command.Cells,
+                    command.DirectionMode);
+            }
+
+            var directions = BuildDirections(command);
+            if (!HasReplacementChange(command.Cells, command.TargetRoadDefinitionId, directions))
+            {
+                return Reject(
+                    RoadCommandOperation.Upgrade,
+                    command.TargetRoadDefinitionId,
+                    RoadCommandFailureReason.NoChange,
+                    cost,
+                    command.Cells,
+                    command.DirectionMode);
+            }
+            if (!_funds.CanAfford(cost))
+            {
+                return Reject(
+                    RoadCommandOperation.Upgrade,
+                    command.TargetRoadDefinitionId,
+                    RoadCommandFailureReason.InsufficientFunds,
+                    cost,
+                    command.Cells,
+                    command.DirectionMode);
+            }
+
+            return RoadCommandResult.Preview(
+                RoadCommandOperation.Upgrade,
+                command.TargetRoadDefinitionId,
+                cost,
+                _funds.Funds,
+                command.Cells,
+                command.DirectionMode);
+        }
+
+        private RoadCommandFailureReason ValidateCommon(IReadOnlyList<CellCoord> cells)
+        {
+            if (cells == null || cells.Count == 0)
+                return RoadCommandFailureReason.EmptyPath;
 
             var seen = new HashSet<CellCoord>();
             for (var index = 0; index < cells.Count; index++)
             {
                 if (!seen.Add(cells[index]))
-                {
-                    return RoadCommandResult.Rejected(
-                        operation,
-                        roadDefinitionId,
-                        RoadCommandFailureReason.DuplicateCell,
-                        0,
-                        funds,
-                        cells);
-                }
-
+                    return RoadCommandFailureReason.DuplicateCell;
                 if (!_roadNetwork.IsInBounds(cells[index]))
-                {
-                    return RoadCommandResult.Rejected(
-                        operation,
-                        roadDefinitionId,
-                        RoadCommandFailureReason.OutOfBounds,
-                        0,
-                        funds,
-                        cells);
-                }
+                    return RoadCommandFailureReason.OutOfBounds;
             }
 
-            if (!RoadPath.IsStraight(cells))
-            {
-                return RoadCommandResult.Rejected(
-                    operation,
-                    roadDefinitionId,
-                    RoadCommandFailureReason.InvalidPath,
-                    0,
-                    funds,
-                    cells);
-            }
+            return RoadPath.IsStraight(cells)
+                ? RoadCommandFailureReason.None
+                : RoadCommandFailureReason.InvalidPath;
+        }
 
-            var cost = 0;
-            if (requiresDefinition)
-            {
-                var totalCost = (long)definition.BuildCost * cells.Count;
-                if (totalCost > int.MaxValue)
-                {
-                    return RoadCommandResult.Rejected(
-                        operation,
-                        roadDefinitionId,
-                        RoadCommandFailureReason.CostOverflow,
-                        0,
-                        funds,
-                        cells);
-                }
-
-                cost = (int)totalCost;
-            }
-
+        private bool TryCalculateUpgradeCost(
+            IReadOnlyList<CellCoord> cells,
+            RoadDefinition targetDefinition,
+            out int cost)
+        {
+            long total = 0;
             for (var index = 0; index < cells.Count; index++)
             {
-                var occupied = _roadNetwork.IsOccupied(cells[index]);
-                if (operation == RoadCommandOperation.Place && occupied)
+                var current = _definitions.Get(_roadNetwork.GetRoadDefinitionId(cells[index]));
+                total += Math.Max(0, targetDefinition.BuildCost - current.BuildCost);
+                if (total > int.MaxValue)
                 {
-                    return RoadCommandResult.Rejected(
-                        operation,
-                        roadDefinitionId,
-                        RoadCommandFailureReason.RoadAlreadyExists,
-                        cost,
-                        funds,
-                        cells);
-                }
-
-                if (operation == RoadCommandOperation.Demolish && !occupied)
-                {
-                    return RoadCommandResult.Rejected(
-                        operation,
-                        roadDefinitionId,
-                        RoadCommandFailureReason.NoRoad,
-                        0,
-                        funds,
-                        cells);
+                    cost = 0;
+                    return false;
                 }
             }
+            cost = (int)total;
+            return true;
+        }
 
-            if (requiresDefinition && !_funds.CanAfford(cost))
+        private bool HasReplacementChange(
+            IReadOnlyList<CellCoord> cells,
+            StableId targetDefinitionId,
+            IReadOnlyList<RoadTravelDirection> directions)
+        {
+            for (var index = 0; index < cells.Count; index++)
             {
-                return RoadCommandResult.Rejected(
-                    operation,
-                    roadDefinitionId,
-                    RoadCommandFailureReason.InsufficientFunds,
-                    cost,
-                    funds,
-                    cells);
+                var state = _roadNetwork.GetCell(cells[index]);
+                if (state.DefinitionId != targetDefinitionId ||
+                    state.TravelDirection != directions[index])
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static IReadOnlyList<RoadTravelDirection> BuildDirections(UpgradeRoadCommand command)
+        {
+            var direction = RoadTravelDirection.Bidirectional;
+            if (command.DirectionMode != RoadDirectionMode.Bidirectional)
+            {
+                direction = RoadTravelDirectionRules.FromPath(
+                    command.Start,
+                    command.End,
+                    command.DirectionMode == RoadDirectionMode.Reverse);
             }
 
-            return RoadCommandResult.Preview(
+            var directions = new RoadTravelDirection[command.Cells.Count];
+            for (var index = 0; index < directions.Length; index++)
+                directions[index] = direction;
+            return Array.AsReadOnly(directions);
+        }
+
+        private static bool IsValidDirectionMode(RoadDirectionMode mode)
+        {
+            return mode >= RoadDirectionMode.Bidirectional && mode <= RoadDirectionMode.Reverse;
+        }
+
+        private static bool TryMultiplyCost(int unitCost, int count, out int cost)
+        {
+            var total = (long)unitCost * count;
+            if (total > int.MaxValue)
+            {
+                cost = 0;
+                return false;
+            }
+            cost = (int)total;
+            return true;
+        }
+
+        private void RecordRoadExpense(int cost)
+        {
+            if (cost > 0)
+            {
+                _municipalFinance?.RecordConstructionExpense(
+                    MunicipalConstructionCategory.Road,
+                    cost);
+            }
+        }
+
+        private RoadCommandResult Reject(
+            RoadCommandOperation operation,
+            StableId definitionId,
+            RoadCommandFailureReason reason,
+            int cost,
+            IReadOnlyList<CellCoord> cells,
+            RoadDirectionMode directionMode = RoadDirectionMode.Bidirectional)
+        {
+            return RoadCommandResult.Rejected(
                 operation,
-                roadDefinitionId,
+                definitionId,
+                reason,
                 cost,
-                funds,
-                cells);
+                _funds.Funds,
+                cells,
+                directionMode);
         }
     }
 }
