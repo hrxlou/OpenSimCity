@@ -7,14 +7,14 @@ namespace OpenSimCity.Application.Construction
 {
     /// <summary>
     /// Top-level construction tools exposed by the Tool Rail. Each maps to one
-    /// command family: straight roads, road demolition, low-density R/C/I zoning
-    /// and zone clearing. No growth, finance, traffic or service tool is exposed
-    /// in P2.
+    /// application command family. Road upgrade is a no-demolition replacement
+    /// command and therefore remains distinct from road placement and demolition.
     /// </summary>
     public enum ConstructionToolMode
     {
         None,
         Road,
+        RoadUpgrade,
         Demolish,
         ZoneResidential,
         ZoneCommercial,
@@ -28,6 +28,7 @@ namespace OpenSimCity.Application.Construction
     {
         None,
         PlaceRoad,
+        UpgradeRoad,
         DemolishRoad,
         PaintZone,
         ClearZone,
@@ -64,6 +65,8 @@ namespace OpenSimCity.Application.Construction
             {
                 case ConstructionToolMode.Road:
                     return ConstructionOperation.PlaceRoad;
+                case ConstructionToolMode.RoadUpgrade:
+                    return ConstructionOperation.UpgradeRoad;
                 case ConstructionToolMode.Demolish:
                     return ConstructionOperation.DemolishRoad;
                 case ConstructionToolMode.ZoneResidential:
