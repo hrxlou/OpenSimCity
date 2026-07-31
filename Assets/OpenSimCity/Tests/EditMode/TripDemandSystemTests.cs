@@ -37,6 +37,7 @@ namespace OpenSimCity.Tests.EditMode
             Assert.That(fixture.Trips.State.CommuteRequested, Is.EqualTo(4));
             Assert.That(fixture.Trips.State.CommuteMatched, Is.EqualTo(4));
             Assert.That(fixture.Trips.State.CommuteUnmet, Is.Zero);
+            AssertGoodsConservation(fixture);
             Assert.That(fixture.Trips.State.GoodsRequested, Is.EqualTo(4));
             Assert.That(fixture.Trips.State.GoodsMatched, Is.EqualTo(4));
             Assert.That(fixture.Trips.State.GoodsUnmet, Is.Zero);
@@ -65,8 +66,7 @@ namespace OpenSimCity.Tests.EditMode
             Assert.That(fixture.Trips.State.CommuteUnmet, Is.EqualTo(4));
             Assert.That(fixture.Trips.State.Rows.Where(row => row.Kind == TripDemandKind.Commute)
                 .All(row => row.UnmetReason == TripDemandUnmetReason.DifferentRoadComponent), Is.True);
-
-            Assert.That(fixture.Trips.State.GoodsRequested, Is.EqualTo(4));
+            AssertGoodsConservation(fixture);
             Assert.That(fixture.Trips.State.GoodsMatched, Is.EqualTo(4));
         }
 
@@ -150,6 +150,7 @@ namespace OpenSimCity.Tests.EditMode
                 row.Kind == TripDemandKind.Commute &&
                 row.UnmetReason == TripDemandUnmetReason.NoDestinationCapacity &&
                 row.Amount == 3), Is.True);
+            AssertGoodsConservation(fixture);
         }
 
         [Test]
@@ -186,8 +187,10 @@ namespace OpenSimCity.Tests.EditMode
 
             Assert.That(forward.Trips.State.CommuteRequested, Is.EqualTo(800));
             Assert.That(forward.Trips.State.CommuteMatched, Is.EqualTo(400));
-            Assert.That(forward.Trips.State.GoodsRequested, Is.EqualTo(400));
+            AssertGoodsConservation(forward);
+            Assert.That(forward.Trips.State.GoodsRequested, Is.EqualTo(800));
             Assert.That(forward.Trips.State.GoodsMatched, Is.EqualTo(400));
+            Assert.That(forward.Trips.State.GoodsUnmet, Is.EqualTo(400));
             Assert.That(forward.Trips.State.ComputeChecksum(), Is.EqualTo(reverse.Trips.State.ComputeChecksum()));
 
             var assemblyReferences = typeof(TripDemandSystem).Assembly
@@ -232,6 +235,15 @@ namespace OpenSimCity.Tests.EditMode
             Assert.That(restored.TripDemandSystem.State.Rows.Count, Is.EqualTo(expectedRows));
             Assert.That(restored.TripDemandSystem.State.ComputeChecksum(), Is.EqualTo(expectedChecksum));
             Assert.That(restored.TripDemandModel.Checksum, Is.EqualTo(expectedChecksum));
+        }
+
+        private static void AssertGoodsConservation(Fixture fixture)
+        {
+            var market = fixture.Economy.Market;
+            var expected = checked(market.GoodsSold + market.GoodsShortage + market.GoodsSurplus);
+            Assert.That(fixture.Trips.State.GoodsRequested, Is.EqualTo(expected));
+            Assert.That(fixture.Trips.State.GoodsRequested,
+                Is.EqualTo(fixture.Trips.State.GoodsMatched + fixture.Trips.State.GoodsUnmet));
         }
 
         private static Fixture CreateConnectedFixture(
@@ -280,8 +292,10 @@ namespace OpenSimCity.Tests.EditMode
                 },
                 new[] { GateEndpoint(GateId, gateComponent, 0, 1) });
             var economy = new UrbanEconomySystem(buildings, profiles);
-            var trips = new TripDemandSystem(buildings, profiles, access, economy);
-            return new Fixture(buildings, economy, trips);
+            return new Fixture(
+                buildings,
+                economy,
+                new TripDemandSystem(buildings, profiles, access, economy));
         }
 
         private static Fixture CreateLargeFixture(bool reverseInsertion)
@@ -289,39 +303,36 @@ namespace OpenSimCity.Tests.EditMode
             var buildings = new BuildingStateCollection();
             var states = new List<BuildingState>();
             var accessByBuilding = new Dictionary<StableId, TripEndpoint>();
-            for (var index = 0; index < 200; index++)
-            {
-                var id = new StableId((ulong)(1_000 + index));
-                states.Add(new BuildingState(
-                    id,
-                    ResidentialDefinitionId,
-                    new StableId((ulong)(10_000 + index)),
-                    new CellCoord(index % 20, 2 + index / 20),
-                    occupancy: 4));
-                accessByBuilding.Add(id, BuildingEndpoint(id, 3, index % 20, 1));
-            }
-            for (var index = 0; index < 100; index++)
-            {
-                var id = new StableId((ulong)(2_000 + index));
-                states.Add(new BuildingState(
-                    id,
-                    CommercialDefinitionId,
-                    new StableId((ulong)(20_000 + index)),
-                    new CellCoord(index % 20, 20 + index / 20),
-                    filledJobs: 2));
-                accessByBuilding.Add(id, BuildingEndpoint(id, 3, index % 20, 19));
-            }
-            for (var index = 0; index < 100; index++)
-            {
-                var id = new StableId((ulong)(3_000 + index));
-                states.Add(new BuildingState(
-                    id,
-                    IndustrialDefinitionId,
-                    new StableId((ulong)(30_000 + index)),
-                    new CellCoord(index % 20, 30 + index / 20),
-                    filledJobs: 2));
-                accessByBuilding.Add(id, BuildingEndpoint(id, 3, index % 20, 29));
-            }
+            AddBuildings(
+                states,
+                accessByBuilding,
+                count: 200,
+                idBase: 1_000,
+                parcelBase: 10_000,
+                ResidentialDefinitionId,
+                occupancy: 4,
+                filledJobs: 0,
+                yBase: 2);
+            AddBuildings(
+                states,
+                accessByBuilding,
+                count: 100,
+                idBase: 2_000,
+                parcelBase: 20_000,
+                CommercialDefinitionId,
+                occupancy: 0,
+                filledJobs: 2,
+                yBase: 20);
+            AddBuildings(
+                states,
+                accessByBuilding,
+                count: 100,
+                idBase: 3_000,
+                parcelBase: 30_000,
+                IndustrialDefinitionId,
+                occupancy: 0,
+                filledJobs: 2,
+                yBase: 30);
 
             if (reverseInsertion)
                 states.Reverse();
@@ -336,8 +347,35 @@ namespace OpenSimCity.Tests.EditMode
                 accessByBuilding,
                 new[] { GateEndpoint(GateId, 3, 0, 0) });
             var economy = new UrbanEconomySystem(buildings, profiles);
-            var trips = new TripDemandSystem(buildings, profiles, access, economy);
-            return new Fixture(buildings, economy, trips);
+            return new Fixture(
+                buildings,
+                economy,
+                new TripDemandSystem(buildings, profiles, access, economy));
+        }
+
+        private static void AddBuildings(
+            ICollection<BuildingState> states,
+            IDictionary<StableId, TripEndpoint> access,
+            int count,
+            int idBase,
+            int parcelBase,
+            StableId definitionId,
+            int occupancy,
+            int filledJobs,
+            int yBase)
+        {
+            for (var index = 0; index < count; index++)
+            {
+                var id = new StableId((ulong)(idBase + index));
+                states.Add(new BuildingState(
+                    id,
+                    definitionId,
+                    new StableId((ulong)(parcelBase + index)),
+                    new CellCoord(index % 20, yBase + index / 20),
+                    occupancy,
+                    filledJobs));
+                access.Add(id, BuildingEndpoint(id, 3, index % 20, yBase - 1));
+            }
         }
 
         private static TripEndpoint BuildingEndpoint(StableId id, int component, int x, int y)
@@ -461,8 +499,9 @@ namespace OpenSimCity.Tests.EditMode
                 IReadOnlyDictionary<StableId, TripEndpoint> buildingAccess,
                 IEnumerable<TripEndpoint> gates)
             {
-                _buildingAccess = buildingAccess;
-                _gates = gates.OrderBy(gate => gate.Id).ToArray();
+                _buildingAccess = buildingAccess ?? throw new ArgumentNullException(nameof(buildingAccess));
+                _gates = gates?.OrderBy(gate => gate.Id).ToArray()
+                    ?? throw new ArgumentNullException(nameof(gates));
             }
 
             public TripEndpoint ResolveBuilding(BuildingState building)
