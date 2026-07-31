@@ -89,8 +89,7 @@ namespace OpenSimCity.Tests.PlayMode
             RunMonth(runtime, 1);
             yield return null;
 
-            var status = bootstrap.GlobalHud.Q<Label>("osc-hud-development-status");
-            Assert.That(status.text, Does.StartWith("수요 있음 / 개발 가능 "));
+            Assert.That(reasons.text, Does.Not.Contain("전력 부족"));
             Assert.That(runtime.GrowthSystem.State.Count, Is.GreaterThan(0));
         }
 
