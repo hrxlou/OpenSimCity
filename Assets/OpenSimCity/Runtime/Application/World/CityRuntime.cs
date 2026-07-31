@@ -94,6 +94,11 @@ namespace OpenSimCity.Application.World
                 BuildingDefinitions,
                 TripAccess,
                 UrbanEconomySystem);
+            TrafficRoutingSystem = new TrafficRoutingSystem(
+                Roads,
+                RoadGraph,
+                RoadDefinitions,
+                TripDemandSystem);
             GrowthSystem = new GrowthDevelopmentSystem(
                 Buildings,
                 Parcels,
@@ -107,6 +112,7 @@ namespace OpenSimCity.Application.World
                 UrbanEconomySystem,
                 GrowthSystem,
                 TripDemandSystem,
+                TrafficRoutingSystem,
                 Buildings,
                 BuildingDefinitions,
                 Roads,
@@ -130,6 +136,7 @@ namespace OpenSimCity.Application.World
             PopulationEmploymentModel = new PopulationEmploymentReadModel(PopulationSystem);
             UrbanEconomyModel = new UrbanEconomyReadModel(UrbanEconomySystem);
             TripDemandModel = new TripDemandReadModel(TripDemandSystem);
+            TrafficRoutingModel = new TrafficRoutingReadModel(TrafficRoutingSystem);
             GrowthModel = new GrowthDevelopmentReadModel(GrowthSystem);
             BuildingViews = new BuildingViewReadModel(Buildings, BuildingDefinitions, GrowthSystem);
             FinanceModel = new MunicipalFinanceReadModel(Finance);
@@ -190,6 +197,7 @@ namespace OpenSimCity.Application.World
         public UrbanEconomySystem UrbanEconomySystem { get; }
         public ITripAccessResolver TripAccess { get; }
         public TripDemandSystem TripDemandSystem { get; }
+        public TrafficRoutingSystem TrafficRoutingSystem { get; }
         public GrowthDevelopmentSystem GrowthSystem { get; }
         public MunicipalFinanceMonthlySystem MunicipalFinanceSystem { get; }
         public MonthlySimulationScheduler MonthlyScheduler { get; }
@@ -197,6 +205,7 @@ namespace OpenSimCity.Application.World
         public PopulationEmploymentReadModel PopulationEmploymentModel { get; }
         public UrbanEconomyReadModel UrbanEconomyModel { get; }
         public TripDemandReadModel TripDemandModel { get; }
+        public TrafficRoutingReadModel TrafficRoutingModel { get; }
         public GrowthDevelopmentReadModel GrowthModel { get; }
         public BuildingViewReadModel BuildingViews { get; }
         public MunicipalFinanceReadModel FinanceModel { get; }
@@ -353,6 +362,7 @@ namespace OpenSimCity.Application.World
             Power.RefreshIfNeeded();
             PowerModel.RefreshIfNeeded();
             TripDemandModel?.RefreshIfNeeded();
+            TrafficRoutingModel?.RefreshIfNeeded();
             BuildingViews?.RefreshIfNeeded();
             FinanceModel?.RefreshIfNeeded();
             DevelopmentStatus?.RefreshIfNeeded();
