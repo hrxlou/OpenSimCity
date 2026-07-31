@@ -399,7 +399,7 @@ namespace OpenSimCity.Application.World
     {
         public const int DefaultInitialFunds = 1_000_000;
         public const int DefaultRoadBuildCost = 10;
-        public const int DefaultRoadMonthlyMaintenanceCost = 2;
+        public const int DefaultRoadMonthlyMaintenanceCost = 1;
         public const int DefaultPowerPlantConstructionCost = 100;
         public const int DefaultPowerPlantMonthlyMaintenanceCost = 5;
 
