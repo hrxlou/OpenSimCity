@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Threading;
 using NUnit.Framework;
 using OpenSimCity.Application.Commands;
 using OpenSimCity.Application.Persistence;
@@ -56,7 +54,7 @@ namespace OpenSimCity.Tests.EditMode
         }
 
         [Test]
-        public void VersionOneEnvelopeMigratesRoadsToExplicitBidirectionalState()
+        public void VersionOnePayloadMigratesRoadsToExplicitBidirectionalState()
         {
             var options = RuntimeOptions();
             var runtime = new CityRuntime(options);
@@ -70,24 +68,33 @@ namespace OpenSimCity.Tests.EditMode
             v1.Header.FormatVersion = 1;
             for (var index = 0; index < v1.Roads.Cells.Length; index++)
                 v1.Roads.Cells[index].TravelDirection = (int)RoadTravelDirection.West;
-            var payload = codec.Encode(v1);
-            var envelope = CitySnapshotEnvelope.Encode(1, "legacy", 500L, payload);
+
+            var encoded = codec.Encode(v1);
+            Assert.That(encoded.IsSuccess, Is.True);
+            Assert.That(encoded.Payload, Is.Not.Null);
+            var sourcePayload = (byte[])encoded.Payload.Clone();
+            var storage = new MemorySaveStorage(sourcePayload);
             var service = new CityPersistenceService(
-                new NullSnapshotStore(),
+                storage,
                 codec,
-                options,
-                "legacy",
-                () => 500L);
+                new ICitySnapshotMigrationStep[]
+                {
+                    new CitySnapshotV1ToV2Migration(codec)
+                });
 
-            var restored = service.LoadBytes(envelope);
+            var loaded = service.Load("legacy", options);
 
+            Assert.That(loaded.IsSuccess, Is.True, loaded.Error.ToString());
+            Assert.That(loaded.WasMigrated, Is.True);
+            Assert.That(loaded.SourceFormatVersion, Is.EqualTo(1));
+            Assert.That(storage.Payload, Is.EqualTo(sourcePayload));
             Assert.That(CitySnapshotFormat.CurrentVersion, Is.EqualTo(2));
             for (var x = 0; x < 3; x++)
             {
                 var cell = new CellCoord(x, 0);
-                Assert.That(restored.Roads.GetRoadDefinitionId(cell),
+                Assert.That(loaded.Runtime.Roads.GetRoadDefinitionId(cell),
                     Is.EqualTo(CityRuntimeOptions.StreetDefinitionId));
-                Assert.That(restored.Roads.GetTravelDirection(cell),
+                Assert.That(loaded.Runtime.Roads.GetTravelDirection(cell),
                     Is.EqualTo(RoadTravelDirection.Bidirectional));
             }
         }
@@ -125,21 +132,31 @@ namespace OpenSimCity.Tests.EditMode
             Assert.That(result.IsApplied, Is.True, result.Message);
         }
 
-        private sealed class NullSnapshotStore : ICitySnapshotStore
+        private sealed class MemorySaveStorage : ICitySaveStorage
         {
-            public void WriteAtomic(string slotId, byte[] data, CancellationToken cancellationToken)
+            private byte[] _payload;
+
+            public MemorySaveStorage(byte[] payload)
             {
-                throw new NotSupportedException();
+                _payload = payload == null
+                    ? throw new ArgumentNullException(nameof(payload))
+                    : (byte[])payload.Clone();
             }
 
-            public byte[] Read(string slotId, CancellationToken cancellationToken)
+            public byte[] Payload => (byte[])_payload.Clone();
+
+            public CitySaveStorageReadResult Read(string saveKey)
             {
-                throw new NotSupportedException();
+                return CitySaveStorageReadResult.Success(_payload);
             }
 
-            public IReadOnlyList<CitySnapshotSlotInfo> ListSlots()
+            public CitySaveStorageWriteResult WriteAtomically(string saveKey, byte[] payload)
             {
-                return Array.Empty<CitySnapshotSlotInfo>();
+                if (payload == null)
+                    return CitySaveStorageWriteResult.Failure(CitySaveStorageError.WriteFailed);
+
+                _payload = (byte[])payload.Clone();
+                return CitySaveStorageWriteResult.Success(hasBackup: false);
             }
         }
     }
