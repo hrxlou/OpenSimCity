@@ -45,6 +45,35 @@ jobs:
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File "Tools\CI\run-unity-tests.ps1" all
 
+      # Artifact 저장 quota가 부족해도 NUnit XML의 실패 case와 message를 Actions
+      # 로그에서 바로 확인할 수 있게 한다. Compiler error처럼 XML이 없는 경우는 건너뛴다.
+      - name: Print failed Unity test cases
+        if: failure()
+        shell: powershell
+        run: |
+          $xmlFiles = Get-ChildItem -Path TestResults -Filter *.xml -ErrorAction SilentlyContinue
+          if (-not $xmlFiles) {
+            Write-Host "No Unity test XML files were produced."
+            exit 0
+          }
+          foreach ($file in $xmlFiles) {
+            [xml]$document = Get-Content -Path $file.FullName
+            $failed = $document.SelectNodes("//test-case[@result='Failed']")
+            Write-Host "::group::$($file.Name) failed cases"
+            if (-not $failed -or $failed.Count -eq 0) {
+              Write-Host "No failed test cases in this XML."
+            } else {
+              foreach ($case in $failed) {
+                Write-Host "FAILED: $($case.fullname)"
+                $message = $case.failure.message
+                if ($message) { Write-Host $message.'#text' }
+                $stack = $case.failure.'stack-trace'
+                if ($stack) { Write-Host $stack.'#text' }
+              }
+            }
+            Write-Host "::endgroup::"
+          }
+
       # Unity batchmode가 compiler error로 조기 종료되면 test XML이 없을 수 있다.
       # artifact quota와 무관하게 원인 줄을 Actions 로그에서 바로 확인할 수 있게 한다.
       - name: Print Unity logs on failure
@@ -63,7 +92,7 @@ jobs:
           }
 
       # 성공/실패와 무관하게 결과와 Unity 로그를 남긴다. 저장 quota 부족은 테스트
-      # 자체의 성공/실패를 덮지 않으며 위 step의 inline log가 최소 진단 경로다.
+      # 자체의 성공/실패를 덮지 않으며 위 step의 inline output이 최소 진단 경로다.
       - name: Upload test results
         if: always()
         continue-on-error: true
