@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Linq;
 using NUnit.Framework;
 using OpenSimCity.Application.Commands;
 using OpenSimCity.Application.Construction;
@@ -65,7 +66,7 @@ namespace OpenSimCity.Tests.EditMode
             Assert.That(result.Committed, Is.True, result.Message);
             Assert.That(runtime.Roads.ComputeChecksum(), Is.EqualTo(ExpectedRoadChecksum));
             Assert.That(runtime.Funds, Is.EqualTo(fundsBefore - result.Cost));
-            Assert.That(runtime.Roads.OccupiedCellCount, Is.EqualTo(128));
+            Assert.That(runtime.Roads.Cells.Count(cell => cell.IsOccupied), Is.EqualTo(128));
 
             TestContext.WriteLine(
                 $"P5-04B 128x128 UX benchmark: previewMs={previewWatch.Elapsed.TotalMilliseconds:F3}; " +
