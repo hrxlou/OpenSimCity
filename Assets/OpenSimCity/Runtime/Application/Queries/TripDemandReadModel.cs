@@ -56,7 +56,8 @@ namespace OpenSimCity.Application.Queries
     /// <summary>
     /// Versioned, allocation-free-on-read projection for debug tables, overlays and
     /// later traffic presentation. It copies Simulation rows only when the monthly
-    /// state version changes.
+    /// state version changes. Missing OD state after snapshot restore is rebuilt from
+    /// the already restored persistent source systems before the first read.
     /// </summary>
     public sealed class TripDemandReadModel
     {
@@ -117,6 +118,9 @@ namespace OpenSimCity.Application.Queries
 
         public bool RefreshIfNeeded()
         {
+            if (!_system.State.HasProcessedMonth)
+                _system.RebuildFromCurrentState();
+
             var sourceVersion = _system.State.Version;
             if (_sourceVersion == sourceVersion)
                 return false;
