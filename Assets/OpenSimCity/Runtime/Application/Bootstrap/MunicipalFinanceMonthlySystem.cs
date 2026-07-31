@@ -6,22 +6,24 @@ using OpenSimCity.Simulation.Buildings;
 using OpenSimCity.Simulation.Development;
 using OpenSimCity.Simulation.Economy;
 using OpenSimCity.Simulation.Roads;
+using OpenSimCity.Simulation.Traffic;
 using OpenSimCity.Simulation.Utilities;
 using OpenSimCity.Simulation.Zones;
 
 namespace OpenSimCity.Application.Bootstrap
 {
     /// <summary>
-    /// Application-owned monthly composition for P3's private market, growth and
-    /// municipal ledger. It applies a pending tax policy before RCI is calculated,
-    /// then settles public cash only after this period's growth diagnostics are
-    /// final. The underlying state types remain separate and Unity-free.
+    /// Application-owned monthly composition for the private market, growth,
+    /// aggregate trip demand and municipal ledger. It applies pending tax policy
+    /// before RCI, runs development, derives path-independent OD rows from the
+    /// final month-end building set, then settles public cash.
     /// </summary>
     public sealed class MunicipalFinanceMonthlySystem : IMonthlySimulationSystem
     {
         private readonly MunicipalFinanceState _finance;
         private readonly UrbanEconomySystem _urbanEconomy;
         private readonly GrowthDevelopmentSystem _growth;
+        private readonly TripDemandSystem _tripDemand;
         private readonly BuildingStateCollection _buildings;
         private readonly BuildingDefinitionCatalog _buildingDefinitions;
         private readonly RoadNetworkState _roads;
@@ -34,6 +36,7 @@ namespace OpenSimCity.Application.Bootstrap
             MunicipalFinanceState finance,
             UrbanEconomySystem urbanEconomy,
             GrowthDevelopmentSystem growth,
+            TripDemandSystem tripDemand,
             BuildingStateCollection buildings,
             BuildingDefinitionCatalog buildingDefinitions,
             RoadNetworkState roads,
@@ -45,6 +48,7 @@ namespace OpenSimCity.Application.Bootstrap
             _finance = finance ?? throw new ArgumentNullException(nameof(finance));
             _urbanEconomy = urbanEconomy ?? throw new ArgumentNullException(nameof(urbanEconomy));
             _growth = growth ?? throw new ArgumentNullException(nameof(growth));
+            _tripDemand = tripDemand ?? throw new ArgumentNullException(nameof(tripDemand));
             _buildings = buildings ?? throw new ArgumentNullException(nameof(buildings));
             _buildingDefinitions = buildingDefinitions ?? throw new ArgumentNullException(nameof(buildingDefinitions));
             _roads = roads ?? throw new ArgumentNullException(nameof(roads));
@@ -60,6 +64,7 @@ namespace OpenSimCity.Application.Bootstrap
             _urbanEconomy.TaxRates = _finance.ActiveTaxRates;
             _urbanEconomy.RunMonth(month);
             _growth.RunMonth(month);
+            _tripDemand.RunMonth(month);
 
             TaxIncome(out var residential, out var commercial, out var industrial);
             _finance.SettleMonth(
