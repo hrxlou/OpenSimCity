@@ -152,6 +152,8 @@ namespace OpenSimCity.Gameplay.Construction
                 SelectTool(ConstructionToolMode.PowerPlant);
             else if (keyboard.digit8Key.wasPressedThisFrame)
                 SelectTool(ConstructionToolMode.RemovePowerPlant);
+            else if (keyboard.digit9Key.wasPressedThisFrame)
+                SelectTool(ConstructionToolMode.RoadUpgrade);
         }
 
         private void HandlePointer()
