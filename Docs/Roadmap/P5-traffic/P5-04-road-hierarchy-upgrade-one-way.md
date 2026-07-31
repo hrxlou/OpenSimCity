@@ -58,11 +58,17 @@
 - [x] Invalidate only route-cache entries intersecting the affected road component.
 - [x] Add snapshot v2 direction state and v1 bidirectional migration.
 - [x] Add runtime hierarchy read model and deterministic fixtures.
-- [ ] Record the final Windows CI benchmark and merge P5-04A.
+- [x] Record the final Windows CI benchmark.
+- [ ] Squash-merge P5-04A after the documentation-only verification rerun.
 
 ## Windows steps
 
-- [ ] Verify the P5-04A 128×128 upgrade/directed-route baseline on Unity `6000.5.3f1`.
+- [x] Verify the P5-04A 128×128 upgrade/directed-route baseline on Unity `6000.5.3f1`.
+  - CI `30636228391` (`#159`), source commit `32d258a96f0cf618ab7c6909ad7286a0d1971e1f`.
+  - EditMode `245/245`, PlayMode `41/41`.
+  - upgrade `2.171 ms`, directed queries `2.913 ms`, NUnit `0.011357 s`.
+  - road checksum `0xB7B3B055E1A33B45`.
+  - baseline: [`Docs/Benchmarks/P5-04A-road-hierarchy-baseline.md`](../../Benchmarks/P5-04A-road-hierarchy-baseline.md).
 - [ ] Connect P5-04B preview and direction visualization.
 - [ ] Smoke-test upgrade, direction reversal, cancel, invalid path, and insufficient funds.
 - [ ] Verify that metric comparison and congestion overlay use the same read-model versions.
