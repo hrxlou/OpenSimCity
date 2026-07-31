@@ -127,7 +127,11 @@ namespace OpenSimCity.Simulation.Traffic
                 var freeFlowSpeed = _planner.EdgeFreeFlowSpeed(pair.Key);
                 var effectiveSpeed = pair.Value <= capacity
                     ? freeFlowSpeed
-                    : Math.Max(1, checked(freeFlowSpeed * capacity / pair.Value));
+                    : Math.Max(
+                        1,
+                        ToInt(
+                            (long)freeFlowSpeed * capacity / pair.Value,
+                            "Effective traffic speed exceeded Int32 range."));
                 var volumeCapacityPermille = ToInt((long)pair.Value * 1000 / capacity,
                     "Traffic volume/capacity ratio exceeded Int32 range.");
                 var freeFlowSeconds = checked((3600 + freeFlowSpeed - 1) / freeFlowSpeed);
