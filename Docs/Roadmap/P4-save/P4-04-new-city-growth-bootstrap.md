@@ -60,11 +60,21 @@
 
 ## Done when
 
-- [ ] 기본 `CityPrototype`에서 공개 UI만으로 6개월 이내 첫 인구와 고용이 발생한다.
-- [ ] 서로 다른 두 배치가 같은 seed/commands에서 같은 첫 성장 timeline과 checksum을 만든다.
-- [ ] 외부 연결·전력 차단과 정상 command 복구가 다음 기간 결과로 검증된다.
-- [ ] bootstrap 전·건설 중 save/load가 초기 압력을 재적용하지 않고 다음 기간 결과를 보존한다.
-- [ ] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+- [x] 기본 `CityPrototype`에서 공개 UI만으로 6개월 이내 첫 인구와 고용이 발생한다.
+- [x] 서로 다른 두 배치가 같은 seed/commands에서 같은 첫 성장 timeline과 checksum을 만든다.
+- [x] 외부 연결·전력 차단과 정상 command 복구가 다음 기간 결과로 검증된다.
+- [x] bootstrap 전·건설 중 save/load가 초기 압력을 재적용하지 않고 다음 기간 결과를 보존한다.
+- [x] 이슈에 OS, Unity 버전, commit/PR, 테스트 로그 또는 캡처를 기록한다.
+
+## Implementation evidence
+
+- PR: `#96`
+- 검증 구현 head: `1efbfa23b6f821c1c81a6ecfd0c462d24eebeb2d`
+- CI run: `30620429260`
+- 환경: `Windows`, Unity `6000.5.3f1 (c2eb47b3a2a9)`
+- EditMode: `207/207`
+- PlayMode: `36/36`
+- 저장 계약: snapshot v1 필드와 schema version 변경 없음
 
 ## Out of scope
 

@@ -1,3 +1,4 @@
+using OpenSimCity.Application.Bootstrap;
 using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.World;
 using OpenSimCity.Gameplay.Camera;
@@ -48,7 +49,7 @@ namespace OpenSimCity.Gameplay.Construction
 
         private void OnEnable()
         {
-            ReplaceRuntime(new CityRuntime(CityRuntimeOptions.Default));
+            ReplaceRuntime(NewCityRuntimeFactory.Create(CityRuntimeOptions.Default));
         }
 
         private void OnDisable()
