@@ -8,7 +8,7 @@ namespace OpenSimCity.Simulation.Roads
     /// behaviour. Cardinal values permit leaving the cell only in that direction;
     /// entering the cell from the opposite direction remains valid.
     /// </summary>
-    public enum RoadTravelDirection : byte
+    public enum RoadTravelDirection : int
     {
         Bidirectional = 0,
         North = 1,
