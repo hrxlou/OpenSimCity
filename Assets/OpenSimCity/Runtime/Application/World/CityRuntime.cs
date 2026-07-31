@@ -16,6 +16,7 @@ using OpenSimCity.Simulation.Buildings;
 using OpenSimCity.Simulation.Parcels;
 using OpenSimCity.Simulation.Population;
 using OpenSimCity.Simulation.Roads;
+using OpenSimCity.Simulation.Traffic;
 using OpenSimCity.Simulation.World;
 using OpenSimCity.Simulation.Zones;
 using OpenSimCity.Simulation.Utilities;
@@ -87,6 +88,12 @@ namespace OpenSimCity.Application.World
                 Buildings,
                 BuildingDefinitions,
                 options.UrbanEconomyParameters);
+            TripAccess = new ParcelRoadTripAccessResolver(Parcels, RoadGraph, ExternalConnections);
+            TripDemandSystem = new TripDemandSystem(
+                Buildings,
+                BuildingDefinitions,
+                TripAccess,
+                UrbanEconomySystem);
             GrowthSystem = new GrowthDevelopmentSystem(
                 Buildings,
                 Parcels,
@@ -99,6 +106,7 @@ namespace OpenSimCity.Application.World
                 Finance,
                 UrbanEconomySystem,
                 GrowthSystem,
+                TripDemandSystem,
                 Buildings,
                 BuildingDefinitions,
                 Roads,
@@ -121,6 +129,7 @@ namespace OpenSimCity.Application.World
             });
             PopulationEmploymentModel = new PopulationEmploymentReadModel(PopulationSystem);
             UrbanEconomyModel = new UrbanEconomyReadModel(UrbanEconomySystem);
+            TripDemandModel = new TripDemandReadModel(TripDemandSystem);
             GrowthModel = new GrowthDevelopmentReadModel(GrowthSystem);
             BuildingViews = new BuildingViewReadModel(Buildings, BuildingDefinitions, GrowthSystem);
             FinanceModel = new MunicipalFinanceReadModel(Finance);
@@ -179,12 +188,15 @@ namespace OpenSimCity.Application.World
         public DevelopmentPowerEligibilityQuery DevelopmentPowerEligibility { get; }
         public PopulationEmploymentMigrationSystem PopulationSystem { get; }
         public UrbanEconomySystem UrbanEconomySystem { get; }
+        public ITripAccessResolver TripAccess { get; }
+        public TripDemandSystem TripDemandSystem { get; }
         public GrowthDevelopmentSystem GrowthSystem { get; }
         public MunicipalFinanceMonthlySystem MunicipalFinanceSystem { get; }
         public MonthlySimulationScheduler MonthlyScheduler { get; }
         public SimulationClock Clock { get; }
         public PopulationEmploymentReadModel PopulationEmploymentModel { get; }
         public UrbanEconomyReadModel UrbanEconomyModel { get; }
+        public TripDemandReadModel TripDemandModel { get; }
         public GrowthDevelopmentReadModel GrowthModel { get; }
         public BuildingViewReadModel BuildingViews { get; }
         public MunicipalFinanceReadModel FinanceModel { get; }
@@ -340,6 +352,7 @@ namespace OpenSimCity.Application.World
             ParcelModel.RefreshIfNeeded();
             Power.RefreshIfNeeded();
             PowerModel.RefreshIfNeeded();
+            TripDemandModel?.RefreshIfNeeded();
             BuildingViews?.RefreshIfNeeded();
             FinanceModel?.RefreshIfNeeded();
             DevelopmentStatus?.RefreshIfNeeded();
