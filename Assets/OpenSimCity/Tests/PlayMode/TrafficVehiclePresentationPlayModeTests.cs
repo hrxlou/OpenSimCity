@@ -12,8 +12,8 @@ using OpenSimCity.Core;
 using OpenSimCity.Core.Mathematics;
 using OpenSimCity.Core.Time;
 using OpenSimCity.Presentation.Vehicles;
+using Unity.Profiling;
 using UnityEngine;
-using UnityEngine.Profiling;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
@@ -149,19 +149,39 @@ namespace OpenSimCity.Tests.PlayMode
             foreach (var count in new[] { 0, 100, 500 })
             {
                 var samples = CreateSamples(count);
-                var memoryBefore = Profiler.GetTotalAllocatedMemoryLong();
+                var gcRecorder = ProfilerRecorder.StartNew(
+                    ProfilerCategory.Memory,
+                    "GC Allocated In Frame",
+                    1);
+                var drawRecorder = ProfilerRecorder.StartNew(
+                    ProfilerCategory.Render,
+                    "Draw Calls Count",
+                    1);
+                var mainThreadRecorder = ProfilerRecorder.StartNew(
+                    ProfilerCategory.Internal,
+                    "Main Thread",
+                    1);
                 var stopwatch = Stopwatch.StartNew();
                 scheduler.ApplySamples(samples);
                 scheduler.UpdatePositions(bounds, count + 0.5d, 12d);
                 stopwatch.Stop();
                 yield return null;
 
-                var memoryAfter = Profiler.GetTotalAllocatedMemoryLong();
+                var gcAllocated = gcRecorder.Valid ? gcRecorder.LastValue : -1L;
+                var drawCalls = drawRecorder.Valid ? drawRecorder.LastValue : -1L;
+                var mainThreadNanoseconds = mainThreadRecorder.Valid
+                    ? mainThreadRecorder.LastValue
+                    : -1L;
+                gcRecorder.Dispose();
+                drawRecorder.Dispose();
+                mainThreadRecorder.Dispose();
+
                 Assert.That(scheduler.ActiveCount, Is.EqualTo(count));
                 Assert.That(scheduler.Samples, Has.Count.EqualTo(count));
-                TestContext.Progress.WriteLine(
+                TestContext.Out.WriteLine(
                     $"P5-03 Benchmark Scene views={count}: updateMs={stopwatch.Elapsed.TotalMilliseconds:0.000}, " +
-                    $"totalMemoryDelta={memoryAfter - memoryBefore}, active={scheduler.ActiveCount}, " +
+                    $"gcAllocatedInFrame={gcAllocated}, drawCalls={drawCalls}, " +
+                    $"mainThreadNs={mainThreadNanoseconds}, active={scheduler.ActiveCount}, " +
                     $"pooled={scheduler.PooledCount}");
             }
 
