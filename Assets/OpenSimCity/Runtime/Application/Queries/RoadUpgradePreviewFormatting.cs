@@ -49,9 +49,9 @@ namespace OpenSimCity.Application.Queries
                 return string.Empty;
             switch (snapshot.PrimaryNewFailureReason)
             {
-                case TrafficRouteFailureReason.NoOriginRoad:
+                case TrafficRouteFailureReason.OriginRoadMissing:
                     return "출발 도로 없음";
-                case TrafficRouteFailureReason.NoDestinationRoad:
+                case TrafficRouteFailureReason.DestinationRoadMissing:
                     return "도착 도로 없음";
                 case TrafficRouteFailureReason.DifferentRoadComponent:
                     return "도로망 분리";
