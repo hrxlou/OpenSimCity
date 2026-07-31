@@ -35,7 +35,7 @@ namespace OpenSimCity.Simulation.Roads
                     SmallRoadDefinitionId,
                     buildCost: 6,
                     presentationKey: "road.small",
-                    monthlyMaintenanceCost: 1,
+                    monthlyMaintenanceCost: 0,
                     capacityPerMonth: 500,
                     freeFlowSpeedCellsPerHour: 20,
                     noiseEmission: 15),
