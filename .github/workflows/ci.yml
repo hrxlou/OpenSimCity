@@ -45,9 +45,28 @@ jobs:
         shell: cmd
         run: powershell -NoProfile -ExecutionPolicy Bypass -File "Tools\CI\run-unity-tests.ps1" all
 
-      # 성공/실패와 무관하게 결과와 Unity 로그를 남긴다.
+      # Unity batchmode가 compiler error로 조기 종료되면 test XML이 없을 수 있다.
+      # artifact quota와 무관하게 원인 줄을 Actions 로그에서 바로 확인할 수 있게 한다.
+      - name: Print Unity logs on failure
+        if: failure()
+        shell: powershell
+        run: |
+          $logs = Get-ChildItem -Path TestResults -Filter *.log -ErrorAction SilentlyContinue
+          if (-not $logs) {
+            Write-Host "No Unity log files were produced."
+            exit 0
+          }
+          foreach ($log in $logs) {
+            Write-Host "::group::$($log.Name)"
+            Get-Content -Path $log.FullName -Tail 500
+            Write-Host "::endgroup::"
+          }
+
+      # 성공/실패와 무관하게 결과와 Unity 로그를 남긴다. 저장 quota 부족은 테스트
+      # 자체의 성공/실패를 덮지 않으며 위 step의 inline log가 최소 진단 경로다.
       - name: Upload test results
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: unity-test-results-${{ github.run_id }}
