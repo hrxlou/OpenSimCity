@@ -16,42 +16,63 @@ namespace OpenSimCity.Application.Persistence
             _codec = codec ?? throw new ArgumentNullException(nameof(codec));
         }
 
-        public int FromVersion => 1;
-        public int ToVersion => 2;
+        public int SourceVersion => 1;
+        public int TargetVersion => 2;
 
-        public byte[] Migrate(byte[] payload)
+        public SnapshotMigrationStepResult Migrate(byte[] sourcePayload)
         {
-            if (payload == null || payload.Length == 0)
-                throw new ArgumentException("A version-one snapshot payload is required.", nameof(payload));
+            if (sourcePayload == null || sourcePayload.Length == 0)
+                return SnapshotMigrationStepResult.Failure();
 
-            var dto = _codec.Decode(payload);
-            if (dto?.Header == null)
-                throw new CitySnapshotMigrationException(1, 2, "Snapshot header is missing.");
-            if (!string.Equals(dto.Header.Magic, CitySnapshotFormat.Magic, StringComparison.Ordinal))
-                throw new CitySnapshotMigrationException(1, 2, "Snapshot magic is invalid.");
-            if (dto.Header.FormatVersion != FromVersion)
+            SnapshotPayloadDecodeResult decodeResult;
+            try
             {
-                throw new CitySnapshotMigrationException(
-                    FromVersion,
-                    ToVersion,
-                    $"Migration received version {dto.Header.FormatVersion}.");
+                decodeResult = _codec.Decode((byte[])sourcePayload.Clone());
+            }
+            catch (Exception)
+            {
+                return SnapshotMigrationStepResult.Failure();
             }
 
-            var roads = dto.Roads?.Cells ?? Array.Empty<RoadCellSnapshotDto>();
+            if (decodeResult == null ||
+                !decodeResult.IsSuccess ||
+                decodeResult.Snapshot?.Header == null)
+            {
+                return SnapshotMigrationStepResult.Failure();
+            }
+
+            var snapshot = decodeResult.Snapshot;
+            if (!string.Equals(snapshot.Header.Magic, CitySnapshotFormat.Magic, StringComparison.Ordinal) ||
+                snapshot.Header.FormatVersion != SourceVersion)
+            {
+                return SnapshotMigrationStepResult.Failure();
+            }
+
+            var roads = snapshot.Roads?.Cells ?? Array.Empty<RoadCellSnapshotDto>();
             for (var index = 0; index < roads.Length; index++)
             {
                 if (roads[index] == null)
-                {
-                    throw new CitySnapshotMigrationException(
-                        FromVersion,
-                        ToVersion,
-                        $"Roads.Cells[{index}] is missing.");
-                }
+                    return SnapshotMigrationStepResult.Failure();
+
                 roads[index].TravelDirection = (int)RoadTravelDirection.Bidirectional;
             }
 
-            dto.Header.FormatVersion = ToVersion;
-            return _codec.Encode(dto);
+            snapshot.Header.FormatVersion = TargetVersion;
+
+            SnapshotPayloadEncodeResult encodeResult;
+            try
+            {
+                encodeResult = _codec.Encode(snapshot);
+            }
+            catch (Exception)
+            {
+                return SnapshotMigrationStepResult.Failure();
+            }
+
+            if (encodeResult == null || !encodeResult.IsSuccess || encodeResult.Payload == null)
+                return SnapshotMigrationStepResult.Failure();
+
+            return SnapshotMigrationStepResult.Success(encodeResult.Payload);
         }
     }
 }
