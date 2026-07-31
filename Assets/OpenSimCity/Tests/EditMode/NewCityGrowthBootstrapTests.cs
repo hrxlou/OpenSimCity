@@ -267,10 +267,14 @@ namespace OpenSimCity.Tests.EditMode
             AssertApplied(runtime.Execute(new PlaceRoadCommand(
                 runtime.DefaultRoadDefinitionId,
                 new CellCoord(4, 3),
+                new CellCoord(4, roadY - 1))));
+            AssertApplied(runtime.Execute(new PlaceRoadCommand(
+                runtime.DefaultRoadDefinitionId,
+                new CellCoord(4, roadY + 1),
                 new CellCoord(4, 9))));
             AssertApplied(runtime.Execute(new PlaceRoadCommand(
                 runtime.DefaultRoadDefinitionId,
-                new CellCoord(4, 3),
+                new CellCoord(5, 3),
                 new CellCoord(14, 3))));
             PaintThreeSectors(runtime, 4, 6, 9, 12);
             if (includePower)
