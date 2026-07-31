@@ -18,11 +18,11 @@ namespace OpenSimCity.Tests.EditMode
             var options = RuntimeOptions();
             var runtime = new CityRuntime(options);
             AssertApplied(runtime.Execute(new PlaceRoadCommand(
-                CityRuntimeOptions.SmallRoadDefinitionId,
+                RoadHierarchyDefaults.SmallRoadDefinitionId,
                 CellCoord.Zero,
                 new CellCoord(3, 0))));
             AssertApplied(runtime.Execute(new UpgradeRoadCommand(
-                CityRuntimeOptions.AvenueDefinitionId,
+                RoadHierarchyDefaults.AvenueDefinitionId,
                 RoadDirectionMode.Forward,
                 CellCoord.Zero,
                 new CellCoord(3, 0))));
@@ -33,7 +33,7 @@ namespace OpenSimCity.Tests.EditMode
             Assert.That(snapshot.Header.FormatVersion, Is.EqualTo(2));
             Assert.That(snapshot.Roads.Cells, Has.Length.EqualTo(4));
             Assert.That(snapshot.Roads.Cells[0].DefinitionId,
-                Is.EqualTo(CityRuntimeOptions.AvenueDefinitionId.Value));
+                Is.EqualTo(RoadHierarchyDefaults.AvenueDefinitionId.Value));
             Assert.That(snapshot.Roads.Cells[0].TravelDirection,
                 Is.EqualTo((int)RoadTravelDirection.East));
 
@@ -47,7 +47,7 @@ namespace OpenSimCity.Tests.EditMode
             {
                 var cell = new CellCoord(x, 0);
                 Assert.That(restored.Roads.GetRoadDefinitionId(cell),
-                    Is.EqualTo(CityRuntimeOptions.AvenueDefinitionId));
+                    Is.EqualTo(RoadHierarchyDefaults.AvenueDefinitionId));
                 Assert.That(restored.Roads.GetTravelDirection(cell),
                     Is.EqualTo(RoadTravelDirection.East));
             }
@@ -59,7 +59,7 @@ namespace OpenSimCity.Tests.EditMode
             var options = RuntimeOptions();
             var runtime = new CityRuntime(options);
             AssertApplied(runtime.Execute(new PlaceRoadCommand(
-                CityRuntimeOptions.StreetDefinitionId,
+                RoadHierarchyDefaults.StreetDefinitionId,
                 CellCoord.Zero,
                 new CellCoord(2, 0))));
 
@@ -93,7 +93,7 @@ namespace OpenSimCity.Tests.EditMode
             {
                 var cell = new CellCoord(x, 0);
                 Assert.That(loaded.Runtime.Roads.GetRoadDefinitionId(cell),
-                    Is.EqualTo(CityRuntimeOptions.StreetDefinitionId));
+                    Is.EqualTo(RoadHierarchyDefaults.StreetDefinitionId));
                 Assert.That(loaded.Runtime.Roads.GetTravelDirection(cell),
                     Is.EqualTo(RoadTravelDirection.Bidirectional));
             }
@@ -104,7 +104,7 @@ namespace OpenSimCity.Tests.EditMode
         {
             var runtime = new CityRuntime(RuntimeOptions());
             AssertApplied(runtime.Execute(new PlaceRoadCommand(
-                CityRuntimeOptions.StreetDefinitionId,
+                RoadHierarchyDefaults.StreetDefinitionId,
                 CellCoord.Zero,
                 new CellCoord(1, 0))));
             var snapshot = CitySnapshotSerializer.Capture(runtime);
