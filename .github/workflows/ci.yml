@@ -59,7 +59,8 @@ jobs:
           $xpath = "//test-case[" +
             "contains(@fullname,'LargeGridRouteIsDeterministicAndSimulationStaysUnityFree') or " +
             "contains(@fullname,'VehicleSampleCountBenchmarkKeepsSimulationChecksumStable') or " +
-            "contains(@fullname,'BenchmarkSceneMeasuresZeroHundredAndFiveHundredViews')]"
+            "contains(@fullname,'BenchmarkSceneMeasuresZeroHundredAndFiveHundredViews') or " +
+            "contains(@fullname,'OpenSimCity.Tests.EditMode.RoadHierarchyBenchmarkTests.')]"
           foreach ($file in $xmlFiles) {
             [xml]$document = Get-Content -Path $file.FullName
             $cases = $document.SelectNodes($xpath)
