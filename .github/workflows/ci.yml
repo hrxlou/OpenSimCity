@@ -30,6 +30,51 @@ jobs:
     runs-on: [self-hosted, Windows, unity]
     timeout-minutes: 70
     steps:
+      # 취소된 Unity batchmode가 Bee 응답 파일을 잡고 있으면 actions/checkout의 workspace
+      # 정리가 EBUSY로 실패한다. 저장소 전용 self-hosted 러너이므로 프로젝트 관련 Unity
+      # 프로세스를 먼저 종료하고 생성 캐시의 잠금 다발만 retry로 제거한다.
+      - name: Release stale Unity workspace locks
+        shell: powershell
+        run: |
+          $processNames = @(
+            "Unity",
+            "UnityShaderCompiler",
+            "UnityCrashHandler64",
+            "bee_backend",
+            "tundra"
+          )
+          foreach ($processName in $processNames) {
+            Get-Process -Name $processName -ErrorAction SilentlyContinue |
+              Stop-Process -Force -ErrorAction SilentlyContinue
+          }
+          Start-Sleep -Seconds 2
+
+          $generatedPaths = @(
+            (Join-Path $env:GITHUB_WORKSPACE "Library\Bee"),
+            (Join-Path $env:GITHUB_WORKSPACE "Temp")
+          )
+          foreach ($path in $generatedPaths) {
+            if (-not (Test-Path -LiteralPath $path)) {
+              continue
+            }
+
+            $removed = $false
+            for ($attempt = 1; $attempt -le 5; $attempt++) {
+              try {
+                Remove-Item -LiteralPath $path -Recurse -Force -ErrorAction Stop
+                $removed = $true
+                break
+              } catch {
+                Write-Warning "Attempt $attempt could not remove $path: $($_.Exception.Message)"
+                Start-Sleep -Seconds (2 * $attempt)
+              }
+            }
+
+            if (-not $removed -and (Test-Path -LiteralPath $path)) {
+              throw "Unable to release generated workspace path: $path"
+            }
+          }
+
       - name: Checkout
         uses: actions/checkout@v7
         with:
