@@ -75,6 +75,7 @@ namespace OpenSimCity.Application.World
             PowerCommands = new PowerCommandHandler(PowerProducers, UtilityDefinitions, Roads, Finance);
 
             RoadAccessibility = new RoadAccessibilityReadModel(RoadGraph);
+            RoadHierarchyModel = new RoadHierarchyReadModel(Roads, RoadDefinitions);
             ZoneModel = new ZoneReadModel(Zones);
             ParcelModel = new ParcelReadModel(Parcels);
             PowerModel = new PowerReadModel(Power, UtilityDefinitions, PowerProducers);
@@ -187,6 +188,7 @@ namespace OpenSimCity.Application.World
         public MunicipalFinanceCommandHandler FinanceCommands { get; }
 
         public RoadAccessibilityReadModel RoadAccessibility { get; }
+        public RoadHierarchyReadModel RoadHierarchyModel { get; }
 
         public ZoneReadModel ZoneModel { get; }
 
@@ -315,6 +317,11 @@ namespace OpenSimCity.Application.World
             return RoadCommands.Preview(command);
         }
 
+        public RoadCommandResult Preview(UpgradeRoadCommand command)
+        {
+            return RoadCommands.Preview(command);
+        }
+
         public ZoneCommandResult Preview(ZoneAreaCommand command)
         {
             return ZoneCommands.Preview(command);
@@ -357,6 +364,7 @@ namespace OpenSimCity.Application.World
             RoadGraph.RefreshIfNeeded();
             Parcels.RefreshIfNeeded();
             RoadAccessibility.RefreshIfNeeded();
+            RoadHierarchyModel.RefreshIfNeeded();
             ZoneModel.RefreshIfNeeded();
             ParcelModel.RefreshIfNeeded();
             Power.RefreshIfNeeded();
@@ -391,17 +399,16 @@ namespace OpenSimCity.Application.World
     {
         public const int DefaultInitialFunds = 1_000_000;
         public const int DefaultRoadBuildCost = 10;
-        public const int DefaultRoadMonthlyMaintenanceCost = 1;
+        public const int DefaultRoadMonthlyMaintenanceCost = 2;
         public const int DefaultPowerPlantConstructionCost = 100;
         public const int DefaultPowerPlantMonthlyMaintenanceCost = 5;
 
-        private const ulong RoadDefinitionNamespace = 0x0100_0000_0000_0000UL;
         private const ulong ExternalGateNamespace = 0x0200_0000_0000_0000UL;
         private const ulong BuildingDefinitionNamespace = 0xB100_0000_0000_0000UL;
         private const ulong UtilityDefinitionNamespace = 0xC100_0000_0000_0000UL;
 
         public static readonly StableId StreetDefinitionId =
-            new StableId(RoadDefinitionNamespace | 0x01UL);
+            RoadHierarchyDefaults.StreetDefinitionId;
 
         public static readonly StableId DefaultPowerPlantDefinitionId =
             new StableId(UtilityDefinitionNamespace | 0x01UL);
@@ -431,14 +438,40 @@ namespace OpenSimCity.Application.World
 
         public IReadOnlyList<RoadDefinition> CreateRoadDefinitions()
         {
-            return new[]
+            var hierarchy = RoadHierarchyDefaults.CreateDefinitions();
+            var definitions = new List<RoadDefinition>(hierarchy.Count + 1);
+            var replacedDefault = false;
+            for (var index = 0; index < hierarchy.Count; index++)
             {
-                new RoadDefinition(
+                var definition = hierarchy[index];
+                if (definition.Id != DefaultRoadDefinitionId)
+                {
+                    definitions.Add(definition);
+                    continue;
+                }
+
+                definitions.Add(new RoadDefinition(
+                    definition.Id,
+                    RoadBuildCost,
+                    definition.PresentationKey,
+                    RoadMonthlyMaintenanceCost,
+                    definition.CapacityPerMonth,
+                    definition.FreeFlowSpeedCellsPerHour,
+                    definition.NoiseEmission));
+                replacedDefault = true;
+            }
+
+            if (!replacedDefault)
+            {
+                definitions.Add(new RoadDefinition(
                     DefaultRoadDefinitionId,
                     RoadBuildCost,
-                    "road.street",
-                    RoadMonthlyMaintenanceCost)
-            };
+                    "road.custom",
+                    RoadMonthlyMaintenanceCost));
+            }
+
+            definitions.Sort((left, right) => left.Id.CompareTo(right.Id));
+            return definitions.AsReadOnly();
         }
 
         public IReadOnlyList<BuildingDefinitionData> CreateBuildingDefinitions()
