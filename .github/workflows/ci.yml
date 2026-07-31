@@ -65,7 +65,7 @@ jobs:
                 $removed = $true
                 break
               } catch {
-                Write-Warning "Attempt $attempt could not remove $path: $($_.Exception.Message)"
+                Write-Warning ("Attempt {0} could not remove {1}: {2}" -f $attempt, $path, $_.Exception.Message)
                 Start-Sleep -Seconds (2 * $attempt)
               }
             }
