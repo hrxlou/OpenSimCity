@@ -228,9 +228,9 @@ namespace OpenSimCity.Tests.EditMode
                 FixtureUtcTicks)).Payload;
 
             TestContext.WriteLine(
-                $"P5-04A v1 migration golden: sourceChecksum={FNV1a64(versionOnePayload):X16}; " +
-                $"migratedChecksum={FNV1a64(migratedPayload):X16}; " +
-                $"nextMonthChecksum={FNV1a64(migratedNextMonth):X16}; " +
+                $"P5-04A v1 migration golden: sourceChecksum={Fnv1a64(versionOnePayload):X16}; " +
+                $"migratedChecksum={Fnv1a64(migratedPayload):X16}; " +
+                $"nextMonthChecksum={Fnv1a64(migratedNextMonth):X16}; " +
                 $"Unity={UnityEngine.Application.unityVersion}; platform={UnityEngine.Application.platform}");
             Assert.That(migratedNextMonth, Is.EqualTo(expectedNextMonth));
         }
