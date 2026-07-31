@@ -21,7 +21,7 @@ namespace OpenSimCity.Tests.EditMode
     {
         private const long FixtureUtcTicks = 638900000000000000L;
         private const string FixtureGameVersion = "p4-01-fixture";
-        private const ulong ExpectedFixtureJsonChecksum = 0x262B9801635F35BDUL;
+        private const ulong ExpectedFixtureJsonChecksum = 0x84A162E5843E98E0UL;
 
         [Test]
         public void GrowingCityRoundTripRestoresAuthoritativeStateCachesAndContinuation()
@@ -66,7 +66,7 @@ namespace OpenSimCity.Tests.EditMode
             Assert.That(continuedRestored, Is.EqualTo(continuedOriginal));
 
             TestContext.WriteLine(
-                $"P4-01 growing city JSON UTF-8 bytes: {Encoding.UTF8.GetByteCount(json)}; " +
+                $"P5-04A growing city JSON UTF-8 bytes: {Encoding.UTF8.GetByteCount(json)}; " +
                 $"roads={snapshot.Roads.Cells.Length}; zones={snapshot.Zones.Cells.Length}; " +
                 $"parcels={snapshot.Parcels.Parcels.Length}; buildings={snapshot.Buildings.Buildings.Length}; " +
                 $"sites={snapshot.Growth.Development.Sites.Length}");
@@ -87,7 +87,7 @@ namespace OpenSimCity.Tests.EditMode
         }
 
         [Test]
-        public void UnsupportedFormatVersionIsRejectedWithoutApplyingMigration()
+        public void UnsupportedFormatVersionIsRejectedAtSerializerBoundary()
         {
             var snapshot = CitySnapshotSerializer.Capture(CreateGrowingRuntime());
             snapshot.Header.FormatVersion = CitySnapshotFormat.CurrentVersion + 1;
@@ -96,7 +96,7 @@ namespace OpenSimCity.Tests.EditMode
                 () => CitySnapshotSerializer.Restore(snapshot));
 
             Assert.That(exception.FieldPath, Is.EqualTo("Header.FormatVersion"));
-            Assert.That(exception.Message, Does.Contain("migration is not part of P4-01"));
+            Assert.That(exception.Message, Does.Contain("migrate before restore"));
         }
 
         [Test]
@@ -129,7 +129,7 @@ namespace OpenSimCity.Tests.EditMode
             var checksum = Fnv1a64(Encoding.UTF8.GetBytes(json));
 
             TestContext.WriteLine(
-                $"P4-01 canonical fixture: checksum={checksum:X16}; " +
+                $"P5-04A canonical fixture: checksum={checksum:X16}; " +
                 $"utf8Bytes={Encoding.UTF8.GetByteCount(json)}; Unity={UnityEngine.Application.unityVersion}");
             Assert.That(checksum, Is.EqualTo(ExpectedFixtureJsonChecksum));
         }
