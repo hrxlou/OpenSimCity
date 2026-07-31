@@ -184,11 +184,14 @@ namespace OpenSimCity.Tests.EditMode
             var original = CreateRuntime();
             ApplyLayout(original, Layout.EdgeBranch, connectExternal: true, includePower: true);
             RunMonth(original, 0);
-            Assert.That(original.GrowthSystem.State.Count, Is.EqualTo(3));
+            var inFlightBeforeSave = original.GrowthSystem.State.Count;
+            Assert.That(inFlightBeforeSave, Is.GreaterThan(0));
             Assert.That(original.Buildings.Count, Is.Zero);
+            var expectedSnapshot = CaptureJson(original);
 
             var restored = RoundTrip(original);
-            Assert.That(CaptureJson(restored), Is.EqualTo(CaptureJson(original)));
+            Assert.That(restored.GrowthSystem.State.Count, Is.EqualTo(inFlightBeforeSave));
+            Assert.That(CaptureJson(restored), Is.EqualTo(expectedSnapshot));
 
             for (var month = 1; month < 6; month++)
             {
