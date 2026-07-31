@@ -6,9 +6,9 @@ using OpenSimCity.Simulation.Roads;
 namespace OpenSimCity.Simulation.Traffic
 {
     /// <summary>
-    /// Unity-independent deterministic Dijkstra routing with a road-version cache.
-    /// Equal-cost queue entries use row-major cell index, and path alternatives are
-    /// ordered by integer travel time then their complete CellCoord sequence.
+    /// Unity-independent deterministic directed Dijkstra routing with a road-version
+    /// cache. Equal-cost queue entries use row-major cell index, and complete routes
+    /// are ordered by integer travel time then their full CellCoord sequence.
     /// </summary>
     public sealed class DeterministicRoutePlanner
     {
@@ -18,6 +18,7 @@ namespace OpenSimCity.Simulation.Traffic
         private readonly TrafficRoutingParameters _parameters;
         private readonly Dictionary<RouteCacheKey, RouteCacheEntry> _cache =
             new Dictionary<RouteCacheKey, RouteCacheEntry>();
+        private readonly RoadCellState[] _observedCells;
         private int _cacheRoadVersion;
 
         public DeterministicRoutePlanner(
@@ -31,6 +32,8 @@ namespace OpenSimCity.Simulation.Traffic
             _definitions = definitions ?? throw new ArgumentNullException(nameof(definitions));
             _parameters = parameters ?? TrafficRoutingParameters.Default;
             _graph.RefreshIfNeeded();
+            _observedCells = new RoadCellState[_roads.CellCount];
+            CaptureRoadCells();
             _cacheRoadVersion = _roads.Version;
         }
 
@@ -65,6 +68,7 @@ namespace OpenSimCity.Simulation.Traffic
         public void ClearCache()
         {
             _cache.Clear();
+            CaptureRoadCells();
             _cacheRoadVersion = _roads.Version;
             LastInvalidatedEntryCount = 0;
             LastRetainedEntryCount = 0;
@@ -76,17 +80,9 @@ namespace OpenSimCity.Simulation.Traffic
                 return;
 
             _graph.RefreshIfNeeded();
-            var dirtyCells = _graph.DirtyCells;
-            var dirtySet = new HashSet<CellCoord>();
-            var affectedComponents = new HashSet<int>();
-            for (var index = 0; index < dirtyCells.Count; index++)
-            {
-                var cell = dirtyCells[index];
-                dirtySet.Add(cell);
-                var result = _graph.Get(cell);
-                if (result.HasRoad)
-                    affectedComponents.Add(result.ComponentId);
-            }
+            var changedCells = CaptureChangedRoadCells();
+            var changedSet = new HashSet<CellCoord>(changedCells);
+            var affectedComponents = FindAffectedComponents(changedCells);
 
             var keys = new List<RouteCacheKey>(_cache.Keys);
             keys.Sort();
@@ -96,8 +92,8 @@ namespace OpenSimCity.Simulation.Traffic
             {
                 var key = keys[index];
                 var entry = _cache[key];
-                var remove = dirtyCells.Count == 0 ||
-                             ShouldInvalidate(key, entry, dirtySet, affectedComponents);
+                var remove = changedCells.Count == 0 ||
+                             ShouldInvalidate(key, entry, changedSet, affectedComponents);
                 if (remove)
                 {
                     _cache.Remove(key);
@@ -114,10 +110,61 @@ namespace OpenSimCity.Simulation.Traffic
             _cacheRoadVersion = _roads.Version;
         }
 
+        private List<CellCoord> CaptureChangedRoadCells()
+        {
+            var changed = new List<CellCoord>();
+            for (var index = 0; index < _observedCells.Length; index++)
+            {
+                var current = _roads.Cells[index];
+                if (_observedCells[index] != current)
+                    changed.Add(current.Coordinate);
+                _observedCells[index] = current;
+            }
+            return changed;
+        }
+
+        private void CaptureRoadCells()
+        {
+            for (var index = 0; index < _observedCells.Length; index++)
+                _observedCells[index] = _roads.Cells[index];
+        }
+
+        private HashSet<int> FindAffectedComponents(IReadOnlyList<CellCoord> changedCells)
+        {
+            var affected = new HashSet<int>();
+            for (var index = 0; index < changedCells.Count; index++)
+            {
+                AddComponent(changedCells[index], affected);
+                VisitCardinalNeighbors(changedCells[index], cell => AddComponent(cell, affected));
+            }
+            return affected;
+        }
+
+        private void AddComponent(CellCoord cell, ISet<int> affected)
+        {
+            if (!_roads.IsInBounds(cell) || !_roads.IsOccupied(cell))
+                return;
+            var result = _graph.Get(cell);
+            if (result.HasRoad)
+                affected.Add(result.ComponentId);
+        }
+
+        private void VisitCardinalNeighbors(CellCoord cell, Action<CellCoord> visitor)
+        {
+            if (cell.Y > 0)
+                visitor(new CellCoord(cell.X, cell.Y - 1));
+            if (cell.X > 0)
+                visitor(new CellCoord(cell.X - 1, cell.Y));
+            if (cell.X + 1 < _roads.Width)
+                visitor(new CellCoord(cell.X + 1, cell.Y));
+            if (cell.Y + 1 < _roads.Height)
+                visitor(new CellCoord(cell.X, cell.Y + 1));
+        }
+
         private bool ShouldInvalidate(
             RouteCacheKey key,
             RouteCacheEntry entry,
-            ISet<CellCoord> dirtyCells,
+            ISet<CellCoord> changedCells,
             ISet<int> affectedComponents)
         {
             if (!_roads.IsOccupied(key.Origin) || !_roads.IsOccupied(key.Destination))
@@ -139,11 +186,10 @@ namespace OpenSimCity.Simulation.Traffic
                 var cells = routes[routeIndex].Cells;
                 for (var cellIndex = 0; cellIndex < cells.Count; cellIndex++)
                 {
-                    if (dirtyCells.Contains(cells[cellIndex]))
+                    if (changedCells.Contains(cells[cellIndex]))
                         return true;
                 }
             }
-
             return false;
         }
 
@@ -235,7 +281,7 @@ namespace OpenSimCity.Simulation.Traffic
                 if (current.CellIndex == destinationIndex)
                     break;
 
-                VisitOccupiedNeighborsInStableOrder(current.CellIndex, neighborIndex =>
+                VisitTravelableNeighborsInStableOrder(current.CellIndex, neighborIndex =>
                 {
                     if (closed[neighborIndex])
                         return;
@@ -280,24 +326,26 @@ namespace OpenSimCity.Simulation.Traffic
             return new TrafficRoute(reverse, ToInt(distances[destinationIndex]));
         }
 
-        private void VisitOccupiedNeighborsInStableOrder(int index, Action<int> visitor)
+        private void VisitTravelableNeighborsInStableOrder(int index, Action<int> visitor)
         {
             var x = index % _roads.Width;
             var y = index / _roads.Width;
             if (y > 0)
-                VisitIfOccupied(index - _roads.Width, visitor);
+                VisitIfTravelable(index, index - _roads.Width, visitor);
             if (x > 0)
-                VisitIfOccupied(index - 1, visitor);
+                VisitIfTravelable(index, index - 1, visitor);
             if (x + 1 < _roads.Width)
-                VisitIfOccupied(index + 1, visitor);
+                VisitIfTravelable(index, index + 1, visitor);
             if (y + 1 < _roads.Height)
-                VisitIfOccupied(index + _roads.Width, visitor);
+                VisitIfTravelable(index, index + _roads.Width, visitor);
         }
 
-        private void VisitIfOccupied(int index, Action<int> visitor)
+        private void VisitIfTravelable(int fromIndex, int toIndex, Action<int> visitor)
         {
-            if (_roads.Cells[index].IsOccupied)
-                visitor(index);
+            var from = _roads.Cells[fromIndex];
+            var to = _roads.Cells[toIndex];
+            if (to.IsOccupied && _roads.CanTravel(from.Coordinate, to.Coordinate))
+                visitor(toIndex);
         }
 
         public int EdgeCapacity(RoadEdgeKey edge)
