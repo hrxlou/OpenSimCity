@@ -66,9 +66,9 @@ jobs:
               foreach ($case in $failed) {
                 Write-Host "FAILED: $($case.fullname)"
                 $message = $case.failure.message
-                if ($message) { Write-Host $message.'#text' }
+                if ($message) { Write-Host $message.InnerText }
                 $stack = $case.failure.'stack-trace'
-                if ($stack) { Write-Host $stack.'#text' }
+                if ($stack) { Write-Host $stack.InnerText }
               }
             }
             Write-Host "::endgroup::"
