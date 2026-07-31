@@ -24,6 +24,7 @@ namespace OpenSimCity.Tests.PlayMode
             var context = CityRuntimeContext.Current;
             var runtime = context.Runtime;
             runtime.SetSimulationSpeed(SimulationSpeed.Paused);
+            var initialTick = runtime.Clock.CurrentTick.Value;
             var roadY = runtime.Height / 2;
 
             Commit(context, ConstructionToolMode.Road,
@@ -38,7 +39,7 @@ namespace OpenSimCity.Tests.PlayMode
                 new CellCoord(15, roadY - 1), new CellCoord(15, roadY - 1));
 
             for (var month = 0; month < 6; month++)
-                RunMonth(runtime, month);
+                RunMonth(runtime, initialTick, month);
             yield return null;
 
             var checksumBeforeObservation = runtime.TripDemandSystem.State.ComputeChecksum();
@@ -65,10 +66,10 @@ namespace OpenSimCity.Tests.PlayMode
             Assert.That(result.Committed, Is.True, result.Message);
         }
 
-        private static void RunMonth(CityRuntime runtime, int monthIndex)
+        private static void RunMonth(CityRuntime runtime, long initialTick, int monthIndex)
         {
             Assert.That(runtime.Clock.CurrentTick.Value,
-                Is.EqualTo((long)monthIndex * runtime.MonthlyScheduler.TicksPerMonth));
+                Is.EqualTo(initialTick + (long)monthIndex * runtime.MonthlyScheduler.TicksPerMonth));
             for (var offset = 0; offset < runtime.MonthlyScheduler.TicksPerMonth; offset++)
                 Assert.That(runtime.AdvanceSimulation(runtime.Clock.FixedDeltaSeconds), Is.EqualTo(1));
         }
