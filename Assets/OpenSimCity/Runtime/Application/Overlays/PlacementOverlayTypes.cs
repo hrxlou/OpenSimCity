@@ -11,6 +11,7 @@ namespace OpenSimCity.Application.Overlays
     public enum PlacementOverlayKind
     {
         RoadConnectivity,
+        RoadHierarchy,
         Accessibility,
         Zone,
         Parcel,
@@ -56,6 +57,11 @@ namespace OpenSimCity.Application.Overlays
         None,
         RoadConnected,
         RoadIsolated,
+        RoadSmall,
+        RoadStreet,
+        RoadAvenue,
+        RoadBidirectional,
+        RoadOneWay,
         AccessibilityGate,
         AccessibilityNear,
         AccessibilityMedium,
