@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.World;
+using Unity.Profiling;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace OpenSimCity.Presentation.Vehicles
 {
@@ -15,6 +17,10 @@ namespace OpenSimCity.Presentation.Vehicles
     public sealed class TrafficViewCoordinator : MonoBehaviour
     {
         public const string RuntimeObjectName = "TrafficViews";
+        public const string UpdateProfilerMarkerName = "OpenSimCity.TrafficViews.Update";
+
+        private static readonly ProfilerMarker UpdateProfilerMarker =
+            new ProfilerMarker(UpdateProfilerMarkerName);
 
         [SerializeField, Range(0, TrafficVisualizationReadModel.MaximumAllowedVehicleSamples)]
         private int visibleVehicleLimit = TrafficVisualizationReadModel.DefaultMaximumVehicleSamples;
@@ -68,6 +74,12 @@ namespace OpenSimCity.Presentation.Vehicles
         }
 
         private void Update()
+        {
+            using (UpdateProfilerMarker.Auto())
+                UpdatePresentation();
+        }
+
+        private void UpdatePresentation()
         {
             var current = CityRuntimeContext.Current;
             if (!ReferenceEquals(current, _context))
@@ -173,6 +185,8 @@ namespace OpenSimCity.Presentation.Vehicles
                          Shader.Find("Universal Render Pipeline/Unlit") ??
                          Shader.Find("Unlit/Color") ??
                          Shader.Find("Standard");
+            if (shader == null)
+                throw new InvalidOperationException("No supported runtime shader is available for traffic views.");
             var material = new Material(shader)
             {
                 name = name,
@@ -203,6 +217,11 @@ namespace OpenSimCity.Presentation.Vehicles
     /// </summary>
     public sealed class VehicleViewScheduler : IDisposable
     {
+        public const string UpdateProfilerMarkerName = "OpenSimCity.TrafficVehicles.UpdatePositions";
+
+        private static readonly ProfilerMarker UpdateProfilerMarker =
+            new ProfilerMarker(UpdateProfilerMarkerName);
+
         private readonly VehicleViewPool _pool;
         private IReadOnlyList<VehicleSampleData> _samples =
             Array.AsReadOnly(Array.Empty<VehicleSampleData>());
@@ -235,29 +254,32 @@ namespace OpenSimCity.Presentation.Vehicles
             if (routeLoopSeconds <= 0d || double.IsNaN(routeLoopSeconds) || double.IsInfinity(routeLoopSeconds))
                 throw new ArgumentOutOfRangeException(nameof(routeLoopSeconds));
 
-            for (var index = 0; index < _samples.Count; index++)
+            using (UpdateProfilerMarker.Auto())
             {
-                var sample = _samples[index];
-                var normalized = elapsedSeconds / routeLoopSeconds +
-                                 sample.PhaseOffsetPermille / 1000d;
-                normalized -= Math.Floor(normalized);
-                var progressPermille = Math.Min(999, (int)(normalized * 1000d));
-                var position = sample.Path.Evaluate(progressPermille);
-                var from = CellCenter(bounds, position.From);
-                var to = CellCenter(bounds, position.To);
-                var transform = _pool.GetActiveTransform(index);
-                transform.localPosition = Vector3.Lerp(
-                    from,
-                    to,
-                    position.SegmentProgressPermille / 1000f);
+                for (var index = 0; index < _samples.Count; index++)
+                {
+                    var sample = _samples[index];
+                    var normalized = elapsedSeconds / routeLoopSeconds +
+                                     sample.PhaseOffsetPermille / 1000d;
+                    normalized -= Math.Floor(normalized);
+                    var progressPermille = Math.Min(999, (int)(normalized * 1000d));
+                    var position = sample.Path.Evaluate(progressPermille);
+                    var from = CellCenter(bounds, position.From);
+                    var to = CellCenter(bounds, position.To);
+                    var transform = _pool.GetActiveTransform(index);
+                    transform.localPosition = Vector3.Lerp(
+                        from,
+                        to,
+                        position.SegmentProgressPermille / 1000f);
 
-                var direction = to - from;
-                if (direction.sqrMagnitude > 0.0001f)
-                    transform.localRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
-                transform.localScale = new Vector3(
-                    bounds.CellSize * 0.22f,
-                    bounds.CellSize * 0.14f,
-                    bounds.CellSize * 0.40f);
+                    var direction = to - from;
+                    if (direction.sqrMagnitude > 0.0001f)
+                        transform.localRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+                    transform.localScale = new Vector3(
+                        bounds.CellSize * 0.22f,
+                        bounds.CellSize * 0.14f,
+                        bounds.CellSize * 0.40f);
+                }
             }
         }
 
@@ -277,6 +299,11 @@ namespace OpenSimCity.Presentation.Vehicles
     /// <summary>Reusable pool for behaviour-free vehicle view GameObjects.</summary>
     public sealed class VehicleViewPool : IDisposable
     {
+        public const string ResizeProfilerMarkerName = "OpenSimCity.TrafficVehicles.PoolResize";
+
+        private static readonly ProfilerMarker ResizeProfilerMarker =
+            new ProfilerMarker(ResizeProfilerMarkerName);
+
         private readonly Transform _parent;
         private readonly GameObject _prefab;
         private readonly Material _fallbackMaterial;
@@ -301,20 +328,23 @@ namespace OpenSimCity.Presentation.Vehicles
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count));
 
-            while (_active.Count > count)
+            using (ResizeProfilerMarker.Auto())
             {
-                var lastIndex = _active.Count - 1;
-                var view = _active[lastIndex];
-                _active.RemoveAt(lastIndex);
-                view.SetActive(false);
-                _pooled.Push(view);
-            }
+                while (_active.Count > count)
+                {
+                    var lastIndex = _active.Count - 1;
+                    var view = _active[lastIndex];
+                    _active.RemoveAt(lastIndex);
+                    view.SetActive(false);
+                    _pooled.Push(view);
+                }
 
-            while (_active.Count < count)
-            {
-                var view = _pooled.Count > 0 ? _pooled.Pop() : CreateView();
-                view.SetActive(true);
-                _active.Add(view);
+                while (_active.Count < count)
+                {
+                    var view = _pooled.Count > 0 ? _pooled.Pop() : CreateView();
+                    view.SetActive(true);
+                    _active.Add(view);
+                }
             }
         }
 
@@ -381,6 +411,11 @@ namespace OpenSimCity.Presentation.Vehicles
     /// </summary>
     public sealed class TrafficCongestionMeshRenderer : IDisposable
     {
+        public const string RebuildProfilerMarkerName = "OpenSimCity.TrafficDataMap.Rebuild";
+
+        private static readonly ProfilerMarker RebuildProfilerMarker =
+            new ProfilerMarker(RebuildProfilerMarkerName);
+
         private readonly GameObject _root;
         private readonly Mesh _mesh;
         private readonly MeshRenderer _renderer;
@@ -396,7 +431,8 @@ namespace OpenSimCity.Presentation.Vehicles
             _mesh = new Mesh
             {
                 name = "TrafficCongestionDataMapMesh",
-                hideFlags = HideFlags.DontSave
+                hideFlags = HideFlags.DontSave,
+                indexFormat = IndexFormat.UInt32
             };
             _mesh.MarkDynamic();
             filter.sharedMesh = _mesh;
@@ -422,58 +458,61 @@ namespace OpenSimCity.Presentation.Vehicles
             if (unrouted == null)
                 throw new ArgumentNullException(nameof(unrouted));
 
-            var quadCount = edges.Count + unrouted.Count;
-            var vertices = new Vector3[quadCount * 4];
-            var colors = new Color[vertices.Length];
-            var triangles = new int[quadCount * 6];
-            var quad = 0;
-            for (var index = 0; index < edges.Count; index++)
+            using (RebuildProfilerMarker.Auto())
             {
-                var edge = edges[index];
-                var a = CellCenter(bounds, edge.Edge.A, 0.055f);
-                var b = CellCenter(bounds, edge.Edge.B, 0.055f);
-                var direction = b - a;
-                var perpendicular = new Vector3(-direction.z, 0f, direction.x).normalized;
-                var width = bounds.CellSize * (edge.IsCongested ? 0.17f : 0.10f);
-                AddQuad(
-                    vertices,
-                    colors,
-                    triangles,
-                    quad++,
-                    a - perpendicular * width,
-                    a + perpendicular * width,
-                    b + perpendicular * width,
-                    b - perpendicular * width,
-                    CongestionColor(edge.VolumeCapacityPermille));
-            }
+                var quadCount = checked(edges.Count + unrouted.Count);
+                var vertices = new Vector3[checked(quadCount * 4)];
+                var colors = new Color[vertices.Length];
+                var triangles = new int[checked(quadCount * 6)];
+                var quad = 0;
+                for (var index = 0; index < edges.Count; index++)
+                {
+                    var edge = edges[index];
+                    var a = CellCenter(bounds, edge.Edge.A, 0.055f);
+                    var b = CellCenter(bounds, edge.Edge.B, 0.055f);
+                    var direction = b - a;
+                    var perpendicular = new Vector3(-direction.z, 0f, direction.x).normalized;
+                    var width = bounds.CellSize * (edge.IsCongested ? 0.17f : 0.10f);
+                    AddQuad(
+                        vertices,
+                        colors,
+                        triangles,
+                        quad++,
+                        a - perpendicular * width,
+                        a + perpendicular * width,
+                        b + perpendicular * width,
+                        b - perpendicular * width,
+                        CongestionColor(edge.VolumeCapacityPermille));
+                }
 
-            for (var index = 0; index < unrouted.Count; index++)
-            {
-                var row = unrouted[index];
-                var center = CellCenter(bounds, row.OriginRoadCell, 0.075f);
-                var half = bounds.CellSize * 0.22f;
-                AddQuad(
-                    vertices,
-                    colors,
-                    triangles,
-                    quad++,
-                    center + new Vector3(-half, 0f, -half),
-                    center + new Vector3(-half, 0f, half),
-                    center + new Vector3(half, 0f, half),
-                    center + new Vector3(half, 0f, -half),
-                    new Color(0.82f, 0.18f, 0.92f, 0.90f));
-            }
+                for (var index = 0; index < unrouted.Count; index++)
+                {
+                    var row = unrouted[index];
+                    var center = CellCenter(bounds, row.OriginRoadCell, 0.075f);
+                    var half = bounds.CellSize * 0.22f;
+                    AddQuad(
+                        vertices,
+                        colors,
+                        triangles,
+                        quad++,
+                        center + new Vector3(-half, 0f, -half),
+                        center + new Vector3(-half, 0f, half),
+                        center + new Vector3(half, 0f, half),
+                        center + new Vector3(half, 0f, -half),
+                        new Color(0.82f, 0.18f, 0.92f, 0.90f));
+                }
 
-            _mesh.Clear();
-            if (vertices.Length > 0)
-            {
-                _mesh.vertices = vertices;
-                _mesh.colors = colors;
-                _mesh.triangles = triangles;
-                _mesh.RecalculateBounds();
+                _mesh.Clear();
+                if (vertices.Length > 0)
+                {
+                    _mesh.vertices = vertices;
+                    _mesh.colors = colors;
+                    _mesh.triangles = triangles;
+                    _mesh.RecalculateBounds();
+                }
+                RenderedEdgeCount = edges.Count;
+                RenderedUnroutedCount = unrouted.Count;
             }
-            RenderedEdgeCount = edges.Count;
-            RenderedUnroutedCount = unrouted.Count;
         }
 
         public void Clear()
