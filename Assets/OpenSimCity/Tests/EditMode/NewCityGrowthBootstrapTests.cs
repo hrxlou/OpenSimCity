@@ -15,7 +15,7 @@ namespace OpenSimCity.Tests.EditMode
 {
     public sealed class NewCityGrowthBootstrapTests
     {
-        private enum Layout
+        public enum Layout
         {
             Grid = 1,
             EdgeBranch = 2
