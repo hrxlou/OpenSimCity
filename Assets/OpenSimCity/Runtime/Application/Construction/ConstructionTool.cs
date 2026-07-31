@@ -1,8 +1,10 @@
 using System;
 using OpenSimCity.Application.Commands;
+using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.World;
 using OpenSimCity.Core;
 using OpenSimCity.Core.Mathematics;
+using OpenSimCity.Simulation.Roads;
 
 namespace OpenSimCity.Application.Construction
 {
@@ -19,11 +21,15 @@ namespace OpenSimCity.Application.Construction
     public sealed class ConstructionTool
     {
         private readonly CityRuntime _runtime;
+        private readonly RoadUpgradePreviewReadModel _roadUpgradePreviewModel;
         private ICityCommand _activeCommand;
 
         public ConstructionTool(CityRuntime runtime)
         {
             _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
+            _roadUpgradePreviewModel = new RoadUpgradePreviewReadModel(runtime);
+            RoadUpgradeTargetDefinitionId = RoadHierarchyDefaults.AvenueDefinitionId;
+            RoadUpgradeDirectionMode = RoadDirectionMode.Bidirectional;
             Preview = ConstructionPreview.Empty;
         }
 
@@ -36,6 +42,14 @@ namespace OpenSimCity.Application.Construction
         public CellCoord CurrentCell { get; private set; }
 
         public ConstructionPreview Preview { get; private set; }
+
+        public StableId RoadUpgradeTargetDefinitionId { get; private set; }
+
+        public RoadDirectionMode RoadUpgradeDirectionMode { get; private set; }
+
+        public RoadUpgradePreviewSnapshot RoadUpgradePreview { get; private set; }
+
+        public RoadUpgradePreviewSnapshot LastCommittedRoadUpgradePreview { get; private set; }
 
         public bool IsDragging => DragPhase == ConstructionDragPhase.Dragging;
 
@@ -53,6 +67,26 @@ namespace OpenSimCity.Application.Construction
                 CancelDrag();
 
             Mode = mode;
+        }
+
+        /// <summary>
+        /// Selects the target tier and path-relative direction used by the road
+        /// upgrade tool. Reconfiguration during a drag rebuilds the same preview
+        /// without mutating live road or traffic state.
+        /// </summary>
+        public void ConfigureRoadUpgrade(
+            StableId targetDefinitionId,
+            RoadDirectionMode directionMode)
+        {
+            if (!_runtime.RoadDefinitions.TryGet(targetDefinitionId, out _))
+                throw new ArgumentOutOfRangeException(nameof(targetDefinitionId));
+            if (!Enum.IsDefined(typeof(RoadDirectionMode), directionMode))
+                throw new ArgumentOutOfRangeException(nameof(directionMode));
+
+            RoadUpgradeTargetDefinitionId = targetDefinitionId;
+            RoadUpgradeDirectionMode = directionMode;
+            if (Mode == ConstructionToolMode.RoadUpgrade && IsDragging)
+                RecomputePreview();
         }
 
         public void BeginDrag(CellCoord cell)
@@ -106,6 +140,7 @@ namespace OpenSimCity.Application.Construction
 
             var preview = Preview;
             var command = _activeCommand;
+            var upgradeComparison = RoadUpgradePreview;
             ConstructionCommitResult result;
 
             if (!preview.IsValid)
@@ -129,6 +164,9 @@ namespace OpenSimCity.Application.Construction
                 result = BuildCommitResult(preview, execution, fundsBefore);
             }
 
+            if (result.Committed && upgradeComparison != null)
+                LastCommittedRoadUpgradePreview = upgradeComparison;
+
             ClearDrag();
             SetPreview(ConstructionPreview.Empty);
             if (Committed != null)
@@ -139,6 +177,7 @@ namespace OpenSimCity.Application.Construction
         private void RecomputePreview()
         {
             _activeCommand = BuildCommand(Mode, StartCell, CurrentCell);
+            RoadUpgradePreview = null;
             SetPreview(BuildPreview(Mode, StartCell, CurrentCell, _activeCommand));
         }
 
@@ -148,6 +187,12 @@ namespace OpenSimCity.Application.Construction
             {
                 case ConstructionToolMode.Road:
                     return new PlaceRoadCommand(_runtime.DefaultRoadDefinitionId, start, end);
+                case ConstructionToolMode.RoadUpgrade:
+                    return new UpgradeRoadCommand(
+                        RoadUpgradeTargetDefinitionId,
+                        RoadUpgradeDirectionMode,
+                        start,
+                        end);
                 case ConstructionToolMode.Demolish:
                     return new DemolishRoadCommand(start, end);
                 case ConstructionToolMode.ZoneResidential:
@@ -178,6 +223,12 @@ namespace OpenSimCity.Application.Construction
             {
                 case PlaceRoadCommand place:
                     return FromRoad(mode, _runtime.Preview(place));
+                case UpgradeRoadCommand upgrade:
+                {
+                    var result = _runtime.Preview(upgrade);
+                    RoadUpgradePreview = _roadUpgradePreviewModel.Build(upgrade, result);
+                    return FromRoad(mode, result);
+                }
                 case DemolishRoadCommand demolish:
                     return FromRoad(mode, _runtime.Preview(demolish));
                 case ZoneAreaCommand paint:
@@ -269,6 +320,7 @@ namespace OpenSimCity.Application.Construction
         {
             DragPhase = ConstructionDragPhase.Idle;
             _activeCommand = null;
+            RoadUpgradePreview = null;
         }
 
         private void SetPreview(ConstructionPreview preview)
