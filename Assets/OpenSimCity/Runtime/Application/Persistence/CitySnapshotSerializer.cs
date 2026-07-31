@@ -23,7 +23,7 @@ namespace OpenSimCity.Application.Persistence
     public static class CitySnapshotFormat
     {
         public const string Magic = "OpenSimCity.CitySnapshot";
-        public const int CurrentVersion = 1;
+        public const int CurrentVersion = 2;
         public const string DevelopmentGameVersion = "development";
     }
 
@@ -44,6 +44,7 @@ namespace OpenSimCity.Application.Persistence
     {
         public int CellIndex;
         public ulong DefinitionId;
+        public int TravelDirection;
     }
 
     [Serializable]
@@ -118,9 +119,8 @@ namespace OpenSimCity.Application.Persistence
     }
 
     /// <summary>
-    /// Version-one field order is declaration order below. Every nested value is a
-    /// serializable scalar, string, DTO, or DTO array; no Unity object can cross this
-    /// boundary.
+    /// Field order is declaration order below. Every nested value is a serializable
+    /// scalar, string, DTO, or DTO array; no Unity object can cross this boundary.
     /// </summary>
     [Serializable]
     public sealed class CitySnapshotDto
@@ -233,9 +233,8 @@ namespace OpenSimCity.Application.Persistence
     }
 
     /// <summary>
-    /// Pure DTO mapper for P4-01. Encoding and file I/O are intentionally left to
-    /// P4-02; callers may pass this field-only graph to JsonUtility for debug and
-    /// cross-platform fixtures.
+    /// Pure DTO mapper. Encoding and file I/O are intentionally left to platform
+    /// adapters; callers may pass this field-only graph to JsonUtility for fixtures.
     /// </summary>
     public static class CitySnapshotSerializer
     {
@@ -347,7 +346,8 @@ namespace OpenSimCity.Application.Persistence
                 cells.Add(new RoadCellSnapshotDto
                 {
                     CellIndex = index,
-                    DefinitionId = source[index].DefinitionId.Value
+                    DefinitionId = source[index].DefinitionId.Value,
+                    TravelDirection = (int)source[index].TravelDirection
                 });
             }
 
@@ -476,7 +476,7 @@ namespace OpenSimCity.Application.Persistence
             if (!string.Equals(snapshot.Header.Magic, CitySnapshotFormat.Magic, StringComparison.Ordinal))
                 Fail("Header.Magic", "Unknown snapshot kind.");
             if (snapshot.Header.FormatVersion != CitySnapshotFormat.CurrentVersion)
-                Fail("Header.FormatVersion", "Unsupported snapshot version; migration is not part of P4-01.");
+                Fail("Header.FormatVersion", "Unsupported snapshot version; migrate before restore.");
             if (string.IsNullOrWhiteSpace(snapshot.Header.GameVersion))
                 Fail("Header.GameVersion", "Game version is required.");
             if (snapshot.Header.CreatedUtcTicks < 0)
@@ -500,6 +500,8 @@ namespace OpenSimCity.Application.Persistence
                 var id = RequireStableId(roads[index].DefinitionId, $"Roads.Cells[{index}].DefinitionId");
                 if (!runtime.RoadDefinitions.TryGet(id, out _))
                     Fail($"Roads.Cells[{index}].DefinitionId", $"Unknown road definition ID {id.Value}.");
+                if (!Enum.IsDefined(typeof(RoadTravelDirection), roads[index].TravelDirection))
+                    Fail($"Roads.Cells[{index}].TravelDirection", "Unknown road travel direction.");
             }
 
             var zones = snapshot.Zones.Cells ?? Array.Empty<ZoneCellSnapshotDto>();
@@ -570,8 +572,13 @@ namespace OpenSimCity.Application.Persistence
                 if (row.CellIndex <= previous || row.CellIndex < 0 || row.CellIndex >= runtime.World.CellCount)
                     Fail($"Roads.Cells[{index}].CellIndex", "Road cells must be unique, in bounds, and row-major.");
                 var cell = runtime.World.GetCoordinate(row.CellIndex);
-                if (!runtime.Roads.TryPlaceRoad(cell, new StableId(row.DefinitionId)))
+                if (!runtime.Roads.TryPlaceRoad(
+                        cell,
+                        new StableId(row.DefinitionId),
+                        (RoadTravelDirection)row.TravelDirection))
+                {
                     Fail($"Roads.Cells[{index}]", "Road state could not be restored.");
+                }
                 previous = row.CellIndex;
             }
         }
