@@ -10,13 +10,15 @@ using OpenSimCity.Simulation.Utilities;
 namespace OpenSimCity.Application.Overlays
 {
     /// <summary>
-    /// Builds the P2 placement datamaps from the versioned Application read models.
-    /// It only reads query values, so an overlay cell always agrees with the cell,
-    /// road-accessibility or parcel query for the same coordinate.
+    /// Builds placement datamaps from versioned Application read models. It only
+    /// reads query values, so an overlay cell always agrees with the authoritative
+    /// query for the same coordinate. Road tier and direction remain presentation-
+    /// independent state; arrows and patterns are derived here from that query.
     /// </summary>
     public sealed class PlacementOverlayModel
     {
         private readonly RoadAccessibilityReadModel _roads;
+        private readonly RoadHierarchyReadModel _hierarchy;
         private readonly ZoneReadModel _zones;
         private readonly ParcelReadModel _parcels;
         private readonly PowerReadModel _power;
@@ -26,7 +28,8 @@ namespace OpenSimCity.Application.Overlays
                 (runtime ?? throw new ArgumentNullException(nameof(runtime))).RoadAccessibility,
                 runtime.ZoneModel,
                 runtime.ParcelModel,
-                runtime.PowerModel)
+                runtime.PowerModel,
+                runtime.RoadHierarchyModel)
         {
         }
 
@@ -34,12 +37,14 @@ namespace OpenSimCity.Application.Overlays
             RoadAccessibilityReadModel roads,
             ZoneReadModel zones,
             ParcelReadModel parcels,
-            PowerReadModel power = null)
+            PowerReadModel power = null,
+            RoadHierarchyReadModel hierarchy = null)
         {
             _roads = roads ?? throw new ArgumentNullException(nameof(roads));
             _zones = zones ?? throw new ArgumentNullException(nameof(zones));
             _parcels = parcels ?? throw new ArgumentNullException(nameof(parcels));
             _power = power;
+            _hierarchy = hierarchy;
         }
 
         public PlacementOverlaySnapshot Build(PlacementOverlayKind kind)
@@ -48,6 +53,8 @@ namespace OpenSimCity.Application.Overlays
             {
                 case PlacementOverlayKind.RoadConnectivity:
                     return BuildRoadConnectivity();
+                case PlacementOverlayKind.RoadHierarchy:
+                    return BuildRoadHierarchy();
                 case PlacementOverlayKind.Accessibility:
                     return BuildAccessibility();
                 case PlacementOverlayKind.Zone:
@@ -83,6 +90,37 @@ namespace OpenSimCity.Application.Overlays
                 Legend(
                     PlacementOverlayCategory.RoadConnected,
                     PlacementOverlayCategory.RoadIsolated));
+        }
+
+        public PlacementOverlaySnapshot BuildRoadHierarchy()
+        {
+            if (_hierarchy == null)
+                throw new InvalidOperationException("A road hierarchy read model is required for the hierarchy overlay.");
+
+            _hierarchy.RefreshIfNeeded();
+            var cells = new List<PlacementOverlayCell>();
+            foreach (var road in _hierarchy.Cells)
+            {
+                var category = CategoryForRoadDefinition(road.DefinitionId);
+                var descriptor = Descriptor(category);
+                cells.Add(new PlacementOverlayCell(
+                    road.Cell,
+                    category,
+                    descriptor.ColorRole,
+                    PatternForDirection(road.TravelDirection),
+                    LabelForDirection(road.TravelDirection)));
+            }
+
+            return new PlacementOverlaySnapshot(
+                PlacementOverlayKind.RoadHierarchy,
+                "도로 등급·방향",
+                cells.AsReadOnly(),
+                Legend(
+                    PlacementOverlayCategory.RoadSmall,
+                    PlacementOverlayCategory.RoadStreet,
+                    PlacementOverlayCategory.RoadAvenue,
+                    PlacementOverlayCategory.RoadBidirectional,
+                    PlacementOverlayCategory.RoadOneWay));
         }
 
         public PlacementOverlaySnapshot BuildAccessibility()
@@ -161,7 +199,8 @@ namespace OpenSimCity.Application.Overlays
 
         public PlacementOverlaySnapshot BuildPower()
         {
-            if (_power == null) throw new InvalidOperationException("A power read model is required for the power overlay.");
+            if (_power == null)
+                throw new InvalidOperationException("A power read model is required for the power overlay.");
             _power.RefreshIfNeeded();
             var cells = new List<PlacementOverlayCell>();
             foreach (var producer in _power.Producers)
@@ -201,6 +240,39 @@ namespace OpenSimCity.Application.Overlays
             return parcel.DistanceBand == ExternalGateDistanceBand.Far
                 ? PlacementOverlayCategory.ParcelReachableFar
                 : PlacementOverlayCategory.ParcelEligible;
+        }
+
+        public static PlacementOverlayCategory CategoryForRoadDefinition(Core.StableId definitionId)
+        {
+            if (definitionId == RoadHierarchyDefaults.SmallRoadDefinitionId)
+                return PlacementOverlayCategory.RoadSmall;
+            if (definitionId == RoadHierarchyDefaults.AvenueDefinitionId)
+                return PlacementOverlayCategory.RoadAvenue;
+            return PlacementOverlayCategory.RoadStreet;
+        }
+
+        public static OverlayPattern PatternForDirection(RoadTravelDirection direction)
+        {
+            return direction == RoadTravelDirection.Bidirectional
+                ? OverlayPattern.Ring
+                : OverlayPattern.Hatch;
+        }
+
+        public static string LabelForDirection(RoadTravelDirection direction)
+        {
+            switch (direction)
+            {
+                case RoadTravelDirection.North:
+                    return "↑";
+                case RoadTravelDirection.East:
+                    return "→";
+                case RoadTravelDirection.South:
+                    return "↓";
+                case RoadTravelDirection.West:
+                    return "←";
+                default:
+                    return "↔";
+            }
         }
 
         public static PlacementOverlayCategory CategoryForBand(RoadAccessibilityBand band)
@@ -290,6 +362,16 @@ namespace OpenSimCity.Application.Overlays
                     OverlayColorRole.Info, OverlayPattern.Solid, string.Empty, "외부와 연결된 도로"),
                 [PlacementOverlayCategory.RoadIsolated] = new OverlayCategoryDescriptor(
                     OverlayColorRole.Danger, OverlayPattern.Hatch, "!", "외부와 끊긴 고립 도로망"),
+                [PlacementOverlayCategory.RoadSmall] = new OverlayCategoryDescriptor(
+                    OverlayColorRole.Neutral, OverlayPattern.Solid, "S", "소형 도로"),
+                [PlacementOverlayCategory.RoadStreet] = new OverlayCategoryDescriptor(
+                    OverlayColorRole.Info, OverlayPattern.Solid, "T", "일반 도로"),
+                [PlacementOverlayCategory.RoadAvenue] = new OverlayCategoryDescriptor(
+                    OverlayColorRole.Accent, OverlayPattern.Solid, "A", "대로"),
+                [PlacementOverlayCategory.RoadBidirectional] = new OverlayCategoryDescriptor(
+                    OverlayColorRole.Neutral, OverlayPattern.Ring, "↔", "양방향 exit"),
+                [PlacementOverlayCategory.RoadOneWay] = new OverlayCategoryDescriptor(
+                    OverlayColorRole.Neutral, OverlayPattern.Hatch, "→", "화살표 방향 exit"),
 
                 [PlacementOverlayCategory.AccessibilityGate] = new OverlayCategoryDescriptor(
                     OverlayColorRole.Accent, OverlayPattern.Solid, "0", "외부 관문 셀"),
