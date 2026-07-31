@@ -186,7 +186,7 @@ namespace OpenSimCity.Tests.EditMode
 
             Assert.That(forward.Trips.State.CommuteRequested, Is.EqualTo(800));
             Assert.That(forward.Trips.State.CommuteMatched, Is.EqualTo(400));
-            Assert.That(forward.Trips.State.GoodsRequested, Is.EqualTo(800));
+            Assert.That(forward.Trips.State.GoodsRequested, Is.EqualTo(400));
             Assert.That(forward.Trips.State.GoodsMatched, Is.EqualTo(400));
             Assert.That(forward.Trips.State.ComputeChecksum(), Is.EqualTo(reverse.Trips.State.ComputeChecksum()));
 
