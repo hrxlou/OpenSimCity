@@ -14,9 +14,9 @@ namespace OpenSimCity.Application.Bootstrap
 {
     /// <summary>
     /// Application-owned monthly composition for the private market, growth,
-    /// aggregate trip demand and municipal ledger. It applies pending tax policy
-    /// before RCI, runs development, derives path-independent OD rows from the
-    /// final month-end building set, then settles public cash.
+    /// aggregate trip demand, deterministic routing and municipal ledger. It
+    /// applies pending tax policy before RCI, runs development, derives OD rows,
+    /// routes matched demand, then settles public cash.
     /// </summary>
     public sealed class MunicipalFinanceMonthlySystem : IMonthlySimulationSystem
     {
@@ -24,6 +24,7 @@ namespace OpenSimCity.Application.Bootstrap
         private readonly UrbanEconomySystem _urbanEconomy;
         private readonly GrowthDevelopmentSystem _growth;
         private readonly TripDemandSystem _tripDemand;
+        private readonly TrafficRoutingSystem _trafficRouting;
         private readonly BuildingStateCollection _buildings;
         private readonly BuildingDefinitionCatalog _buildingDefinitions;
         private readonly RoadNetworkState _roads;
@@ -44,11 +45,41 @@ namespace OpenSimCity.Application.Bootstrap
             PowerProducerCollection powerProducers,
             UtilityDefinitionCatalog utilityDefinitions,
             MunicipalFinanceParameters parameters = null)
+            : this(
+                finance,
+                urbanEconomy,
+                growth,
+                tripDemand,
+                null,
+                buildings,
+                buildingDefinitions,
+                roads,
+                roadDefinitions,
+                powerProducers,
+                utilityDefinitions,
+                parameters)
+        {
+        }
+
+        public MunicipalFinanceMonthlySystem(
+            MunicipalFinanceState finance,
+            UrbanEconomySystem urbanEconomy,
+            GrowthDevelopmentSystem growth,
+            TripDemandSystem tripDemand,
+            TrafficRoutingSystem trafficRouting,
+            BuildingStateCollection buildings,
+            BuildingDefinitionCatalog buildingDefinitions,
+            RoadNetworkState roads,
+            RoadDefinitionCatalog roadDefinitions,
+            PowerProducerCollection powerProducers,
+            UtilityDefinitionCatalog utilityDefinitions,
+            MunicipalFinanceParameters parameters = null)
         {
             _finance = finance ?? throw new ArgumentNullException(nameof(finance));
             _urbanEconomy = urbanEconomy ?? throw new ArgumentNullException(nameof(urbanEconomy));
             _growth = growth ?? throw new ArgumentNullException(nameof(growth));
             _tripDemand = tripDemand ?? throw new ArgumentNullException(nameof(tripDemand));
+            _trafficRouting = trafficRouting;
             _buildings = buildings ?? throw new ArgumentNullException(nameof(buildings));
             _buildingDefinitions = buildingDefinitions ?? throw new ArgumentNullException(nameof(buildingDefinitions));
             _roads = roads ?? throw new ArgumentNullException(nameof(roads));
@@ -65,6 +96,7 @@ namespace OpenSimCity.Application.Bootstrap
             _urbanEconomy.RunMonth(month);
             _growth.RunMonth(month);
             _tripDemand.RunMonth(month);
+            _trafficRouting?.RunMonth(month);
 
             TaxIncome(out var residential, out var commercial, out var industrial);
             _finance.SettleMonth(
