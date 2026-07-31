@@ -51,8 +51,11 @@ namespace OpenSimCity.Tests.PlayMode
             Assert.That(routing.Assignments.All(route =>
                 route.CongestedTravelSeconds >= route.FreeFlowTravelSeconds), Is.True);
 
+            var routeToBreak = routing.Assignments.First(route => route.Route.Cells.Count > 2).Route;
+            var demolishedCell = routeToBreak.Cells[routeToBreak.Cells.Count / 2];
             var checksumBeforeDemolition = routing.Checksum;
-            var demolishedCell = new CellCoord(8, roadY);
+            Assert.That(routeToBreak.Contains(demolishedCell), Is.True);
+
             Commit(context, ConstructionToolMode.Demolish, demolishedCell, demolishedCell);
             yield return null;
 
