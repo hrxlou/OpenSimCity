@@ -51,16 +51,22 @@ jobs:
         if: success()
         shell: powershell
         run: |
-          $path = "TestResults/editmode.xml"
-          if (-not (Test-Path $path)) {
-            Write-Host "No EditMode XML was produced."
+          $xmlFiles = Get-ChildItem -Path TestResults -Filter *.xml -ErrorAction SilentlyContinue
+          if (-not $xmlFiles) {
+            Write-Host "No Unity test XML files were produced."
             exit 0
           }
-          [xml]$document = Get-Content -Path $path
-          $cases = $document.SelectNodes("//test-case[contains(@fullname,'LargeGridRouteIsDeterministicAndSimulationStaysUnityFree')]")
-          foreach ($case in $cases) {
-            Write-Host "BENCHMARK: $($case.fullname) durationSeconds=$($case.duration) result=$($case.result)"
-            if ($case.output) { Write-Host $case.output.InnerText }
+          $xpath = "//test-case[" +
+            "contains(@fullname,'LargeGridRouteIsDeterministicAndSimulationStaysUnityFree') or " +
+            "contains(@fullname,'VehicleSampleCountBenchmarkKeepsSimulationChecksumStable') or " +
+            "contains(@fullname,'BenchmarkSceneMeasuresZeroHundredAndFiveHundredViews')]"
+          foreach ($file in $xmlFiles) {
+            [xml]$document = Get-Content -Path $file.FullName
+            $cases = $document.SelectNodes($xpath)
+            foreach ($case in $cases) {
+              Write-Host "BENCHMARK: $($case.fullname) durationSeconds=$($case.duration) result=$($case.result)"
+              if ($case.output) { Write-Host $case.output.InnerText }
+            }
           }
 
       # Artifact 저장 quota가 부족해도 NUnit XML의 실패 case와 message를 Actions
