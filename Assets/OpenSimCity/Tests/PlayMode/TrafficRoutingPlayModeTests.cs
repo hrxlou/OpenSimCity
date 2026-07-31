@@ -53,7 +53,7 @@ namespace OpenSimCity.Tests.PlayMode
 
             var checksumBeforeDemolition = routing.Checksum;
             var demolishedCell = new CellCoord(8, roadY);
-            Commit(context, ConstructionToolMode.DemolishRoad, demolishedCell, demolishedCell);
+            Commit(context, ConstructionToolMode.Demolish, demolishedCell, demolishedCell);
             yield return null;
 
             Assert.That(routing.Checksum, Is.Not.EqualTo(checksumBeforeDemolition));
