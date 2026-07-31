@@ -31,23 +31,42 @@ jobs:
     timeout-minutes: 70
     steps:
       # 취소된 Unity batchmode가 Bee 응답 파일을 잡고 있으면 actions/checkout의 workspace
-      # 정리가 EBUSY로 실패한다. 저장소 전용 self-hosted 러너이므로 프로젝트 관련 Unity
-      # 프로세스를 먼저 종료하고 생성 캐시의 잠금 다발만 retry로 제거한다.
+      # 정리가 EBUSY로 실패한다. 저장소 전용 self-hosted 러너이므로 이전 실행의 workspace
+      # process와 Unity compiler 계열을 종료하고 생성 캐시를 retry로 제거한다.
       - name: Release stale Unity workspace locks
         shell: powershell
         run: |
+          $workspace = [IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
+          $workspaceProcesses = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+            Where-Object {
+              $_.ProcessId -ne $PID -and
+              $_.CommandLine -and
+              $_.CommandLine.IndexOf($workspace, [StringComparison]::OrdinalIgnoreCase) -ge 0
+            }
+          foreach ($process in $workspaceProcesses) {
+            Write-Host "Stopping stale workspace process $($process.Name) pid=$($process.ProcessId)"
+            Stop-Process -Id $process.ProcessId -Force -ErrorAction SilentlyContinue
+          }
+
           $processNames = @(
             "Unity",
             "UnityShaderCompiler",
             "UnityCrashHandler64",
+            "UnityPackageManager",
+            "AssetImportWorker",
+            "Unity.ILPP.Runner",
             "bee_backend",
-            "tundra"
+            "tundra",
+            "VBCSCompiler",
+            "csc",
+            "MSBuild",
+            "dotnet"
           )
           foreach ($processName in $processNames) {
             Get-Process -Name $processName -ErrorAction SilentlyContinue |
               Stop-Process -Force -ErrorAction SilentlyContinue
           }
-          Start-Sleep -Seconds 2
+          Start-Sleep -Seconds 5
 
           $generatedPaths = @(
             (Join-Path $env:GITHUB_WORKSPACE "Library\Bee"),
@@ -59,19 +78,25 @@ jobs:
             }
 
             $removed = $false
-            for ($attempt = 1; $attempt -le 5; $attempt++) {
+            for ($attempt = 1; $attempt -le 10; $attempt++) {
               try {
                 Remove-Item -LiteralPath $path -Recurse -Force -ErrorAction Stop
                 $removed = $true
                 break
               } catch {
                 Write-Warning ("Attempt {0} could not remove {1}: {2}" -f $attempt, $path, $_.Exception.Message)
-                Start-Sleep -Seconds (2 * $attempt)
+                Start-Sleep -Seconds 3
               }
             }
 
             if (-not $removed -and (Test-Path -LiteralPath $path)) {
-              throw "Unable to release generated workspace path: $path"
+              $leaf = Split-Path -Leaf $path
+              $quarantine = Join-Path $env:RUNNER_TEMP ("OpenSimCity-stale-{0}-{1}" -f $env:GITHUB_RUN_ID, $leaf)
+              if (Test-Path -LiteralPath $quarantine) {
+                Remove-Item -LiteralPath $quarantine -Recurse -Force -ErrorAction SilentlyContinue
+              }
+              Move-Item -LiteralPath $path -Destination $quarantine -Force -ErrorAction Stop
+              Write-Warning "Moved locked generated path outside the checkout workspace: $quarantine"
             }
           }
 
