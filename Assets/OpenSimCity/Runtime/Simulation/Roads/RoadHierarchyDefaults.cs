@@ -12,9 +12,9 @@ namespace OpenSimCity.Simulation.Roads
     }
 
     /// <summary>
-    /// Stable P5 road hierarchy. The original street ID remains unchanged for save
-    /// compatibility; small road and avenue receive new IDs in the same namespace.
-    /// Differences are limited to cost, maintenance, capacity, speed and noise.
+    /// Stable P5 road hierarchy. The original street ID and its existing runtime
+    /// economics remain unchanged for save compatibility; small road and avenue
+    /// receive new IDs in the same namespace.
     /// </summary>
     public static class RoadHierarchyDefaults
     {
@@ -43,7 +43,7 @@ namespace OpenSimCity.Simulation.Roads
                     StreetDefinitionId,
                     buildCost: 10,
                     presentationKey: "road.street",
-                    monthlyMaintenanceCost: 2,
+                    monthlyMaintenanceCost: 1,
                     capacityPerMonth: 1000,
                     freeFlowSpeedCellsPerHour: 30,
                     noiseEmission: 30),
