@@ -14,10 +14,7 @@ namespace OpenSimCity.Tests.EditMode
     public sealed class CitySnapshotSchemaContractTests
     {
         private const int ExpectedContractRowCount = 207;
-
-        // Populated from the canonical Windows Unity 6000.5.3f1 reflection result.
-        // The assertion message prints the next value whenever the DTO graph changes.
-        private const ulong ExpectedSchemaChecksum = 0UL;
+        private const ulong ExpectedSchemaChecksum = 0x6F6AA666B4FBC6B3UL;
 
         [Test]
         public void SnapshotSchemaDeclarationOrderMatchesVersionTwoContract()
