@@ -25,7 +25,7 @@ namespace OpenSimCity.Application.Persistence
             _migrationDispatcher = new CitySnapshotMigrationDispatcher(
                 codec,
                 CitySnapshotFormat.CurrentVersion,
-                migrations);
+                migrations ?? CreateDefaultMigrations(codec));
         }
 
         public CitySaveResult Save(
@@ -201,6 +201,15 @@ namespace OpenSimCity.Application.Persistence
                 snapshot.Timeline.NextMonthYear,
                 snapshot.Timeline.NextMonth,
                 read.Payload.Length);
+        }
+
+        private static IEnumerable<ICitySnapshotMigrationStep> CreateDefaultMigrations(
+            ICitySnapshotPayloadCodec codec)
+        {
+            return new ICitySnapshotMigrationStep[]
+            {
+                new CitySnapshotV1ToV2Migration(codec)
+            };
         }
 
         private static CityLoadResult Failure(
