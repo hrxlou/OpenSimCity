@@ -318,9 +318,15 @@ namespace OpenSimCity.Tests.EditMode
 
         private static void RunMonth(CityRuntime runtime, int monthIndex)
         {
-            var firstTick = monthIndex * runtime.MonthlyScheduler.TicksPerMonth;
-            for (var offset = 0; offset < runtime.MonthlyScheduler.TicksPerMonth; offset++)
-                runtime.ProcessSimulationTick(new SimulationTick(firstTick + offset));
+            var ticksPerMonth = runtime.MonthlyScheduler.TicksPerMonth;
+            var expectedFirstTick = checked((long)monthIndex * ticksPerMonth);
+            Assert.That(runtime.Clock.CurrentTick.Value, Is.EqualTo(expectedFirstTick));
+
+            for (var offset = 0; offset < ticksPerMonth; offset++)
+            {
+                var advanced = runtime.AdvanceSimulation(runtime.Clock.FixedDeltaSeconds);
+                Assert.That(advanced, Is.EqualTo(1));
+            }
         }
 
         private static CityRuntime RoundTrip(CityRuntime runtime)
