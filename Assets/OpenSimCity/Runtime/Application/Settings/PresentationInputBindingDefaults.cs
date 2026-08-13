@@ -49,7 +49,7 @@ namespace OpenSimCity.Application.Settings
             var paths = new List<string>();
             for (var c = 'a'; c <= 'z'; c++) paths.Add("<Keyboard>/" + c);
             for (var digit = 0; digit <= 9; digit++) paths.Add("<Keyboard>/digit" + digit);
-            for (var f = 1; f <= 12; f++) paths.Add("<Keyboard>/f" + f);
+            for (var f = 7; f <= 12; f++) paths.Add("<Keyboard>/f" + f);
             paths.Add("<Keyboard>/escape");
             paths.Add("<Keyboard>/tab");
             paths.Add("<Keyboard>/space");
