@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using OpenSimCity.Application.Bootstrap;
+using OpenSimCity.Application.Buildings;
 using OpenSimCity.Application.Commands;
 using OpenSimCity.Application.World;
+using OpenSimCity.Core;
 using OpenSimCity.Core.Mathematics;
 using OpenSimCity.Core.Time;
 using OpenSimCity.Simulation.Zones;
@@ -20,14 +22,15 @@ namespace OpenSimCity.Application.Verification
 
     public static class P8BenchmarkFixture
     {
-        private const int BlockStride = 8;
+        private const int BlockStride = 2;
+        private const ulong BuildingIdPrefix = 0xB800_0000_0000_0000UL;
 
         public static P8BenchmarkFixtureState Build(P8BenchmarkScenarioSpec spec)
         {
             if (spec == null) throw new ArgumentNullException(nameof(spec));
             if (spec.Width < 16 || spec.Height < 16) throw new ArgumentOutOfRangeException(nameof(spec));
             if (spec.Width % BlockStride != 0 || spec.Height % BlockStride != 0)
-                throw new ArgumentException("P8 benchmark dimensions must align to the fixed eight-cell grid.", nameof(spec));
+                throw new ArgumentException("P8 benchmark dimensions must align to the fixed two-cell grid.", nameof(spec));
             var runtime = NewCityRuntimeFactory.Create(new CityRuntimeOptions
             {
                 Width = spec.Width,
@@ -42,8 +45,10 @@ namespace OpenSimCity.Application.Verification
             BuildRoadGrid(runtime);
             PaintZones(runtime);
             PlacePower(runtime);
-            for (var month = 0; month < spec.GrowthMonths; month++)
-                runtime.ProcessSimulationTick(runtime.MonthlyScheduler.NextRunTick);
+            SeedBuildings(runtime, spec.RequiredBuildingCount);
+            for (var month = 0; month < spec.SettlementMonths; month++)
+                for (var tick = 0; tick < runtime.MonthlyScheduler.TicksPerMonth; tick++)
+                    runtime.AdvanceSimulation(runtime.Clock.FixedDeltaSeconds);
             runtime.RefreshReadModels();
             return new P8BenchmarkFixtureState
             {
@@ -87,11 +92,8 @@ namespace OpenSimCity.Application.Verification
             {
                 for (var x = 0; x < runtime.Width; x += BlockStride)
                 {
-                    var start = new CellCoord(x + 1, y + 1);
-                    var end = new CellCoord(Math.Min(runtime.Width - 2, x + BlockStride - 1),
-                        Math.Min(runtime.Height - 2, y + BlockStride - 1));
-                    if (start.X > end.X || start.Y > end.Y) continue;
-                    if (power.X >= start.X && power.X <= end.X && power.Y >= start.Y && power.Y <= end.Y)
+                    var cell = new CellCoord(x + 1, y + 1);
+                    if (!runtime.World.IsInBounds(cell) || cell == power)
                     {
                         blockIndex++;
                         continue;
@@ -99,7 +101,7 @@ namespace OpenSimCity.Application.Verification
                     var zone = blockIndex % 5 < 2 ? ZoneType.ResidentialLow
                         : blockIndex % 5 < 4 ? ZoneType.CommercialLow
                         : ZoneType.IndustrialLow;
-                    Apply(runtime, new ZoneAreaCommand(zone, start, end));
+                    Apply(runtime, new ZoneAreaCommand(zone, cell, cell));
                     blockIndex++;
                 }
             }
@@ -110,6 +112,32 @@ namespace OpenSimCity.Application.Verification
             var cell = PowerCell(runtime);
             Apply(runtime, new PlacePowerProducerCommand(
                 runtime.PowerProducerIdFor(cell), runtime.DefaultPowerPlantDefinitionId, cell));
+        }
+
+        private static void SeedBuildings(CityRuntime runtime, int requested)
+        {
+            runtime.Parcels.RefreshIfNeeded();
+            var definitions = new Dictionary<ZoneType, BuildingDefinitionData>();
+            var catalog = runtime.BuildingDefinitions.Definitions;
+            for (var index = 0; index < catalog.Count; index++)
+            {
+                var definition = catalog[index];
+                if (definition.Footprint.Width != 1 || definition.Footprint.Height != 1 || definitions.ContainsKey(definition.ZoneType)) continue;
+                definitions.Add(definition.ZoneType, definition);
+            }
+
+            var parcels = runtime.Parcels.Parcels;
+            var created = 0;
+            for (var index = 0; index < parcels.Count && created < requested; index++)
+            {
+                var parcel = parcels[index];
+                if (!parcel.IsDevelopmentEligible || parcel.Width != 1 || parcel.Height != 1 || !definitions.TryGetValue(parcel.ZoneType, out var definition)) continue;
+                var id = new StableId(BuildingIdPrefix | (ulong)(uint)(created + 1));
+                if (!runtime.Buildings.Create(id, definition.Id, parcel.Id, parcel.Anchor,
+                    definition.OccupancyCapacity, definition.JobCapacity))
+                    throw new InvalidOperationException($"Benchmark building seed failed at parcel {parcel.Id}.");
+                created++;
+            }
         }
 
         private static CellCoord PowerCell(CityRuntime runtime) =>
