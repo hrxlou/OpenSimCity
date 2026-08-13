@@ -145,7 +145,8 @@ namespace OpenSimCity.Application.Districts
                 if (!Districts.Districts.TryGet(id, out _)) throw new ArgumentException("Policy references an unknown district.", nameof(data));
                 if (!Enum.IsDefined(typeof(DistrictPolicyKind), row.Kind) || !Enum.IsDefined(typeof(DistrictPolicyOperatingReason), row.Reason))
                     throw new ArgumentException("Policy enum value is invalid.", nameof(data));
-                if (hasPrevious && (row.DistrictId < previousId || (row.DistrictId == previousId && row.Kind <= previousKind)))
+                if (hasPrevious && (row.DistrictId < previousId ||
+                    (row.DistrictId == previousId && (byte)row.Kind <= (byte)previousKind)))
                     throw new ArgumentException("Policy rows require stable district/kind ordering.", nameof(data));
                 var pending = row.HasPending ? new SimulationDate(row.PendingYear, row.PendingMonth) : default;
                 var operating = row.HasOperatingPeriod ? new SimulationDate(row.OperatingYear, row.OperatingMonth) : default;
