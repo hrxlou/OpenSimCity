@@ -8,12 +8,14 @@ The existing `P3-08-production-like-art-baseline.md` remains a Windows rendering
 
 ## Fixed scenarios
 
-| Scenario | Map | Seed | Required buildings | Requested visible vehicles | Growth months |
+| Scenario | Map | Seed | Required buildings | Requested visible vehicles | Settlement months |
 |---|---:|---:|---:|---:|---:|
-| `P8.Target128` | 128x128 | `0x08011280` | 2,000 | 500 | 120 |
-| `P8.Stress256` | 256x256 | `0x08012560` | 2,000 | 500 | 120 |
+| `P8.Target128` | 128x128 | `0x08011280` | 2,000 | 500 | 1 |
+| `P8.Stress256` | 256x256 | `0x08012560` | 2,000 | 500 | 1 |
 
-`P8BenchmarkFixture` creates both cities from the same deterministic eight-cell road-grid algorithm, zoning pattern, power capacity, command path and monthly growth schedule. The fixture records the actual building count and checksum. It never fabricates the requested scale: a measured run below the required building/view count is rejected by `P8BenchmarkGate`.
+`P8BenchmarkFixture` creates both cities from the same deterministic two-cell road-grid algorithm. Isolated 1x1 development cells provide enough road-frontage parcels on both map sizes. The fixture applies a stable R/C/I pattern, reserves one powered utility cell, seeds up to 2,000 stable-ID 1x1 buildings in stable parcel order using normal building definitions, then advances one normal monthly settlement through the public clock so economy/trip/traffic state exists before measurement.
+
+The fixture records the actual building count and checksum. A measured run below the required building/view count is rejected by `P8BenchmarkGate`.
 
 ## Render/content lanes
 
@@ -30,7 +32,7 @@ Placeholder numbers cannot establish the production-art render budget. Productio
 - Warm-up: 300 rendered frames before sampling.
 - Sample window: 600 frames.
 - Repetitions: 3 per platform/scenario/content lane.
-- Resolution, quality level, graphics API, Unity version, OS and hardware ID must be identical across the three repetitions and recorded in evidence.
+- Resolution, quality level, graphics API, Unity version, OS and hardware ID must be identical across repetitions and recorded.
 - macOS and Windows results are evaluated independently; they are never averaged together.
 - Every repetition must finish with the same simulation checksum.
 
@@ -38,44 +40,19 @@ The frame counts above are measurement-protocol inputs, not performance budgets.
 
 ## Required measurements
 
-`P8BenchmarkMetric` requires evidence for all of the following:
+`P8BenchmarkMetric` requires simulation tick, monthly tick, CPU frame, GPU frame, GC/frame, total memory, draw calls, save bytes/time, load time, selection feedback, placement preview, command feedback, and HUD/query refresh.
 
-- simulation tick time
-- monthly tick time
-- CPU frame time
-- GPU frame time
-- GC allocated per frame
-- total memory
-- draw calls
-- save payload size
-- save time
-- load time
-- selection feedback latency
-- placement-preview latency
-- command-to-public-feedback latency
-- HUD/query refresh latency
-
-Time values are stored as integer microseconds, memory/GC/save size as bytes, and draw calls as integer counts. If a Unity Profiler counter is unavailable, the metric is marked `IsMeasured=false`; zero is not substituted for missing evidence.
+Time values use integer microseconds; memory/GC/save size use bytes; draw calls use integer counts. If a counter is unavailable, the metric is recorded as unmeasured rather than substituting zero.
 
 ## Evidence gate
 
-`P8BenchmarkGate` refuses a performance pass when any of these conditions hold:
-
-- fewer than three repetitions
-- hardware/runtime/quality mismatch between repetitions
-- actual fixture scale below the required building or visible-vehicle count
-- checksum disagreement
-- any missing required metric
-- any missing **approved** platform/scenario/content budget
-- any measured median above an approved maximum
-
-This prevents benchmark infrastructure, placeholder-only measurements, or a single profiler capture from being reported as a release performance pass.
+`P8BenchmarkGate` refuses a pass for fewer than three repetitions, environment mismatch, undersized fixture, checksum drift, any missing required metric, any missing approved platform/scenario/content budget, or any measured median above its approved maximum.
 
 ## Budget approval table
 
-The following rows are intentionally unapproved until real P8 measurements are collected. Values must be entered from the P8 baseline review rather than inferred from P3, another machine, or model estimates.
+No P8 budget is approved yet. Values must come from real P8 runs rather than P3, another machine, or estimates.
 
-| Platform | Scenario | Content | CPU/GPU/GC/memory/draw/save/input/HUD budgets |
+| Platform | Scenario | Content | Status |
 |---|---|---|---|
 | Windows | Target128 | Placeholder | **UNAPPROVED / UNMEASURED** |
 | Windows | Target128 | ProductionLike | **UNAPPROVED / UNMEASURED** |
@@ -86,17 +63,4 @@ The following rows are intentionally unapproved until real P8 measurements are c
 | macOS | Stress256 | Placeholder | **UNAPPROVED / UNMEASURED** |
 | macOS | Stress256 | ProductionLike | **UNAPPROVED / UNMEASURED** |
 
-## Required evidence record
-
-Each run records:
-
-- platform / OS / hardware ID
-- Unity version / graphics API
-- resolution / quality
-- scenario and content mode
-- repeat index
-- actual building count and visible vehicle count
-- simulation checksum
-- measured min/median/max for every required metric
-
-A follow-up P8 measurement run should commit the resulting evidence and approved budget set without changing the deterministic scenario definition. Optimization work in P8-02 must compare against these exact scenario/checksum contracts.
+Each run must record platform, OS, hardware, Unity version, graphics API, resolution, quality, scenario, content mode, repeat index, actual building/vehicle count, simulation checksum, and min/median/max for every required metric. P8-02 comparisons must reuse this scenario/checksum contract.
