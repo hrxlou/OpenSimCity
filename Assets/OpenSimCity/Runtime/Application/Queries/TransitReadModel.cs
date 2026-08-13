@@ -7,6 +7,29 @@ using OpenSimCity.Simulation.Transit;
 
 namespace OpenSimCity.Application.Queries
 {
+    public enum TransitModeChoiceReasonView : byte
+    {
+        None,
+        NoMatchedCommute,
+        NoEnabledLine,
+        BudgetDisabled,
+        BudgetUnaffordable,
+        OriginOutsideWalkingRange,
+        DestinationOutsideWalkingRange,
+        DirectionMismatch,
+        BrokenLine,
+        TooIndirect,
+        CapacityExhausted
+    }
+
+    public static class TransitReasonProjection
+    {
+        public static TransitModeChoiceReasonView ToView(TransitModeChoiceReason reason)
+        {
+            return (TransitModeChoiceReasonView)(byte)reason;
+        }
+    }
+
     [Serializable]
     public readonly struct TransitStopReadModel
     {
@@ -55,7 +78,7 @@ namespace OpenSimCity.Application.Queries
             PrivateVehicleTrips = source.PrivateVehicleTrips;
             CarCostSeconds = source.CarGeneralizedCostSeconds;
             BusCostSeconds = source.BusGeneralizedCostSeconds;
-            Reason = source.Reason;
+            Reason = TransitReasonProjection.ToView(source.Reason);
         }
         public StableId OriginId { get; }
         public StableId DestinationId { get; }
@@ -65,7 +88,7 @@ namespace OpenSimCity.Application.Queries
         public int PrivateVehicleTrips { get; }
         public int CarCostSeconds { get; }
         public int BusCostSeconds { get; }
-        public TransitModeChoiceReason Reason { get; }
+        public TransitModeChoiceReasonView Reason { get; }
     }
 
     [Serializable]
