@@ -1,18 +1,11 @@
 using System;
 using OpenSimCity.Application.Construction;
+using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.World;
 
 namespace OpenSimCity.Application.Onboarding
 {
-    public enum OnboardingTaskKind : byte
-    {
-        BuildRoad,
-        PaintZone,
-        PlacePower,
-        ObserveFirstGrowth,
-        RecoverProblem,
-        Complete
-    }
+    public enum OnboardingTaskKind : byte { BuildRoad, PaintZone, PlacePower, ObserveFirstGrowth, RecoverProblem, Complete }
 
     [Serializable]
     public sealed class OnboardingProfileDto
@@ -47,11 +40,6 @@ namespace OpenSimCity.Application.Onboarding
         void Save(OnboardingProfileDto profile);
     }
 
-    /// <summary>
-    /// Application-owned onboarding state. Construction completion comes from the
-    /// public commit result and growth/problem completion comes from existing public
-    /// HUD/building queries; no Scene or GameObject name participates in progression.
-    /// </summary>
     public sealed class OnboardingProgressController
     {
         private readonly IOnboardingProfileStore _store;
@@ -66,35 +54,24 @@ namespace OpenSimCity.Application.Onboarding
             BindRuntime(runtime ?? throw new ArgumentNullException(nameof(runtime)));
         }
 
-        public OnboardingSnapshot Snapshot
-        {
-            get { Refresh(); return _snapshot; }
-        }
-
+        public OnboardingSnapshot Snapshot { get { Refresh(); return _snapshot; } }
         public event Action<OnboardingSnapshot> Changed;
 
         public void BindRuntime(CityRuntime runtime)
         {
             _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
-            Refresh(forcePublish: true);
+            Refresh(true);
         }
 
         public void ObserveConstruction(ConstructionCommitResult result)
         {
-            if (result == null || !result.Committed)
-                return;
+            if (result == null || !result.Committed) return;
             var changed = false;
             switch (result.Operation)
             {
-                case ConstructionOperation.PlaceRoad:
-                    changed = Set(ref _profile.RoadPlaced);
-                    break;
-                case ConstructionOperation.PaintZone:
-                    changed = Set(ref _profile.ZonePainted);
-                    break;
-                case ConstructionOperation.PlacePowerProducer:
-                    changed = Set(ref _profile.PowerPlaced);
-                    break;
+                case ConstructionOperation.PlaceRoad: changed = Set(ref _profile.RoadPlaced); break;
+                case ConstructionOperation.PaintZone: changed = Set(ref _profile.ZonePainted); break;
+                case ConstructionOperation.PlacePowerProducer: changed = Set(ref _profile.PowerPlaced); break;
             }
             if (changed) PersistAndRefresh();
         }
@@ -122,7 +99,7 @@ namespace OpenSimCity.Application.Onboarding
             PersistAndRefresh();
         }
 
-        public void Refresh() => Refresh(forcePublish: false);
+        public void Refresh() => Refresh(false);
 
         private void Refresh(bool forcePublish)
         {
@@ -133,17 +110,14 @@ namespace OpenSimCity.Application.Onboarding
                 _profile.FirstGrowthObserved = true;
                 changed = true;
             }
-
             var hud = _runtime.HudModel.Snapshot;
             var problemCode = FindRepresentativeProblem(hud);
             if (_profile.ProblemDetailsViewed && !_profile.ProblemRecovered &&
-                !string.IsNullOrEmpty(_profile.LastProblemCode) &&
-                !HasProblemCode(hud, _profile.LastProblemCode))
+                !string.IsNullOrEmpty(_profile.LastProblemCode) && !HasProblemCode(hud, _profile.LastProblemCode))
             {
                 _profile.ProblemRecovered = true;
                 changed = true;
             }
-
             if (changed) _store.Save(_profile);
             var next = BuildSnapshot(problemCode);
             if (forcePublish || !Equivalent(_snapshot, next))
@@ -161,7 +135,6 @@ namespace OpenSimCity.Application.Onboarding
                 : !_profile.FirstGrowthObserved ? OnboardingTaskKind.ObserveFirstGrowth
                 : _profile.ProblemDetailsViewed && !_profile.ProblemRecovered ? OnboardingTaskKind.RecoverProblem
                 : OnboardingTaskKind.Complete;
-
             var snapshot = new OnboardingSnapshot
             {
                 Task = task,
@@ -205,18 +178,18 @@ namespace OpenSimCity.Application.Onboarding
         private void PersistAndRefresh()
         {
             _store.Save(_profile);
-            Refresh(forcePublish: true);
+            Refresh(true);
         }
 
         private static OnboardingProfileDto Normalize(OnboardingProfileDto profile)
         {
             if (profile == null || profile.SchemaVersion != OnboardingProfileDto.CurrentSchemaVersion)
                 return new OnboardingProfileDto();
-            profile.LastProblemCode ??= string.Empty;
+            if (profile.LastProblemCode == null) profile.LastProblemCode = string.Empty;
             return profile;
         }
 
-        private static string FindRepresentativeProblem(Application.Queries.MunicipalHudSnapshotDto hud)
+        private static string FindRepresentativeProblem(MunicipalHudSnapshotDto hud)
         {
             if (hud?.TopBlockReasons == null) return string.Empty;
             for (var index = 0; index < hud.TopBlockReasons.Length; index++)
@@ -227,7 +200,7 @@ namespace OpenSimCity.Application.Onboarding
             return string.Empty;
         }
 
-        private static bool HasProblemCode(Application.Queries.MunicipalHudSnapshotDto hud, string code)
+        private static bool HasProblemCode(MunicipalHudSnapshotDto hud, string code)
         {
             if (hud?.TopBlockReasons == null) return false;
             for (var index = 0; index < hud.TopBlockReasons.Length; index++)
