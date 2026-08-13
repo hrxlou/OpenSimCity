@@ -21,12 +21,13 @@ namespace OpenSimCity.UI.Services
         {
             if (!scene.IsValid() || !scene.isLoaded) return;
             if (mode != LoadSceneMode.Single && scene != SceneManager.GetActiveScene()) return;
-            if (Object.FindFirstObjectByType<PublicServiceUiBinder>() != null) return;
             var document = Object.FindFirstObjectByType<UIDocument>();
             if (document == null || document.gameObject.scene != scene) return;
             var binder = document.GetComponent<PublicServiceUiBinder>();
             if (binder == null) binder = document.gameObject.AddComponent<PublicServiceUiBinder>();
             binder.Configure(document);
+            if (document.GetComponent<ServiceResponsePanel>() == null)
+                document.gameObject.AddComponent<ServiceResponsePanel>();
         }
     }
 }
