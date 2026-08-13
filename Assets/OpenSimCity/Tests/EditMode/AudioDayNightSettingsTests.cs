@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.Settings;
 using OpenSimCity.Application.Verification;
 using OpenSimCity.Application.World;
@@ -19,14 +20,7 @@ namespace OpenSimCity.Tests.EditMode
                     UiScalePercent = 150,
                     VisualMode = (int)AccessibilityVisualMode.HighContrast,
                     StrongFocusVisible = true,
-                    BindingOverrides = new[]
-                    {
-                        new PresentationBindingOverrideDto
-                        {
-                            Action = (int)PresentationInputAction.ToolRoad,
-                            ControlPath = "<Keyboard>/r"
-                        }
-                    }
+                    BindingOverrides = new[] { new PresentationBindingOverrideDto { Action = (int)PresentationInputAction.ToolRoad, ControlPath = "<Keyboard>/r" } }
                 }
             };
             var controller = new PresentationSettingsController(store);
@@ -57,7 +51,7 @@ namespace OpenSimCity.Tests.EditMode
         public void DayNightProjectionFreezesWhileSimulationIsPaused()
         {
             var runtime = new CityRuntime(CityRuntimeOptions.Default);
-            var model = new Application.Queries.DayNightPresentationReadModel(runtime);
+            var model = new DayNightPresentationReadModel(runtime);
             runtime.SetSimulationSpeed(SimulationSpeed.Paused);
             model.RefreshIfNeeded();
             var beforeTick = model.Snapshot.SourceTick;
