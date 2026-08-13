@@ -152,6 +152,21 @@ namespace OpenSimCity.Gameplay.Construction
                 SelectTool(ConstructionToolMode.PowerPlant);
             else if (keyboard.digit8Key.wasPressedThisFrame)
                 SelectTool(ConstructionToolMode.RemovePowerPlant);
+            else if (keyboard.digit9Key.wasPressedThisFrame)
+                SelectTool(ConstructionToolMode.RoadUpgrade);
+
+            if (keyboard.f1Key.wasPressedThisFrame)
+                ToggleOverlay(PlacementOverlayKind.RoadConnectivity);
+            else if (keyboard.f2Key.wasPressedThisFrame)
+                ToggleOverlay(PlacementOverlayKind.Accessibility);
+            else if (keyboard.f3Key.wasPressedThisFrame)
+                ToggleOverlay(PlacementOverlayKind.Zone);
+            else if (keyboard.f4Key.wasPressedThisFrame)
+                ToggleOverlay(PlacementOverlayKind.Parcel);
+            else if (keyboard.f5Key.wasPressedThisFrame)
+                ToggleOverlay(PlacementOverlayKind.Power);
+            else if (keyboard.f6Key.wasPressedThisFrame)
+                ToggleOverlay(PlacementOverlayKind.RoadHierarchy);
         }
 
         private void HandlePointer()

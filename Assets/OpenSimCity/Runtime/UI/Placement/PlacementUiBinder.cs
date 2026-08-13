@@ -1,7 +1,10 @@
 using System.Collections.Generic;
+using OpenSimCity.Application.Commands;
 using OpenSimCity.Application.Construction;
 using OpenSimCity.Application.Overlays;
+using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.World;
+using OpenSimCity.Core;
 using OpenSimCity.UI.Foundation;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -9,15 +12,9 @@ using UnityEngine.UIElements;
 namespace OpenSimCity.UI.Placement
 {
     /// <summary>
-    /// Binds the P2 placement state to the four shells: the Tool Rail selects the
-    /// road/zone/demolish tool and toggles overlays, the Build Palette shows the
-    /// selected tool's subtype, cost and shortcut, the Context Inspector shows the
-    /// live preview and its failure reason, and the Data Overlay Legend names the
-    /// active overlay's categories with a non-color pattern channel.
-    /// <para>
-    /// It reads the ambient <see cref="CityRuntimeContext"/> and only shows values
-    /// for systems implemented in P2 (Docs/DESIGN.md 3.1).
-    /// </para>
+    /// Binds placement and road-upgrade state to the runtime UI shells. UI renders
+    /// Application previews and read models only; it does not inspect or mutate
+    /// Simulation collections.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PlacementUiBinder : MonoBehaviour
@@ -31,6 +28,10 @@ namespace OpenSimCity.UI.Placement
             new Dictionary<ConstructionToolMode, VisualElement>();
         private readonly Dictionary<PlacementOverlayKind, VisualElement> _overlayButtons =
             new Dictionary<PlacementOverlayKind, VisualElement>();
+        private readonly Dictionary<StableId, VisualElement> _upgradeTierButtons =
+            new Dictionary<StableId, VisualElement>();
+        private readonly Dictionary<RoadDirectionMode, VisualElement> _upgradeDirectionButtons =
+            new Dictionary<RoadDirectionMode, VisualElement>();
 
         private Label _paletteTool;
         private Label _paletteCost;
@@ -40,6 +41,13 @@ namespace OpenSimCity.UI.Placement
         private Label _inspectorBalance;
         private Label _inspectorStatusMarker;
         private Label _inspectorStatus;
+        private VisualElement _roadUpgradePanel;
+        private Label _upgradeSelection;
+        private Label _upgradeEconomy;
+        private Label _upgradePerformance;
+        private Label _upgradeTraffic;
+        private Label _upgradeReachability;
+        private Label _upgradeRisk;
         private VisualElement _legendList;
         private Label _legendTitle;
 
@@ -79,6 +87,8 @@ namespace OpenSimCity.UI.Placement
         {
             _toolButtons.Clear();
             _overlayButtons.Clear();
+            _upgradeTierButtons.Clear();
+            _upgradeDirectionButtons.Clear();
             BuildToolRail();
             BuildPalette();
             BuildInspector();
@@ -95,6 +105,7 @@ namespace OpenSimCity.UI.Placement
             var content = ReplaceContent(rail, "osc-placement-tools");
 
             AddToolButton(content, ConstructionToolMode.Road, "도로", "1");
+            AddToolButton(content, ConstructionToolMode.RoadUpgrade, "도로 업그레이드", "9");
             AddToolButton(content, ConstructionToolMode.ZoneResidential, "주거 R", "2");
             AddToolButton(content, ConstructionToolMode.ZoneCommercial, "상업 C", "3");
             AddToolButton(content, ConstructionToolMode.ZoneIndustrial, "공업 I", "4");
@@ -108,6 +119,7 @@ namespace OpenSimCity.UI.Placement
             content.Add(overlayHeader);
 
             AddOverlayButton(content, PlacementOverlayKind.RoadConnectivity, "연결");
+            AddOverlayButton(content, PlacementOverlayKind.RoadHierarchy, "등급·방향");
             AddOverlayButton(content, PlacementOverlayKind.Accessibility, "접근성");
             AddOverlayButton(content, PlacementOverlayKind.Zone, "구역맵");
             AddOverlayButton(content, PlacementOverlayKind.Parcel, "필지");
@@ -137,9 +149,6 @@ namespace OpenSimCity.UI.Placement
             var content = ReplaceContent(palette, "osc-placement-palette");
             palette.AddToClassList("osc-placement-palette--compact");
             content.AddToClassList("osc-placement-palette__content");
-            // ReplaceContent gives every shell a vertical default inline style.
-            // The compact palette is the one exception: its three live values
-            // intentionally share the fixed bottom bar's single row.
             content.style.flexDirection = FlexDirection.Row;
             content.style.alignItems = Align.Center;
             var title = palette.Q<Label>(className: UiFoundationNames.PanelTitleClass);
@@ -172,6 +181,66 @@ namespace OpenSimCity.UI.Placement
             statusRow.Add(_inspectorStatusMarker);
             statusRow.Add(_inspectorStatus);
             content.Add(statusRow);
+
+            _roadUpgradePanel = new VisualElement { name = "osc-road-upgrade-panel" };
+            _roadUpgradePanel.style.flexDirection = FlexDirection.Column;
+            _roadUpgradePanel.style.marginTop = 8f;
+            _roadUpgradePanel.style.display = DisplayStyle.None;
+            var heading = new Label("도로 업그레이드 비교");
+            heading.AddToClassList(UiFoundationNames.PanelCaptionClass);
+            _roadUpgradePanel.Add(heading);
+
+            var tierRow = new VisualElement { name = "osc-road-upgrade-tier-row" };
+            tierRow.style.flexDirection = FlexDirection.Row;
+            AddUpgradeTierButton(tierRow, RoadUpgradeDefinitionIds.Small, "소형");
+            AddUpgradeTierButton(tierRow, RoadUpgradeDefinitionIds.Street, "일반");
+            AddUpgradeTierButton(tierRow, RoadUpgradeDefinitionIds.Avenue, "대로");
+            _roadUpgradePanel.Add(tierRow);
+
+            var directionRow = new VisualElement { name = "osc-road-upgrade-direction-row" };
+            directionRow.style.flexDirection = FlexDirection.Row;
+            AddUpgradeDirectionButton(directionRow, RoadDirectionMode.Bidirectional, "↔ 양방향");
+            AddUpgradeDirectionButton(directionRow, RoadDirectionMode.Forward, "→ 정방향");
+            AddUpgradeDirectionButton(directionRow, RoadDirectionMode.Reverse, "← 역방향");
+            _roadUpgradePanel.Add(directionRow);
+
+            _upgradeSelection = AddValueLabel(_roadUpgradePanel, UiFoundationNames.PanelCaptionClass);
+            _upgradeEconomy = AddValueLabel(_roadUpgradePanel, UiFoundationNames.PanelCaptionClass);
+            _upgradePerformance = AddValueLabel(_roadUpgradePanel, UiFoundationNames.PanelCaptionClass);
+            _upgradeTraffic = AddValueLabel(_roadUpgradePanel, UiFoundationNames.PanelCaptionClass);
+            _upgradeReachability = AddValueLabel(_roadUpgradePanel, UiFoundationNames.PanelCaptionClass);
+            _upgradeRisk = AddValueLabel(_roadUpgradePanel, UiFoundationNames.PanelCaptionClass);
+            content.Add(_roadUpgradePanel);
+        }
+
+        private void AddUpgradeTierButton(VisualElement parent, StableId definitionId, string label)
+        {
+            var button = MakeItemButton(label, () => ConfigureRoadUpgrade(definitionId, null));
+            parent.Add(button);
+            _upgradeTierButtons[definitionId] = button;
+        }
+
+        private void AddUpgradeDirectionButton(
+            VisualElement parent,
+            RoadDirectionMode directionMode,
+            string label)
+        {
+            var button = MakeItemButton(label, () => ConfigureRoadUpgrade(null, directionMode));
+            parent.Add(button);
+            _upgradeDirectionButtons[directionMode] = button;
+        }
+
+        private void ConfigureRoadUpgrade(StableId? targetDefinitionId, RoadDirectionMode? directionMode)
+        {
+            var tool = _boundContext?.Tool;
+            if (tool == null)
+                return;
+
+            tool.ConfigureRoadUpgrade(
+                targetDefinitionId ?? tool.RoadUpgradeTargetDefinitionId,
+                directionMode ?? tool.RoadUpgradeDirectionMode);
+            RefreshPalette();
+            RefreshRoadUpgradePanel();
         }
 
         private void BuildLegend()
@@ -219,17 +288,20 @@ namespace OpenSimCity.UI.Placement
         {
             RefreshToolSelection();
             RefreshPalette();
+            RefreshRoadUpgradePanel();
         }
 
         private void HandlePreviewChanged(ConstructionPreview preview)
         {
             RefreshPalette();
             RefreshInspector(preview, committed: null);
+            RefreshRoadUpgradePanel();
         }
 
         private void HandleCommitted(ConstructionCommitResult result)
         {
             RefreshInspector(_boundContext?.Tool.Preview, result);
+            RefreshRoadUpgradePanel();
             RefreshOverlaySelection();
         }
 
@@ -245,6 +317,7 @@ namespace OpenSimCity.UI.Placement
             RefreshOverlaySelection();
             RefreshPalette();
             RefreshInspector(_boundContext?.Tool.Preview, committed: null);
+            RefreshRoadUpgradePanel();
             RefreshLegend(_boundContext?.ActiveOverlaySnapshot);
         }
 
@@ -280,6 +353,8 @@ namespace OpenSimCity.UI.Placement
                 _paletteCost.text = preview.Cost > 0 ? $"비용 {preview.Cost:N0}" : "무료";
             else if (mode == ConstructionToolMode.Road)
                 _paletteCost.text = "도로: 셀당 비용";
+            else if (mode == ConstructionToolMode.RoadUpgrade)
+                _paletteCost.text = "차액·혼잡 미리보기";
             else if (mode.IsPaintZoneTool() || mode == ConstructionToolMode.ZoneClear)
                 _paletteCost.text = "무료";
             else
@@ -296,7 +371,10 @@ namespace OpenSimCity.UI.Placement
                 _inspectorOperation.text = $"작업: {OperationName(committed.Operation)}";
                 _inspectorCost.text = committed.Committed ? $"비용 {committed.Cost:N0}" : "적용 안 됨";
                 _inspectorBalance.text = $"잔액 {committed.FundsAfter:N0}";
-                SetStatus(committed.Committed, committed.Committed ? "설치 완료" : committed.Message);
+                var done = committed.Operation == ConstructionOperation.UpgradeRoad
+                    ? "업그레이드 완료"
+                    : "설치 완료";
+                SetStatus(committed.Committed, committed.Committed ? done : committed.Message);
                 return;
             }
 
@@ -312,7 +390,86 @@ namespace OpenSimCity.UI.Placement
             _inspectorOperation.text = $"작업: {OperationName(preview.Operation)} · {preview.ValidCells.Count}셀";
             _inspectorCost.text = preview.Cost > 0 ? $"비용 {preview.Cost:N0}" : "무료";
             _inspectorBalance.text = $"잔액 {preview.FundsAfter:N0}";
-            SetStatus(preview.IsValid, preview.IsValid ? "설치 가능" : preview.FailureReason);
+            var validMessage = preview.Operation == ConstructionOperation.UpgradeRoad
+                ? "업그레이드 가능"
+                : "설치 가능";
+            SetStatus(preview.IsValid, preview.IsValid ? validMessage : preview.FailureReason);
+        }
+
+        private void RefreshRoadUpgradePanel()
+        {
+            if (_roadUpgradePanel == null)
+                return;
+
+            var tool = _boundContext?.Tool;
+            var active = tool != null && tool.Mode == ConstructionToolMode.RoadUpgrade;
+            _roadUpgradePanel.style.display = active ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!active)
+                return;
+
+            foreach (var pair in _upgradeTierButtons)
+            {
+                pair.Value.EnableInClassList(
+                    UiFoundationNames.ItemSelectedClass,
+                    pair.Key == tool.RoadUpgradeTargetDefinitionId);
+            }
+            foreach (var pair in _upgradeDirectionButtons)
+            {
+                pair.Value.EnableInClassList(
+                    UiFoundationNames.ItemSelectedClass,
+                    pair.Key == tool.RoadUpgradeDirectionMode);
+            }
+
+            var comparison = tool.RoadUpgradePreview ?? tool.LastCommittedRoadUpgradePreview;
+            _upgradeSelection.text = $"대상 {TierName(tool.RoadUpgradeTargetDefinitionId)} · " +
+                                     RoadUpgradePreviewFormatting.DirectionModeLabel(tool.RoadUpgradeDirectionMode);
+            if (comparison == null)
+            {
+                _upgradeEconomy.text = "기존 도로를 드래그하면 전후 수치를 비교합니다.";
+                _upgradePerformance.text = string.Empty;
+                _upgradeTraffic.text = string.Empty;
+                _upgradeReachability.text = string.Empty;
+                _upgradeRisk.text = string.Empty;
+                return;
+            }
+
+            _upgradeSelection.text = $"대상 {TierName(comparison.TargetDefinitionId)} · " +
+                                     RoadUpgradePreviewFormatting.DirectionLabel(comparison);
+            _upgradeEconomy.text =
+                $"건설값 {comparison.CurrentBuildCost:N0} → {comparison.TargetBuildCost:N0} · " +
+                $"차액 {comparison.UpgradeCost:N0} · 유지비 " +
+                $"{comparison.CurrentMonthlyMaintenance:N0} → {comparison.TargetMonthlyMaintenance:N0}";
+            _upgradePerformance.text =
+                $"용량 {comparison.CurrentCapacity:N0} → {comparison.TargetCapacity:N0} · " +
+                $"속도 {comparison.CurrentMinimumSpeed:N0} → {comparison.TargetMinimumSpeed:N0} · " +
+                $"소음 {comparison.CurrentNoise:N0} → {comparison.TargetNoise:N0}";
+            _upgradeTraffic.text =
+                $"최대 V/C {FormatPermille(comparison.CurrentMaximumVolumeCapacityPermille)} → " +
+                $"{FormatPermille(comparison.PredictedMaximumVolumeCapacityPermille)} · 혼잡 edge " +
+                $"{comparison.CurrentCongestedEdgeCount:N0} → {comparison.PredictedCongestedEdgeCount:N0}";
+            _upgradeReachability.text =
+                $"도달 trip {comparison.ReachableTripAmountBefore:N0} → {comparison.ReachableTripAmountAfter:N0} · " +
+                $"미배정 {comparison.UnroutedTripAmountBefore:N0} → {comparison.UnroutedTripAmountAfter:N0} · " +
+                $"평균 자유통행 {comparison.AverageFreeFlowSecondsBefore:N0}s → " +
+                $"{comparison.AverageFreeFlowSecondsAfter:N0}s";
+
+            var failure = RoadUpgradePreviewFormatting.PrimaryFailureLabel(comparison);
+            if (comparison.UnroutedTripAmountDelta > 0)
+            {
+                _upgradeRisk.text = $"경고: +{comparison.UnroutedTripAmountDelta:N0} trip · {failure}";
+                _upgradeRisk.EnableInClassList(UiFoundationNames.ItemErrorClass, true);
+            }
+            else if (comparison.HasPredictedBottleneck)
+            {
+                _upgradeRisk.text =
+                    $"예상 병목 {comparison.PredictedBottleneckA} ↔ {comparison.PredictedBottleneckB}";
+                _upgradeRisk.EnableInClassList(UiFoundationNames.ItemErrorClass, false);
+            }
+            else
+            {
+                _upgradeRisk.text = "새 도달 불가 없음";
+                _upgradeRisk.EnableInClassList(UiFoundationNames.ItemErrorClass, false);
+            }
         }
 
         private void SetStatus(bool ok, string message)
@@ -371,10 +528,6 @@ namespace OpenSimCity.UI.Placement
 
         private static VisualElement ReplaceContent(VisualElement shell, string name)
         {
-            // Hide the P2-00 placeholder note and the seven debug state fixtures so
-            // the real P2 content is not overlapped by scaffolding. The fixture
-            // elements stay in the tree (display:none), so the P2-00 shell smoke
-            // that looks them up by state still finds all seven.
             var note = shell.Q<Label>(className: UiFoundationNames.EmptyNoteClass);
             if (note != null)
                 note.style.display = DisplayStyle.None;
@@ -409,12 +562,28 @@ namespace OpenSimCity.UI.Placement
             return label;
         }
 
+        private static string TierName(StableId definitionId)
+        {
+            if (definitionId == RoadUpgradeDefinitionIds.Small)
+                return "소형";
+            if (definitionId == RoadUpgradeDefinitionIds.Avenue)
+                return "대로";
+            return "일반";
+        }
+
+        private static string FormatPermille(int permille)
+        {
+            return $"{permille / 1000}.{(permille % 1000) / 100}x";
+        }
+
         private static string ToolDisplayName(ConstructionToolMode mode)
         {
             switch (mode)
             {
                 case ConstructionToolMode.Road:
                     return "도로";
+                case ConstructionToolMode.RoadUpgrade:
+                    return "도로 업그레이드";
                 case ConstructionToolMode.ZoneResidential:
                     return "주거 구역 (R)";
                 case ConstructionToolMode.ZoneCommercial:
@@ -440,6 +609,8 @@ namespace OpenSimCity.UI.Placement
             {
                 case ConstructionToolMode.Road:
                     return "1";
+                case ConstructionToolMode.RoadUpgrade:
+                    return "9";
                 case ConstructionToolMode.ZoneResidential:
                     return "2";
                 case ConstructionToolMode.ZoneCommercial:
@@ -465,6 +636,8 @@ namespace OpenSimCity.UI.Placement
             {
                 case ConstructionOperation.PlaceRoad:
                     return "도로 설치";
+                case ConstructionOperation.UpgradeRoad:
+                    return "도로 업그레이드";
                 case ConstructionOperation.DemolishRoad:
                     return "도로 철거";
                 case ConstructionOperation.PaintZone:
