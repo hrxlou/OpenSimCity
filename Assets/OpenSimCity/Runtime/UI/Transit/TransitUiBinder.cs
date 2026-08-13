@@ -1,8 +1,8 @@
 using System;
 using OpenSimCity.Application.Input;
+using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.Transit;
 using OpenSimCity.Application.World;
-using OpenSimCity.Simulation.Transit;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -206,34 +206,34 @@ namespace OpenSimCity.UI.Transit
                 $"운영비 {snapshot.LastPaidOperatingExpense}/{snapshot.LastProjectedOperatingExpense} · " +
                 $"자동차 경로량 {snapshot.TransitAwareRoutedTrips}/{snapshot.BaselineRoutedTrips}";
 
-            TransitModeChoiceReason topReason = TransitModeChoiceReason.None;
+            var topReason = TransitModeChoiceReasonView.None;
             var topAmount = 0;
             for (var index = 0; index < snapshot.OdRows.Count; index++)
             {
                 var row = snapshot.OdRows[index];
-                if (row.Reason == TransitModeChoiceReason.None || row.RequestedTrips <= topAmount)
+                if (row.Reason == TransitModeChoiceReasonView.None || row.RequestedTrips <= topAmount)
                     continue;
                 topReason = row.Reason;
                 topAmount = row.RequestedTrips;
             }
-            _reason.text = topReason == TransitModeChoiceReason.None
+            _reason.text = topReason == TransitModeChoiceReasonView.None
                 ? "현재 대표 차단 원인 없음"
                 : $"대표 차단 원인: {ReasonText(topReason)} ({topAmount} trips)";
         }
 
-        private static string ReasonText(TransitModeChoiceReason reason)
+        private static string ReasonText(TransitModeChoiceReasonView reason)
         {
             switch (reason)
             {
-                case TransitModeChoiceReason.NoEnabledLine: return "운행 중인 노선 없음";
-                case TransitModeChoiceReason.BudgetDisabled: return "운행 예산 0";
-                case TransitModeChoiceReason.BudgetUnaffordable: return "운영비 부족";
-                case TransitModeChoiceReason.OriginOutsideWalkingRange: return "출발지 정류장 접근 불가";
-                case TransitModeChoiceReason.DestinationOutsideWalkingRange: return "도착지 정류장 접근 불가";
-                case TransitModeChoiceReason.DirectionMismatch: return "노선 방향 불일치";
-                case TransitModeChoiceReason.BrokenLine: return "노선 도로 단절";
-                case TransitModeChoiceReason.TooIndirect: return "과도한 우회·대기 비용";
-                case TransitModeChoiceReason.CapacityExhausted: return "노선 용량 부족";
+                case TransitModeChoiceReasonView.NoEnabledLine: return "운행 중인 노선 없음";
+                case TransitModeChoiceReasonView.BudgetDisabled: return "운행 예산 0";
+                case TransitModeChoiceReasonView.BudgetUnaffordable: return "운영비 부족";
+                case TransitModeChoiceReasonView.OriginOutsideWalkingRange: return "출발지 정류장 접근 불가";
+                case TransitModeChoiceReasonView.DestinationOutsideWalkingRange: return "도착지 정류장 접근 불가";
+                case TransitModeChoiceReasonView.DirectionMismatch: return "노선 방향 불일치";
+                case TransitModeChoiceReasonView.BrokenLine: return "노선 도로 단절";
+                case TransitModeChoiceReasonView.TooIndirect: return "과도한 우회·대기 비용";
+                case TransitModeChoiceReasonView.CapacityExhausted: return "노선 용량 부족";
                 default: return reason.ToString();
             }
         }
