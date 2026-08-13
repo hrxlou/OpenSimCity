@@ -17,8 +17,8 @@ namespace OpenSimCity.Application.Spatial
     public sealed class SpatialFieldRuntimeModule
     {
         private readonly CityRuntime _runtime;
-        private readonly HashSet<StableId> _roadSourceIds = new HashSet<StableId>();
-        private readonly HashSet<StableId> _buildingSourceIds = new HashSet<StableId>();
+        private readonly SortedSet<StableId> _roadSourceIds = new SortedSet<StableId>();
+        private readonly SortedSet<StableId> _buildingSourceIds = new SortedSet<StableId>();
         private int _observedRoadVersion = -1;
         private int _observedBuildingVersion = -1;
 
@@ -102,7 +102,24 @@ namespace OpenSimCity.Application.Spatial
 
         public void Restore(SpatialFieldRuntimeSnapshotDto snapshot)
         {
-            Fields.RestoreFromDto(snapshot ?? throw new ArgumentNullException(nameof(snapshot)));
+            if (snapshot == null)
+                throw new ArgumentNullException(nameof(snapshot));
+
+            var rows = snapshot.Sources ?? Array.Empty<SpatialFieldSourceStateDto>();
+            for (var index = 0; index < rows.Length; index++)
+            {
+                var row = rows[index] ??
+                          throw new ArgumentException("Spatial source rows cannot contain null.", nameof(snapshot));
+                if (row.Id == 0UL)
+                    throw new ArgumentException("Spatial source IDs must be valid.", nameof(snapshot));
+                if (SpatialDerivedSourceIds.IsDerived(new StableId(row.Id)))
+                {
+                    throw new InvalidOperationException(
+                        "Derived road/building spatial sources cannot be restored from capability snapshots.");
+                }
+            }
+
+            Fields.RestoreFromDto(snapshot);
             _roadSourceIds.Clear();
             _buildingSourceIds.Clear();
             _observedRoadVersion = -1;
@@ -112,7 +129,7 @@ namespace OpenSimCity.Application.Spatial
 
         private bool SynchronizeRoadSources()
         {
-            var current = new HashSet<StableId>();
+            var current = new SortedSet<StableId>();
             var roads = _runtime.Roads.Cells;
             var changed = false;
             for (var index = 0; index < roads.Count; index++)
@@ -132,13 +149,14 @@ namespace OpenSimCity.Application.Spatial
                     changed |= Fields.RemoveSource(previous);
             }
             _roadSourceIds.Clear();
-            foreach (var id in current) _roadSourceIds.Add(id);
+            foreach (var id in current)
+                _roadSourceIds.Add(id);
             return changed;
         }
 
         private bool SynchronizeBuildingSources()
         {
-            var current = new HashSet<StableId>();
+            var current = new SortedSet<StableId>();
             var buildings = _runtime.Buildings.Buildings;
             var changed = false;
             for (var index = 0; index < buildings.Count; index++)
@@ -160,7 +178,8 @@ namespace OpenSimCity.Application.Spatial
                     changed |= Fields.RemoveSource(previous);
             }
             _buildingSourceIds.Clear();
-            foreach (var id in current) _buildingSourceIds.Add(id);
+            foreach (var id in current)
+                _buildingSourceIds.Add(id);
             return changed;
         }
     }
