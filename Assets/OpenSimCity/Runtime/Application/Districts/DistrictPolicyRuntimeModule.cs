@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using OpenSimCity.Application.Commands;
+using OpenSimCity.Application.Transit;
 using OpenSimCity.Application.World;
 using OpenSimCity.Core;
 using OpenSimCity.Core.Time;
@@ -92,6 +93,75 @@ namespace OpenSimCity.Application.Districts
             LastProcessedMonth = month;
             HasProcessedMonth = true;
             Version = checked(Version + 1);
+        }
+
+        public DistrictPolicySaveData Capture()
+        {
+            PruneMissingDistricts();
+            var source = Policies.Rows;
+            var rows = new DistrictPolicySaveRow[source.Count];
+            for (var index = 0; index < rows.Length; index++)
+            {
+                var state = source[index];
+                rows[index] = new DistrictPolicySaveRow
+                {
+                    DistrictId = state.DistrictId.Value,
+                    Kind = state.Kind,
+                    Enabled = state.IsEnabled,
+                    HasPending = state.HasPending,
+                    PendingEnabled = state.PendingEnabled,
+                    PendingYear = state.HasPending ? state.PendingEffectiveMonth.Year : 0,
+                    PendingMonth = state.HasPending ? state.PendingEffectiveMonth.Month : 0,
+                    HasOperatingPeriod = state.HasOperatingPeriod,
+                    OperatingYear = state.HasOperatingPeriod ? state.LastOperatingMonth.Year : 0,
+                    OperatingMonth = state.HasOperatingPeriod ? state.LastOperatingMonth.Month : 0,
+                    ProjectedCost = state.LastProjectedCost,
+                    PaidCost = state.LastPaidCost,
+                    Reason = state.LastReason
+                };
+            }
+            return new DistrictPolicySaveData
+            {
+                Format = 1,
+                HasProcessedMonth = HasProcessedMonth,
+                LastProcessedYear = HasProcessedMonth ? LastProcessedMonth.Year : 0,
+                LastProcessedMonth = HasProcessedMonth ? LastProcessedMonth.Month : 0,
+                Items = rows
+            };
+        }
+
+        public void Restore(DistrictPolicySaveData data)
+        {
+            if (data == null || data.Format != 1) throw new InvalidOperationException("Unsupported district policy save format.");
+            var source = data.Items ?? Array.Empty<DistrictPolicySaveRow>();
+            var restored = new List<DistrictPolicyState>(source.Length);
+            ulong previousId = 0;
+            var previousKind = DistrictPolicyKind.HeavyVehicleRestriction;
+            var hasPrevious = false;
+            for (var index = 0; index < source.Length; index++)
+            {
+                var row = source[index] ?? throw new ArgumentException("District policy row cannot be null.", nameof(data));
+                var id = new StableId(row.DistrictId);
+                if (!Districts.Districts.TryGet(id, out _)) throw new ArgumentException("Policy references an unknown district.", nameof(data));
+                if (!Enum.IsDefined(typeof(DistrictPolicyKind), row.Kind) || !Enum.IsDefined(typeof(DistrictPolicyOperatingReason), row.Reason))
+                    throw new ArgumentException("Policy enum value is invalid.", nameof(data));
+                if (hasPrevious && (row.DistrictId < previousId || (row.DistrictId == previousId && row.Kind <= previousKind)))
+                    throw new ArgumentException("Policy rows require stable district/kind ordering.", nameof(data));
+                var pending = row.HasPending ? new SimulationDate(row.PendingYear, row.PendingMonth) : default;
+                var operating = row.HasOperatingPeriod ? new SimulationDate(row.OperatingYear, row.OperatingMonth) : default;
+                var state = new DistrictPolicyState(id, row.Kind);
+                state.Restore(row.Enabled, row.HasPending, row.PendingEnabled, pending, row.HasOperatingPeriod,
+                    operating, row.ProjectedCost, row.PaidCost, row.Reason);
+                restored.Add(state);
+                previousId = row.DistrictId; previousKind = row.Kind; hasPrevious = true;
+            }
+            var processedMonth = data.HasProcessedMonth ? new SimulationDate(data.LastProcessedYear, data.LastProcessedMonth) : default;
+            Policies.Replace(restored);
+            HasProcessedMonth = data.HasProcessedMonth;
+            LastProcessedMonth = processedMonth;
+            Version = checked(Version + 1);
+            Runtime.TrafficRoutingSystem.RefreshIfNeeded();
+            if (TransitRuntimeRegistry.TryGet(Runtime, out var transit)) transit.RefreshDerived();
         }
 
         public void PruneMissingDistricts()
