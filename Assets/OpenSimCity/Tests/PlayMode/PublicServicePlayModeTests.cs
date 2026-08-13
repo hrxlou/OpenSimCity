@@ -18,9 +18,10 @@ namespace OpenSimCity.Tests.PlayMode
     public sealed class PublicServicePlayModeTests
     {
         [UnityTest]
-        public IEnumerator PublicPlacementBudgetAndCoverageUseApplicationStateOnly()
+        public IEnumerator PublicPlacementBudgetCoverageAndResponseViewsStayReadOnly()
         {
             PublicServiceSelection.Current.SetCoverageVisible(false);
+            ServiceResponseSettings.Current.SetMaximumSamples(ServiceResponseProjection.DefaultMaximumSamples);
             yield return SceneManager.LoadSceneAsync("CityPrototype", LoadSceneMode.Single);
             yield return null;
             yield return null;
@@ -29,10 +30,14 @@ namespace OpenSimCity.Tests.PlayMode
             var host = Object.FindFirstObjectByType<PublicServiceRuntimeHost>();
             var ui = Object.FindFirstObjectByType<PublicServiceUiBinder>();
             var views = Object.FindFirstObjectByType<PublicServiceViewCoordinator>();
+            var responseView = Object.FindFirstObjectByType<ServiceResponseView>();
+            var responsePanel = Object.FindFirstObjectByType<ServiceResponsePanel>();
             Assert.That(context, Is.Not.Null);
             Assert.That(host, Is.Not.Null);
             Assert.That(ui, Is.Not.Null);
             Assert.That(views, Is.Not.Null);
+            Assert.That(responseView, Is.Not.Null);
+            Assert.That(responsePanel, Is.Not.Null);
 
             var runtime = context.Runtime;
             var roadY = runtime.Height / 2;
@@ -53,6 +58,7 @@ namespace OpenSimCity.Tests.PlayMode
             var placement = host.Place(ServiceKindView.Police, serviceCell);
             Assert.That(placement.IsApplied, Is.True, placement.Message);
             RunMonths(runtime, 1);
+            yield return null;
             host.Module.ReadModel.RefreshIfNeeded();
             var facility = host.Module.ReadModel.Snapshot.Facilities.Single();
             Assert.That(facility.Kind, Is.EqualTo(ServiceKindView.Police));
@@ -67,9 +73,18 @@ namespace OpenSimCity.Tests.PlayMode
             Assert.That(views.ActiveFacilityViewCount, Is.EqualTo(1));
             Assert.That(views.IsCoverageVisible, Is.True);
             Assert.That(views.CoverageCellCount, Is.GreaterThan(0));
+            Assert.That(responseView.Projection.SourceSimulationChecksum, Is.EqualTo(checksum));
+            Assert.That(responseView.ActiveCount, Is.LessThanOrEqualTo(responseView.Projection.Samples.Count));
             Assert.That(host.Module.System.State.ComputeChecksum(), Is.EqualTo(checksum));
             Assert.That(views.GetComponentsInChildren<UnityEngine.MonoBehaviour>(true)
                 .Where(component => !ReferenceEquals(component, views)), Is.Empty);
+
+            ServiceResponseSettings.Current.SetMaximumSamples(0);
+            yield return null;
+            yield return null;
+            Assert.That(responseView.ActiveCount, Is.Zero);
+            Assert.That(host.Module.System.State.ComputeChecksum(), Is.EqualTo(checksum));
+            ServiceResponseSettings.Current.SetMaximumSamples(ServiceResponseProjection.DefaultMaximumSamples);
 
             var budget = host.SetBudget(facility.FacilityId, 500);
             Assert.That(budget.IsApplied, Is.True, budget.Message);
@@ -79,14 +94,20 @@ namespace OpenSimCity.Tests.PlayMode
             Assert.That(halfBudget.ActiveBudgetPermille, Is.EqualTo(500));
             Assert.That(halfBudget.EffectiveBudgetPermille, Is.LessThanOrEqualTo(500));
             var summary = ui.Panel.Q<Label>("osc-service-summary");
+            var responseStatus = ui.Panel.Q<Label>("osc-service-response-status");
             Assert.That(summary, Is.Not.Null);
             Assert.That(summary.text, Does.Contain("적용 기간"));
+            Assert.That(responseStatus, Is.Not.Null);
+            Assert.That(responseStatus.text, Does.Contain("미서비스 사건"));
 
             var oldViews = views;
+            var oldResponseView = responseView;
             yield return SceneManager.LoadSceneAsync("MainMenu", LoadSceneMode.Single);
             yield return null;
             Assert.That(oldViews == null, Is.True);
+            Assert.That(oldResponseView == null, Is.True);
             PublicServiceSelection.Current.SetCoverageVisible(false);
+            ServiceResponseSettings.Current.SetMaximumSamples(ServiceResponseProjection.DefaultMaximumSamples);
         }
 
         private static void RunMonths(CityRuntime runtime, int count)
