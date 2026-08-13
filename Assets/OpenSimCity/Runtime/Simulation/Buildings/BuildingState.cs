@@ -7,6 +7,9 @@ namespace OpenSimCity.Simulation.Buildings
     [Serializable]
     public sealed class BuildingState : IEquatable<BuildingState>
     {
+        private BuildingFootprint _fixtureFootprint;
+        private bool _hasFixtureFootprint;
+
         public BuildingState(StableId id, StableId definitionId, StableId parcelId, CellCoord anchor, int occupancy = 0, int filledJobs = 0)
         {
             if (!id.IsValid) throw new ArgumentException("A building must have a valid stable ID.", nameof(id));
@@ -26,6 +29,8 @@ namespace OpenSimCity.Simulation.Buildings
             : this(id, definitionId, parcelId, anchor, occupancy, filledJobs)
         {
             if (footprint.Width <= 0 || footprint.Height <= 0) throw new ArgumentOutOfRangeException(nameof(footprint));
+            _fixtureFootprint = footprint;
+            _hasFixtureFootprint = true;
         }
 
         public StableId Id { get; }
@@ -34,8 +39,14 @@ namespace OpenSimCity.Simulation.Buildings
         public CellCoord Anchor { get; }
         public int Occupancy { get; }
         public int FilledJobs { get; }
+        public BuildingFootprint Footprint => _hasFixtureFootprint ? _fixtureFootprint : BuildingFootprintLookup.Resolve(DefinitionId);
 
-        public BuildingState WithCounts(int occupancy, int filledJobs) => new BuildingState(Id, DefinitionId, ParcelId, Anchor, occupancy, filledJobs);
+        public BuildingState WithCounts(int occupancy, int filledJobs)
+        {
+            return _hasFixtureFootprint
+                ? new BuildingState(Id, DefinitionId, ParcelId, Anchor, _fixtureFootprint, occupancy, filledJobs)
+                : new BuildingState(Id, DefinitionId, ParcelId, Anchor, occupancy, filledJobs);
+        }
 
         public BuildingStateDto ToDto()
         {
