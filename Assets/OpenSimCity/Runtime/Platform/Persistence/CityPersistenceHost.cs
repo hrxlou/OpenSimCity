@@ -3,6 +3,7 @@ using System.IO;
 using OpenSimCity.Application.Bootstrap;
 using OpenSimCity.Application.Onboarding;
 using OpenSimCity.Application.Persistence;
+using OpenSimCity.Application.Settings;
 using OpenSimCity.Application.World;
 using OpenSimCity.Gameplay.Construction;
 using UnityEngine;
@@ -16,12 +17,14 @@ namespace OpenSimCity.Platform.Persistence
         public const string SaveDirectoryName = "Saves";
         public const string ProfileDirectoryName = "Profile";
         public const string OnboardingProfileFileName = "onboarding.json";
+        public const string PresentationSettingsFileName = "presentation-settings.json";
 
         [SerializeField] private CityRuntimeHost runtimeHost;
         [SerializeField] private ConstructionInputDriver inputDriver;
 
         private CityPersistenceController _controller;
         private OnboardingProgressController _onboarding;
+        private PresentationSettingsController _presentationSettings;
         private ReleaseSessionActions _releaseSession;
 
         public CityPersistenceController Controller => _controller;
@@ -33,6 +36,7 @@ namespace OpenSimCity.Platform.Persistence
             CityPersistenceContext.Reset();
             OnboardingContext.Reset();
             ReleaseSessionContext.Reset();
+            PresentationSettingsContext.Reset();
         }
 
         public void ConfigureReferences(CityRuntimeHost cityRuntimeHost, ConstructionInputDriver constructionInputDriver)
@@ -46,8 +50,7 @@ namespace OpenSimCity.Platform.Persistence
 
         private void Update()
         {
-            if (_controller == null && runtimeHost != null && runtimeHost.Runtime != null)
-                Initialize();
+            if (_controller == null && runtimeHost != null && runtimeHost.Runtime != null) Initialize();
             _controller?.ProcessPendingOperation();
         }
 
@@ -82,14 +85,17 @@ namespace OpenSimCity.Platform.Persistence
             _controller.ViewModelChanged += HandleViewModelChanged;
             CityPersistenceContext.SetCurrent(_controller);
 
-            var profilePath = ResolveOnboardingProfilePath(StorageRootDirectory);
             _onboarding = new OnboardingProgressController(
-                runtimeHost.Runtime, new JsonFileOnboardingProfileStore(profilePath));
+                runtimeHost.Runtime,
+                new JsonFileOnboardingProfileStore(ResolveProfilePath(StorageRootDirectory, OnboardingProfileFileName)));
             OnboardingContext.SetCurrent(_onboarding);
 
+            _presentationSettings = new PresentationSettingsController(
+                new JsonFilePresentationSettingsStore(ResolveProfilePath(StorageRootDirectory, PresentationSettingsFileName)));
+            PresentationSettingsContext.SetCurrent(_presentationSettings);
+
             _releaseSession = new ReleaseSessionActions(
-                StartNewCity,
-                ContinueCity,
+                StartNewCity, ContinueCity,
                 key => _controller != null && _controller.RequestLoad(key),
                 () => _controller?.ViewModel);
             ReleaseSessionContext.SetCurrent(_releaseSession);
@@ -98,9 +104,7 @@ namespace OpenSimCity.Platform.Persistence
 
         private bool StartNewCity()
         {
-            if (_controller == null || _controller.ViewModel?.IsBusy == true || runtimeHost == null)
-                return false;
-
+            if (_controller == null || _controller.ViewModel?.IsBusy == true || runtimeHost == null) return false;
             var storageRoot = StorageRootDirectory;
             ShutdownController();
             runtimeHost.ReplaceRuntime(NewCityRuntimeFactory.Create(CityRuntimeOptions.Default));
@@ -133,6 +137,11 @@ namespace OpenSimCity.Platform.Persistence
                 ReleaseSessionContext.ClearCurrent(_releaseSession);
                 _releaseSession = null;
             }
+            if (_presentationSettings != null)
+            {
+                PresentationSettingsContext.ClearCurrent(_presentationSettings);
+                _presentationSettings = null;
+            }
             if (_onboarding != null)
             {
                 OnboardingContext.ClearCurrent(_onboarding);
@@ -155,11 +164,11 @@ namespace OpenSimCity.Platform.Persistence
                 _onboarding?.BindRuntime(_controller.Runtime);
         }
 
-        private static string ResolveOnboardingProfilePath(string saveRoot)
+        private static string ResolveProfilePath(string saveRoot, string fileName)
         {
             var saveDirectory = Path.GetFullPath(saveRoot);
             var parent = Directory.GetParent(saveDirectory)?.FullName ?? saveDirectory;
-            return Path.Combine(parent, ProfileDirectoryName, OnboardingProfileFileName);
+            return Path.Combine(parent, ProfileDirectoryName, fileName);
         }
     }
 }

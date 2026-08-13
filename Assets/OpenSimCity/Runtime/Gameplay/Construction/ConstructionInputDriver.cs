@@ -1,25 +1,17 @@
 using OpenSimCity.Application.Construction;
 using OpenSimCity.Application.Input;
 using OpenSimCity.Application.Overlays;
+using OpenSimCity.Application.Settings;
 using OpenSimCity.Application.World;
 using OpenSimCity.Core.Mathematics;
 using OpenSimCity.Gameplay.Camera;
+using OpenSimCity.Gameplay.Input;
 using OpenSimCity.Gameplay.Selection;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace OpenSimCity.Gameplay.Construction
 {
-    /// <summary>
-    /// Translates pointer and keyboard input into construction tool actions:
-    /// left drag places along a straight road path or zone area, right-click and
-    /// Escape cancel, digit keys switch tools, and F-keys toggle overlays.
-    /// <para>
-    /// The screen-to-cell projection and drag lifecycle are exposed as public
-    /// methods so both the Windows and macOS input paths — and the PlayMode smoke
-    /// — drive the same deterministic tool without depending on a device.
-    /// </para>
-    /// </summary>
     [DisallowMultipleComponent]
     public sealed class ConstructionInputDriver : MonoBehaviour
     {
@@ -31,45 +23,29 @@ namespace OpenSimCity.Gameplay.Construction
         private bool _interactionEnabled = true;
 
         public IsometricCameraRig CameraRig => cameraRig;
-
         public CityRuntimeContext Context => CityRuntimeContext.Current;
         public bool InteractionEnabled => _interactionEnabled;
 
-        public void ConfigureReferences(IsometricCameraRig rig)
-        {
-            cameraRig = rig;
-        }
+        public void ConfigureReferences(IsometricCameraRig rig) => cameraRig = rig;
 
-        /// <summary>Relay from the UI pointer boundary; blocks placement over panels.</summary>
         public void SetUiPointerBlocked(bool isBlocked)
         {
             _uiPointerBlocked = isBlocked;
-            if (isBlocked && _pointerDown)
-                CancelDrag();
+            if (isBlocked && _pointerDown) CancelDrag();
         }
 
         public void SetInteractionEnabled(bool isEnabled)
         {
             _interactionEnabled = isEnabled;
-            if (!isEnabled && _pointerDown)
-                CancelDrag();
+            if (!isEnabled && _pointerDown) CancelDrag();
         }
 
-        public void SelectTool(ConstructionToolMode mode)
-        {
-            Context?.SelectTool(mode);
-        }
-
-        public void ToggleOverlay(PlacementOverlayKind kind)
-        {
-            Context?.ToggleOverlay(kind);
-        }
+        public void SelectTool(ConstructionToolMode mode) => Context?.SelectTool(mode);
+        public void ToggleOverlay(PlacementOverlayKind kind) => Context?.ToggleOverlay(kind);
 
         public bool TryBeginAtScreen(Vector2 screenPosition)
         {
-            if (!CanPlace() || !TryScreenToCell(screenPosition, out var cell))
-                return false;
-
+            if (!CanPlace() || !TryScreenToCell(screenPosition, out var cell)) return false;
             _pointerDown = true;
             Context.Tool.BeginDrag(cell);
             return true;
@@ -77,9 +53,7 @@ namespace OpenSimCity.Gameplay.Construction
 
         public bool TryUpdateAtScreen(Vector2 screenPosition)
         {
-            if (!_pointerDown || Context == null || !TryScreenToCell(screenPosition, out var cell))
-                return false;
-
+            if (!_pointerDown || Context == null || !TryScreenToCell(screenPosition, out var cell)) return false;
             Context.Tool.UpdateDrag(cell);
             return true;
         }
@@ -98,11 +72,8 @@ namespace OpenSimCity.Gameplay.Construction
 
         private bool CanPlace()
         {
-            return enableInput &&
-                   _interactionEnabled &&
-                   !_uiPointerBlocked &&
-                   !UiInputBoundary.Current.IsPointerOverUi &&
-                   Context != null &&
+            return enableInput && _interactionEnabled && !_uiPointerBlocked &&
+                   !UiInputBoundary.Current.IsPointerOverUi && Context != null &&
                    Context.Tool.Mode != ConstructionToolMode.None &&
                    (cameraRig == null || !cameraRig.SuppressPointerClick);
         }
@@ -110,81 +81,61 @@ namespace OpenSimCity.Gameplay.Construction
         private bool TryScreenToCell(Vector2 screenPosition, out CellCoord cell)
         {
             cell = default;
-            if (cameraRig == null)
-                return false;
-            if (!cameraRig.TryProjectPointerToGround(screenPosition, out var world))
-                return false;
-
+            if (cameraRig == null || !cameraRig.TryProjectPointerToGround(screenPosition, out var world)) return false;
             return GridSelectionMath.TryWorldToCell(world, cameraRig.WorldBounds, out cell);
         }
 
         private void Update()
         {
-            if (!enableInput || !_interactionEnabled || Context == null)
-                return;
-
+            if (!enableInput || !_interactionEnabled || Context == null) return;
             HandleKeyboardToolSelection();
             HandlePointer();
         }
 
         private void HandleKeyboardToolSelection()
         {
-            var keyboard = Keyboard.current;
-            if (keyboard == null)
-                return;
+            if (UiInputBoundary.Current.IsKeyboardFocusCaptured) return;
 
-            if (keyboard.escapeKey.wasPressedThisFrame)
-                CancelDrag();
+            if (PresentationKeyboardInput.Pressed(PresentationInputAction.Cancel)) CancelDrag();
 
-            if (keyboard.digit1Key.wasPressedThisFrame)
+            if (PresentationKeyboardInput.Pressed(PresentationInputAction.ToolRoad))
                 SelectTool(ConstructionToolMode.Road);
-            else if (keyboard.digit2Key.wasPressedThisFrame)
+            else if (PresentationKeyboardInput.Pressed(PresentationInputAction.ToolResidential))
                 SelectTool(ConstructionToolMode.ZoneResidential);
-            else if (keyboard.digit3Key.wasPressedThisFrame)
+            else if (PresentationKeyboardInput.Pressed(PresentationInputAction.ToolCommercial))
                 SelectTool(ConstructionToolMode.ZoneCommercial);
-            else if (keyboard.digit4Key.wasPressedThisFrame)
+            else if (PresentationKeyboardInput.Pressed(PresentationInputAction.ToolIndustrial))
                 SelectTool(ConstructionToolMode.ZoneIndustrial);
-            else if (keyboard.digit5Key.wasPressedThisFrame)
+            else if (PresentationKeyboardInput.Pressed(PresentationInputAction.ToolZoneClear))
                 SelectTool(ConstructionToolMode.ZoneClear);
-            else if (keyboard.digit6Key.wasPressedThisFrame)
+            else if (PresentationKeyboardInput.Pressed(PresentationInputAction.ToolDemolish))
                 SelectTool(ConstructionToolMode.Demolish);
-            else if (keyboard.digit7Key.wasPressedThisFrame)
+            else if (PresentationKeyboardInput.Pressed(PresentationInputAction.ToolPowerPlant))
                 SelectTool(ConstructionToolMode.PowerPlant);
-            else if (keyboard.digit8Key.wasPressedThisFrame)
+            else if (PresentationKeyboardInput.Pressed(PresentationInputAction.ToolRemovePowerPlant))
                 SelectTool(ConstructionToolMode.RemovePowerPlant);
-            else if (keyboard.digit9Key.wasPressedThisFrame)
+            else if (PresentationKeyboardInput.Pressed(PresentationInputAction.ToolRoadUpgrade))
                 SelectTool(ConstructionToolMode.RoadUpgrade);
 
-            if (keyboard.f1Key.wasPressedThisFrame)
-                ToggleOverlay(PlacementOverlayKind.RoadConnectivity);
-            else if (keyboard.f2Key.wasPressedThisFrame)
-                ToggleOverlay(PlacementOverlayKind.Accessibility);
-            else if (keyboard.f3Key.wasPressedThisFrame)
-                ToggleOverlay(PlacementOverlayKind.Zone);
-            else if (keyboard.f4Key.wasPressedThisFrame)
-                ToggleOverlay(PlacementOverlayKind.Parcel);
-            else if (keyboard.f5Key.wasPressedThisFrame)
-                ToggleOverlay(PlacementOverlayKind.Power);
-            else if (keyboard.f6Key.wasPressedThisFrame)
-                ToggleOverlay(PlacementOverlayKind.RoadHierarchy);
+            var keyboard = Keyboard.current;
+            if (keyboard == null) return;
+            if (keyboard.f1Key.wasPressedThisFrame) ToggleOverlay(PlacementOverlayKind.RoadConnectivity);
+            else if (keyboard.f2Key.wasPressedThisFrame) ToggleOverlay(PlacementOverlayKind.Accessibility);
+            else if (keyboard.f3Key.wasPressedThisFrame) ToggleOverlay(PlacementOverlayKind.Zone);
+            else if (keyboard.f4Key.wasPressedThisFrame) ToggleOverlay(PlacementOverlayKind.Parcel);
+            else if (keyboard.f5Key.wasPressedThisFrame) ToggleOverlay(PlacementOverlayKind.Power);
+            else if (keyboard.f6Key.wasPressedThisFrame) ToggleOverlay(PlacementOverlayKind.RoadHierarchy);
         }
 
         private void HandlePointer()
         {
             var mouse = Mouse.current;
-            if (mouse == null)
-                return;
-
-            if (mouse.rightButton.wasPressedThisFrame && _pointerDown)
-                CancelDrag();
-
+            if (mouse == null) return;
+            if (mouse.rightButton.wasPressedThisFrame && _pointerDown) CancelDrag();
             var position = mouse.position.ReadValue();
-            if (mouse.leftButton.wasPressedThisFrame)
-                TryBeginAtScreen(position);
-            else if (_pointerDown && mouse.leftButton.isPressed)
-                TryUpdateAtScreen(position);
-            else if (mouse.leftButton.wasReleasedThisFrame && _pointerDown)
-                Commit();
+            if (mouse.leftButton.wasPressedThisFrame) TryBeginAtScreen(position);
+            else if (_pointerDown && mouse.leftButton.isPressed) TryUpdateAtScreen(position);
+            else if (mouse.leftButton.wasReleasedThisFrame && _pointerDown) Commit();
         }
     }
 }
