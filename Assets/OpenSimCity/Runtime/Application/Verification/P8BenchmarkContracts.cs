@@ -3,35 +3,13 @@ using System.Collections.Generic;
 
 namespace OpenSimCity.Application.Verification
 {
-    public enum P8BenchmarkScenarioKind : byte
-    {
-        Target128,
-        Stress256
-    }
-
-    public enum P8BenchmarkContentMode : byte
-    {
-        ViewOff,
-        Placeholder,
-        ProductionLike
-    }
-
+    public enum P8BenchmarkScenarioKind : byte { Target128, Stress256 }
+    public enum P8BenchmarkContentMode : byte { ViewOff, Placeholder, ProductionLike }
     public enum P8BenchmarkMetric : byte
     {
-        SimulationTickMicroseconds,
-        MonthlyTickMicroseconds,
-        CpuFrameMicroseconds,
-        GpuFrameMicroseconds,
-        GcBytesPerFrame,
-        TotalMemoryBytes,
-        DrawCalls,
-        SaveBytes,
-        SaveMicroseconds,
-        LoadMicroseconds,
-        SelectionFeedbackMicroseconds,
-        PlacementPreviewMicroseconds,
-        CommandFeedbackMicroseconds,
-        HudRefreshMicroseconds
+        SimulationTickMicroseconds, MonthlyTickMicroseconds, CpuFrameMicroseconds, GpuFrameMicroseconds,
+        GcBytesPerFrame, TotalMemoryBytes, DrawCalls, SaveBytes, SaveMicroseconds, LoadMicroseconds,
+        SelectionFeedbackMicroseconds, PlacementPreviewMicroseconds, CommandFeedbackMicroseconds, HudRefreshMicroseconds
     }
 
     [Serializable]
@@ -47,36 +25,22 @@ namespace OpenSimCity.Application.Verification
         public int WarmupFrames;
         public int SampleFrames;
         public int RequiredRepeatCount;
-        public int GrowthMonths;
+        public int SettlementMonths;
 
         public static P8BenchmarkScenarioSpec Target128() => new P8BenchmarkScenarioSpec
         {
-            Name = "P8.Target128",
-            Kind = P8BenchmarkScenarioKind.Target128,
-            Width = 128,
-            Height = 128,
-            Seed = 0x0801_1280UL,
-            RequiredBuildingCount = 2000,
-            RequestedVisibleVehicleCount = 500,
-            WarmupFrames = 300,
-            SampleFrames = 600,
-            RequiredRepeatCount = 3,
-            GrowthMonths = 120
+            Name = "P8.Target128", Kind = P8BenchmarkScenarioKind.Target128,
+            Width = 128, Height = 128, Seed = 0x0801_1280UL,
+            RequiredBuildingCount = 2000, RequestedVisibleVehicleCount = 500,
+            WarmupFrames = 300, SampleFrames = 600, RequiredRepeatCount = 3, SettlementMonths = 1
         };
 
         public static P8BenchmarkScenarioSpec Stress256() => new P8BenchmarkScenarioSpec
         {
-            Name = "P8.Stress256",
-            Kind = P8BenchmarkScenarioKind.Stress256,
-            Width = 256,
-            Height = 256,
-            Seed = 0x0801_2560UL,
-            RequiredBuildingCount = 2000,
-            RequestedVisibleVehicleCount = 500,
-            WarmupFrames = 300,
-            SampleFrames = 600,
-            RequiredRepeatCount = 3,
-            GrowthMonths = 120
+            Name = "P8.Stress256", Kind = P8BenchmarkScenarioKind.Stress256,
+            Width = 256, Height = 256, Seed = 0x0801_2560UL,
+            RequiredBuildingCount = 2000, RequestedVisibleVehicleCount = 500,
+            WarmupFrames = 300, SampleFrames = 600, RequiredRepeatCount = 3, SettlementMonths = 1
         };
     }
 
@@ -130,14 +94,8 @@ namespace OpenSimCity.Application.Verification
 
     public enum P8BenchmarkGateReason : byte
     {
-        Passed,
-        MissingRuns,
-        EnvironmentMismatch,
-        FixtureBelowRequiredScale,
-        ChecksumMismatch,
-        MissingMeasurements,
-        MissingApprovedBudget,
-        BudgetExceeded
+        Passed, MissingRuns, EnvironmentMismatch, FixtureBelowRequiredScale, ChecksumMismatch,
+        MissingMeasurements, MissingApprovedBudget, BudgetExceeded
     }
 
     public sealed class P8BenchmarkGateResult
@@ -154,22 +112,18 @@ namespace OpenSimCity.Application.Verification
         private static readonly P8BenchmarkMetric[] RequiredMetrics =
             (P8BenchmarkMetric[])Enum.GetValues(typeof(P8BenchmarkMetric));
 
-        public static P8BenchmarkGateResult Evaluate(
-            P8BenchmarkScenarioSpec spec,
-            IReadOnlyList<P8BenchmarkRunEvidence> runs,
-            P8BenchmarkBudgetSet budget)
+        public static P8BenchmarkGateResult Evaluate(P8BenchmarkScenarioSpec spec,
+            IReadOnlyList<P8BenchmarkRunEvidence> runs, P8BenchmarkBudgetSet budget)
         {
             if (spec == null) throw new ArgumentNullException(nameof(spec));
             if (runs == null) throw new ArgumentNullException(nameof(runs));
             if (budget == null) throw new ArgumentNullException(nameof(budget));
             if (runs.Count < spec.RequiredRepeatCount)
                 return Fail(P8BenchmarkGateReason.MissingRuns, "The scenario requires at least three recorded repetitions.");
-
             var first = runs[0];
             if (budget.Scenario != spec.Kind || budget.ContentMode != first.ContentMode ||
                 !string.Equals(budget.Platform, first.Platform, StringComparison.Ordinal))
                 return Fail(P8BenchmarkGateReason.EnvironmentMismatch, "Budget and evidence do not describe the same platform/scenario/content mode.");
-
             for (var index = 0; index < spec.RequiredRepeatCount; index++)
             {
                 var run = runs[index];
@@ -189,7 +143,6 @@ namespace OpenSimCity.Application.Verification
                     if (!TryMetric(run, RequiredMetrics[metricIndex], out _))
                         return Fail(P8BenchmarkGateReason.MissingMeasurements, $"Missing measured metric: {RequiredMetrics[metricIndex]}.");
             }
-
             for (var metricIndex = 0; metricIndex < RequiredMetrics.Length; metricIndex++)
             {
                 var metric = RequiredMetrics[metricIndex];
@@ -198,12 +151,11 @@ namespace OpenSimCity.Application.Verification
                 for (var runIndex = 0; runIndex < spec.RequiredRepeatCount; runIndex++)
                 {
                     TryMetric(runs[runIndex], metric, out var value);
-                    if (value > maximum)
-                        return Fail(P8BenchmarkGateReason.BudgetExceeded, $"{metric} exceeded the approved maximum.");
+                    if (value > maximum) return Fail(P8BenchmarkGateReason.BudgetExceeded, $"{metric} exceeded the approved maximum.");
                 }
             }
-
-            return new P8BenchmarkGateResult(true, P8BenchmarkGateReason.Passed, "All required repetitions, measurements and approved budgets passed.");
+            return new P8BenchmarkGateResult(true, P8BenchmarkGateReason.Passed,
+                "All required repetitions, measurements and approved budgets passed.");
         }
 
         private static bool TryMetric(P8BenchmarkRunEvidence run, P8BenchmarkMetric metric, out long median)
@@ -212,11 +164,9 @@ namespace OpenSimCity.Application.Verification
             for (var index = 0; index < rows.Length; index++)
             {
                 if (rows[index] == null || rows[index].Metric != metric || !rows[index].IsMeasured) continue;
-                median = rows[index].Median;
-                return true;
+                median = rows[index].Median; return true;
             }
-            median = 0;
-            return false;
+            median = 0; return false;
         }
 
         private static bool TryBudget(P8BenchmarkBudgetSet budget, P8BenchmarkMetric metric, out long maximum)
@@ -225,11 +175,9 @@ namespace OpenSimCity.Application.Verification
             for (var index = 0; index < rows.Length; index++)
             {
                 if (rows[index] == null || rows[index].Metric != metric || !rows[index].IsApproved || rows[index].Maximum < 0) continue;
-                maximum = rows[index].Maximum;
-                return true;
+                maximum = rows[index].Maximum; return true;
             }
-            maximum = 0;
-            return false;
+            maximum = 0; return false;
         }
 
         private static P8BenchmarkGateResult Fail(P8BenchmarkGateReason reason, string message) =>
