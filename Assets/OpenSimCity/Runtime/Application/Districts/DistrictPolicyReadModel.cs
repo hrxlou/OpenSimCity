@@ -32,6 +32,7 @@ namespace OpenSimCity.Application.Districts
         public int Population { get; set; }
         public int Jobs { get; set; }
         public int RoutedTrips { get; set; }
+        public int TrafficNoisePermille { get; set; }
         public int BusTrips { get; set; }
         public int PrivateVehicleTrips { get; set; }
         public int ServiceCoveragePermille { get; set; }
@@ -84,8 +85,8 @@ namespace OpenSimCity.Application.Districts
                 _transitVersion == transitVersion && _spatialVersion == _spatial.Fields.FieldVersion) return false;
 
             var rows = new List<DistrictStatsViewData>();
-            var districtRows = _module.Districts.ReadModel.Snapshot.Districts;
-            for (var index = 0; index < districtRows.Count; index++) rows.Add(BuildDistrict(districtRows[index], transit));
+            var districts = _module.Districts.ReadModel.Snapshot.Districts;
+            for (var index = 0; index < districts.Count; index++) rows.Add(BuildDistrict(districts[index], transit));
             Snapshot = new DistrictPolicyReadModelSnapshot
             {
                 Version = Snapshot.Version + 1,
@@ -125,6 +126,14 @@ namespace OpenSimCity.Application.Districts
                 for (var cellIndex = 0; cellIndex < assignments[index].Route.Cells.Count && !touches; cellIndex++)
                     touches = cells.Contains(assignments[index].Route.Cells[cellIndex]);
                 if (touches) routed = checked(routed + assignments[index].Amount);
+            }
+
+            long noiseTotal = 0; var noiseEdges = 0;
+            var edges = _module.Runtime.TrafficRoutingSystem.State.Edges;
+            for (var index = 0; index < edges.Count; index++)
+            {
+                if (!cells.Contains(edges[index].Edge.A) && !cells.Contains(edges[index].Edge.B)) continue;
+                noiseTotal += Math.Min(2000, edges[index].VolumeCapacityPermille); noiseEdges++;
             }
 
             var bus = 0; var privateVehicles = 0;
@@ -177,6 +186,7 @@ namespace OpenSimCity.Application.Districts
                 Population = population,
                 Jobs = jobs,
                 RoutedTrips = routed,
+                TrafficNoisePermille = noiseEdges == 0 ? 0 : (int)(noiseTotal / noiseEdges),
                 BusTrips = bus,
                 PrivateVehicleTrips = privateVehicles,
                 ServiceCoveragePermille = coverageCount == 0 ? 0 : coverageTotal / coverageCount,
