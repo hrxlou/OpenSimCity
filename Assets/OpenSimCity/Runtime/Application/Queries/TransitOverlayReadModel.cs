@@ -52,7 +52,7 @@ namespace OpenSimCity.Application.Queries
             CellCoord originRoadCell,
             CellCoord destinationRoadCell,
             int amount,
-            TransitModeChoiceReason reason)
+            TransitModeChoiceReasonView reason)
         {
             OriginId = originId;
             DestinationId = destinationId;
@@ -66,7 +66,7 @@ namespace OpenSimCity.Application.Queries
         public CellCoord OriginRoadCell { get; }
         public CellCoord DestinationRoadCell { get; }
         public int Amount { get; }
-        public TransitModeChoiceReason Reason { get; }
+        public TransitModeChoiceReasonView Reason { get; }
     }
 
     /// <summary>
@@ -175,7 +175,7 @@ namespace OpenSimCity.Application.Queries
                     demand.Origin.RoadCell,
                     demand.Destination.RoadCell,
                     row.RequestedTrips,
-                    row.Reason));
+                    TransitReasonProjection.ToView(row.Reason)));
             }
 
             _stops = Array.AsReadOnly(stops);
