@@ -24,22 +24,16 @@ namespace OpenSimCity.Tests.EditMode
             var module = WaterDensityRuntimeRegistry.GetOrCreate(runtime);
             var cell = new CellCoord(2, 3);
             var producerId = module.ProducerIdFor(cell);
-            var command = new PlaceWaterProducerCommand(
-                producerId,
-                WaterDensityDefinitionIds.Pump,
-                cell);
+            var command = new PlaceWaterProducerCommand(producerId, WaterDensityDefinitionIds.Pump, cell);
             var preview = module.Commands.Preview(command);
             var funds = runtime.Finance.Funds;
-
             Assert.That(preview.IsValid, Is.True, preview.Message);
             Assert.That(runtime.Finance.Funds, Is.EqualTo(funds));
             Assert.That(module.WaterProducers.Producers, Is.Empty);
-
             var result = module.Execute(command);
             Assert.That(result.IsApplied, Is.True, result.Message);
             Assert.That(module.WaterProducers.Producers.Single().Id, Is.EqualTo(producerId));
-            Assert.That(runtime.Finance.Funds,
-                Is.EqualTo(funds - module.WaterDefinitions.Get(WaterDensityDefinitionIds.Pump).ConstructionCost));
+            Assert.That(runtime.Finance.Funds, Is.EqualTo(funds - module.WaterDefinitions.Get(WaterDensityDefinitionIds.Pump).ConstructionCost));
         }
 
         [Test]
@@ -50,11 +44,7 @@ namespace OpenSimCity.Tests.EditMode
             module.Restore(new WaterDensityRuntimeSnapshotDto
             {
                 SchemaVersion = 1,
-                Water = new WaterRuntimeSnapshotDto
-                {
-                    SchemaVersion = 1,
-                    Producers = Array.Empty<WaterProducerStateDto>()
-                },
+                Water = new WaterRuntimeSnapshotDto { SchemaVersion = 1, Producers = Array.Empty<WaterProducerStateDto>() },
                 Density = new DensityRuntimeSnapshotDto
                 {
                     SchemaVersion = 1,
@@ -77,42 +67,29 @@ namespace OpenSimCity.Tests.EditMode
                 }
             });
             var definition = runtime.BuildingDefinitions.Get(building.DefinitionId);
-
-            Assert.That(runtime.PopulationSystem.CapacityResolver.ResolveHousingCapacity(
-                    building,
-                    definition.OccupancyCapacity),
-                Is.EqualTo(definition.OccupancyCapacity * 2));
+            Assert.That(runtime.PopulationSystem.CapacityResolver.ResolveHousingCapacity(building, definition.OccupancyCapacity), Is.EqualTo(definition.OccupancyCapacity * 2));
             module.ReadModel.RefreshIfNeeded();
             var row = module.ReadModel.Snapshot.Buildings.Single();
             Assert.That(row.Stage, Is.EqualTo(DensityStageView.Medium));
-            Assert.That(row.EffectiveHousingCapacity,
-                Is.EqualTo(definition.OccupancyCapacity * 2));
+            Assert.That(row.EffectiveHousingCapacity, Is.EqualTo(definition.OccupancyCapacity * 2));
             Assert.That(row.BuildingId, Is.EqualTo(building.Id));
         }
 
         [Test]
-        public void SupplementalDensityTaxUsesOrdinarySectorLedgerColumns()
+        public void DensityTaxCompatibilityDoesNotInjectSamePeriodBonus()
         {
-            var finance = new MunicipalFinanceState(
-                10_000,
-                new UrbanEconomyTaxRates(100, 100, 100));
+            var finance = new MunicipalFinanceState(10_000, new UrbanEconomyTaxRates(100, 100, 100));
+#pragma warning disable CS0618
             finance.RecordSupplementalTaxIncome(EconomicSector.Residential, 25);
             finance.RecordSupplementalTaxIncome(EconomicSector.Commercial, 15);
             finance.RecordSupplementalTaxIncome(EconomicSector.Industrial, 10);
-
-            var row = finance.SettleMonth(
-                new SimulationDate(1, 1),
-                residentialTaxIncome: 100,
-                commercialTaxIncome: 80,
-                industrialTaxIncome: 60,
-                roadMaintenanceExpense: 0,
-                powerMaintenanceExpense: 0);
-
-            Assert.That(row.ResidentialTaxIncome, Is.EqualTo(125));
-            Assert.That(row.CommercialTaxIncome, Is.EqualTo(95));
-            Assert.That(row.IndustrialTaxIncome, Is.EqualTo(70));
-            Assert.That(row.TaxIncome, Is.EqualTo(290));
-            Assert.That(row.ClosingBalance, Is.EqualTo(10_290));
+#pragma warning restore CS0618
+            var row = finance.SettleMonth(new SimulationDate(1, 1), 100, 80, 60, 0, 0);
+            Assert.That(row.ResidentialTaxIncome, Is.EqualTo(100));
+            Assert.That(row.CommercialTaxIncome, Is.EqualTo(80));
+            Assert.That(row.IndustrialTaxIncome, Is.EqualTo(60));
+            Assert.That(row.TaxIncome, Is.EqualTo(240));
+            Assert.That(row.ClosingBalance, Is.EqualTo(10_240));
         }
 
         [Test]
@@ -123,11 +100,7 @@ namespace OpenSimCity.Tests.EditMode
             var snapshot = new WaterDensityRuntimeSnapshotDto
             {
                 SchemaVersion = 1,
-                Water = new WaterRuntimeSnapshotDto
-                {
-                    SchemaVersion = 1,
-                    Producers = Array.Empty<WaterProducerStateDto>()
-                },
+                Water = new WaterRuntimeSnapshotDto { SchemaVersion = 1, Producers = Array.Empty<WaterProducerStateDto>() },
                 Density = new DensityRuntimeSnapshotDto
                 {
                     SchemaVersion = 1,
@@ -143,35 +116,17 @@ namespace OpenSimCity.Tests.EditMode
                     }
                 }
             };
-
             Assert.Throws<ArgumentException>(() => module.Restore(snapshot));
             Assert.That(module.WaterProducers.Producers, Is.Empty);
         }
 
         private static CityRuntime CreateRuntimeWithRoad(out BuildingState building)
         {
-            var runtime = new CityRuntime(new CityRuntimeOptions
-            {
-                Width = 8,
-                Height = 8,
-                Seed = 0x702UL,
-                InitialFunds = 20_000
-            });
-            var road = runtime.Execute(new PlaceRoadCommand(
-                runtime.DefaultRoadDefinitionId,
-                new CellCoord(0, 4),
-                new CellCoord(6, 4)));
+            var runtime = new CityRuntime(new CityRuntimeOptions { Width = 8, Height = 8, Seed = 0x702UL, InitialFunds = 20_000 });
+            var road = runtime.Execute(new PlaceRoadCommand(runtime.DefaultRoadDefinitionId, new CellCoord(0, 4), new CellCoord(6, 4)));
             Assert.That(road.IsApplied, Is.True, road.Message);
-            var definition = runtime.BuildingDefinitions.Definitions
-                .Single(item => item.ZoneType == ZoneType.ResidentialLow);
-            building = new BuildingState(
-                new StableId(0xB702000000000101UL),
-                definition.Id,
-                new StableId(0xA702000000000101UL),
-                new CellCoord(2, 2),
-                definition.Footprint,
-                definition.OccupancyCapacity,
-                0);
+            var definition = runtime.BuildingDefinitions.Definitions.Single(item => item.ZoneType == ZoneType.ResidentialLow);
+            building = new BuildingState(new StableId(0xB702000000000101UL), definition.Id, new StableId(0xA702000000000101UL), new CellCoord(2, 2), definition.Footprint, definition.OccupancyCapacity, 0);
             runtime.Buildings.Add(building);
             return runtime;
         }
