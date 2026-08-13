@@ -12,7 +12,6 @@ namespace OpenSimCity.Presentation.Services
     public sealed class ServiceResponseView : MonoBehaviour
     {
         public const string RuntimeObjectName = "ServiceResponseViews";
-        [SerializeField, Range(0, ServiceResponseProjection.MaximumAllowedSamples)] private int visibleLimit = ServiceResponseProjection.DefaultMaximumSamples;
         [SerializeField, Min(0.1f)] private float routeLoopSeconds = 8f;
 
         private CityRuntimeContext _context;
@@ -20,18 +19,11 @@ namespace OpenSimCity.Presentation.Services
         private VehicleViewScheduler _scheduler;
         private Material _material;
         private int _observedVersion = -1;
+        private int _settingsVersion = -1;
 
         public int ActiveCount => _scheduler?.ActiveCount ?? 0;
         public int PooledCount => _scheduler?.PooledCount ?? 0;
         public ServiceResponseProjection Projection => _projection;
-
-        public void SetVisibleLimit(int value)
-        {
-            if (value < 0 || value > ServiceResponseProjection.MaximumAllowedSamples) throw new ArgumentOutOfRangeException(nameof(value));
-            visibleLimit = value;
-            _projection?.SetMaximumSamples(value);
-            _observedVersion = -1;
-        }
 
         private void Update()
         {
@@ -41,15 +33,22 @@ namespace OpenSimCity.Presentation.Services
                 _context = current;
                 _projection = null;
                 _observedVersion = -1;
+                _settingsVersion = -1;
                 _scheduler?.ReleaseAll();
             }
             if (_context == null || !_context.HasWorldBounds) return;
             EnsureScheduler();
             if (_projection == null)
-            {
                 _projection = new ServiceResponseProjection(PublicServiceRuntimeRegistry.GetOrCreate(_context.Runtime));
-                _projection.SetMaximumSamples(visibleLimit);
+
+            var settings = ServiceResponseSettings.Current;
+            if (_settingsVersion != settings.Version)
+            {
+                _settingsVersion = settings.Version;
+                _projection.SetMaximumSamples(settings.MaximumSamples);
+                _observedVersion = -1;
             }
+
             _projection.RefreshIfNeeded();
             if (_observedVersion != _projection.Version)
             {
@@ -59,11 +58,19 @@ namespace OpenSimCity.Presentation.Services
                 for (var index = 0; index < rows.Length; index++)
                 {
                     var item = source[index];
-                    rows[index] = new VehicleSampleData(item.Id, TrafficFlowKind.Goods, item.RepresentedDemand, item.PhaseOffsetPermille, item.Path);
+                    rows[index] = new VehicleSampleData(
+                        item.Id,
+                        TrafficFlowKind.Goods,
+                        item.RepresentedDemand,
+                        item.PhaseOffsetPermille,
+                        item.Path);
                 }
                 _scheduler.ApplySamples(Array.AsReadOnly(rows));
             }
-            _scheduler.UpdatePositions(_context.WorldBounds, Time.unscaledTimeAsDouble, Math.Max(0.1f, routeLoopSeconds));
+            _scheduler.UpdatePositions(
+                _context.WorldBounds,
+                Time.unscaledTimeAsDouble,
+                Math.Max(0.1f, routeLoopSeconds));
         }
 
         private void EnsureScheduler()
@@ -71,7 +78,9 @@ namespace OpenSimCity.Presentation.Services
             if (_scheduler != null) return;
             if (_material == null)
             {
-                var shader = Shader.Find("Sprites/Default") ?? Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Standard");
+                var shader = Shader.Find("Sprites/Default") ??
+                             Shader.Find("Universal Render Pipeline/Unlit") ??
+                             Shader.Find("Standard");
                 if (shader == null) throw new InvalidOperationException("No runtime shader for service response view.");
                 _material = new Material(shader) { hideFlags = HideFlags.DontSave };
             }
