@@ -142,6 +142,9 @@ namespace OpenSimCity.Simulation.Economy
         private int _periodOpeningBalance;
         private int _roadConstructionExpense;
         private int _powerConstructionExpense;
+        private int _residentialSupplementalTaxIncome;
+        private int _commercialSupplementalTaxIncome;
+        private int _industrialSupplementalTaxIncome;
 
         public MunicipalFinanceState(
             int initialBalance,
@@ -227,6 +230,32 @@ namespace OpenSimCity.Simulation.Economy
         }
 
         /// <summary>
+        /// Accrues named sector tax produced by a capability that extends effective
+        /// building capacity. The amount is folded into the ordinary sector columns
+        /// by the same monthly settlement; it does not create a parallel hidden ledger.
+        /// </summary>
+        public void RecordSupplementalTaxIncome(EconomicSector sector, int amount)
+        {
+            if (amount < 0)
+                throw new ArgumentOutOfRangeException(nameof(amount));
+            switch (sector)
+            {
+                case EconomicSector.Residential:
+                    _residentialSupplementalTaxIncome = checked(_residentialSupplementalTaxIncome + amount);
+                    break;
+                case EconomicSector.Commercial:
+                    _commercialSupplementalTaxIncome = checked(_commercialSupplementalTaxIncome + amount);
+                    break;
+                case EconomicSector.Industrial:
+                    _industrialSupplementalTaxIncome = checked(_industrialSupplementalTaxIncome + amount);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(sector));
+            }
+            Version = checked(Version + 1);
+        }
+
+        /// <summary>
         /// Replaces a not-yet-effective tax request. The requested rate is applied
         /// only when the scheduler reaches <paramref name="effectiveMonth"/>.
         /// </summary>
@@ -276,6 +305,10 @@ namespace OpenSimCity.Simulation.Economy
                 throw new ArgumentOutOfRangeException(nameof(residentialTaxIncome), "Ledger inputs must be non-negative.");
             }
 
+            residentialTaxIncome = checked(residentialTaxIncome + _residentialSupplementalTaxIncome);
+            commercialTaxIncome = checked(commercialTaxIncome + _commercialSupplementalTaxIncome);
+            industrialTaxIncome = checked(industrialTaxIncome + _industrialSupplementalTaxIncome);
+
             var expectedPreSettlement = checked(
                 _periodOpeningBalance - _roadConstructionExpense - _powerConstructionExpense);
             if (Balance != expectedPreSettlement)
@@ -308,6 +341,9 @@ namespace OpenSimCity.Simulation.Economy
             _periodOpeningBalance = Balance;
             _roadConstructionExpense = 0;
             _powerConstructionExpense = 0;
+            _residentialSupplementalTaxIncome = 0;
+            _commercialSupplementalTaxIncome = 0;
+            _industrialSupplementalTaxIncome = 0;
             Version = checked(Version + 1);
             return entry;
         }
@@ -389,6 +425,9 @@ namespace OpenSimCity.Simulation.Economy
             _periodOpeningBalance = dto.PeriodOpeningBalance;
             _roadConstructionExpense = dto.RoadConstructionExpense;
             _powerConstructionExpense = dto.PowerConstructionExpense;
+            _residentialSupplementalTaxIncome = 0;
+            _commercialSupplementalTaxIncome = 0;
+            _industrialSupplementalTaxIncome = 0;
             _ledger.Clear();
             _ledger.AddRange(restored);
             LastSettledMonth = previous == null ? default(SimulationDate) : previous.Month;
