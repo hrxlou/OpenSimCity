@@ -47,8 +47,22 @@ namespace OpenSimCity.Tests.EditMode
             });
             var economy = new UrbanEconomySystem(buildings, profiles);
             var demand = new TripDemandSystem(buildings, profiles, access, economy);
-            var definitions = new RoadDefinitionCatalog(new[] { new RoadDefinition(RoadId, 0, "test", 0, 100, 30) });
-            var routing = new TrafficRoutingSystem(roads, graph, definitions, demand, new TrafficRoutingParameters(3));
+            var definitions = new RoadDefinitionCatalog(new[]
+            {
+                new RoadDefinition(
+                    RoadId,
+                    buildCost: 0,
+                    presentationKey: "test",
+                    monthlyMaintenanceCost: 0,
+                    capacityPerMonth: 100,
+                    freeFlowSpeedCellsPerHour: 30)
+            });
+            var routing = new TrafficRoutingSystem(
+                roads,
+                graph,
+                definitions,
+                demand,
+                new TrafficRoutingParameters(maximumRouteAlternatives: 3));
             var month = new SimulationDate(1,1);
             economy.RunMonth(month); demand.RunMonth(month); routing.RunMonth(month);
             Assert.That(routing.State.Assignments.Count(row => row.Kind == TripDemandKind.Goods), Is.GreaterThan(1));
