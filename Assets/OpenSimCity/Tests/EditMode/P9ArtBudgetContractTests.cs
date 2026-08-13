@@ -22,6 +22,15 @@ namespace OpenSimCity.Tests.EditMode
         }
 
         [Test]
+        public void StaticCeilingRejectsGeometryRegression()
+        {
+            Assert.That(P9ArtStaticBudgetValidator.IsWithinBudget(
+                "OSC_REP_BLD_SMALL", 1, 13, 18152, false), Is.True);
+            Assert.That(P9ArtStaticBudgetValidator.IsWithinBudget(
+                "OSC_REP_BLD_SMALL", 1, 13, 18153, false), Is.False);
+        }
+
+        [Test]
         public void PerformanceApprovalRequiresProfilerAndP8Evidence()
         {
             Assert.That(P9ArtPerformanceGate.IsApproved(null), Is.False);
