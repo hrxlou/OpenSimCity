@@ -1,9 +1,9 @@
 using NUnit.Framework;
+using OpenSimCity.Application.Bootstrap;
 using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.Settings;
 using OpenSimCity.Application.Verification;
 using OpenSimCity.Application.World;
-using OpenSimCity.Core.Time;
 
 namespace OpenSimCity.Tests.EditMode
 {
