@@ -21,6 +21,8 @@ namespace OpenSimCity.Simulation.Population
         private readonly IPopulationEmploymentProfileResolver _profiles;
         private readonly IReadOnlyList<ExternalConnectionState> _externalConnections;
         private readonly Func<bool> _transportConnectionAvailability;
+        private IBuildingCapacityResolver _capacityResolver =
+            PassThroughBuildingCapacityResolver.Instance;
 
         public PopulationEmploymentMigrationSystem(
             BuildingStateCollection buildings,
@@ -43,6 +45,12 @@ namespace OpenSimCity.Simulation.Population
         public SimulationDate LastProcessedMonth { get; private set; }
         public bool HasProcessedMonth { get; private set; }
         public int Version { get; private set; }
+
+        public IBuildingCapacityResolver CapacityResolver
+        {
+            get => _capacityResolver;
+            set => _capacityResolver = value ?? throw new ArgumentNullException(nameof(value));
+        }
 
         public PopulationEmploymentMigrationStateDto ToDto()
         {
@@ -90,13 +98,17 @@ namespace OpenSimCity.Simulation.Population
 
                 if (profile.HousingCapacity > 0)
                 {
-                    var residents = Math.Min(building.Occupancy, profile.HousingCapacity);
+                    var effectiveCapacity = ResolveHousingCapacity(building, profile.HousingCapacity);
+                    var residents = Math.Min(building.Occupancy, effectiveCapacity);
                     forcedDepartures = checked(forcedDepartures + building.Occupancy - residents);
-                    housingRows.Add(new MutableHousingRow(building, residents, profile.HousingCapacity));
+                    housingRows.Add(new MutableHousingRow(building, residents, effectiveCapacity));
                 }
 
                 if (profile.JobCapacity > 0)
-                    jobRows.Add(new MutableJobRow(building, profile.JobCapacity));
+                {
+                    var effectiveCapacity = ResolveJobCapacity(building, profile.JobCapacity);
+                    jobRows.Add(new MutableJobRow(building, effectiveCapacity));
+                }
             }
 
             var populationBeforeEconomicMigration = SumResidents(housingRows);
@@ -143,6 +155,28 @@ namespace OpenSimCity.Simulation.Population
             LastProcessedMonth = month;
             HasProcessedMonth = true;
             Version = checked(Version + 1);
+        }
+
+        private int ResolveHousingCapacity(BuildingState building, int definitionCapacity)
+        {
+            var capacity = _capacityResolver.ResolveHousingCapacity(building, definitionCapacity);
+            if (capacity < 0 || capacity > definitionCapacity)
+            {
+                throw new InvalidOperationException(
+                    $"Building capacity resolver returned invalid housing capacity {capacity} for {building.Id}.");
+            }
+            return capacity;
+        }
+
+        private int ResolveJobCapacity(BuildingState building, int definitionCapacity)
+        {
+            var capacity = _capacityResolver.ResolveJobCapacity(building, definitionCapacity);
+            if (capacity < 0 || capacity > definitionCapacity)
+            {
+                throw new InvalidOperationException(
+                    $"Building capacity resolver returned invalid job capacity {capacity} for {building.Id}.");
+            }
+            return capacity;
         }
 
         private bool HasEnabledTransportConnection()
