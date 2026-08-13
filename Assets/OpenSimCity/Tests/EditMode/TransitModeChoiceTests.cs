@@ -2,6 +2,7 @@ using System.Linq;
 using NUnit.Framework;
 using OpenSimCity.Application.Bootstrap;
 using OpenSimCity.Application.Commands;
+using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.Transit;
 using OpenSimCity.Application.World;
 using OpenSimCity.Core.Mathematics;
@@ -29,7 +30,7 @@ namespace OpenSimCity.Tests.EditMode
             Assert.That(snapshot.TransitAwareRoutedTrips, Is.LessThan(snapshot.BaselineRoutedTrips));
             Assert.That(snapshot.OdRows.All(row =>
                 row.BusTrips + row.PrivateVehicleTrips == row.RequestedTrips), Is.True);
-            Assert.That(snapshot.OdRows.Any(row => row.Reason == TransitModeChoiceReason.None), Is.True);
+            Assert.That(snapshot.OdRows.Any(row => row.Reason == TransitModeChoiceReasonView.None), Is.True);
         }
 
         [Test]

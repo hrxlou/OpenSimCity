@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using OpenSimCity.Application.Buildings;
 using OpenSimCity.Application.Utilities;
 using OpenSimCity.Core.Time;
@@ -14,9 +15,9 @@ namespace OpenSimCity.Application.Bootstrap
 {
     /// <summary>
     /// Application-owned monthly composition for the private market, growth,
-    /// aggregate trip demand, deterministic routing and municipal ledger. It
-    /// applies pending tax policy before RCI, runs development, derives OD rows,
-    /// routes matched demand, then settles public cash.
+    /// aggregate trip demand, optional post-demand mobility systems, deterministic
+    /// baseline routing and the municipal ledger. Registration order is the stable
+    /// execution order for post-demand systems.
     /// </summary>
     public sealed class MunicipalFinanceMonthlySystem : IMonthlySimulationSystem
     {
@@ -32,6 +33,8 @@ namespace OpenSimCity.Application.Bootstrap
         private readonly PowerProducerCollection _powerProducers;
         private readonly UtilityDefinitionCatalog _utilityDefinitions;
         private readonly MunicipalFinanceParameters _parameters;
+        private readonly List<IMonthlySimulationSystem> _postTripDemandSystems =
+            new List<IMonthlySimulationSystem>();
 
         public MunicipalFinanceMonthlySystem(
             MunicipalFinanceState finance,
@@ -89,6 +92,26 @@ namespace OpenSimCity.Application.Bootstrap
             _parameters = parameters ?? MunicipalFinanceParameters.Default;
         }
 
+        public IReadOnlyList<IMonthlySimulationSystem> PostTripDemandSystems =>
+            _postTripDemandSystems.AsReadOnly();
+
+        /// <summary>
+        /// Registers a deterministic monthly extension after aggregate OD exists and
+        /// before baseline routing and municipal settlement. Duplicate references are
+        /// ignored so runtime composition can be rebuilt safely.
+        /// </summary>
+        public void RegisterPostTripDemandSystem(IMonthlySimulationSystem system)
+        {
+            if (system == null)
+                throw new ArgumentNullException(nameof(system));
+            for (var index = 0; index < _postTripDemandSystems.Count; index++)
+            {
+                if (ReferenceEquals(_postTripDemandSystems[index], system))
+                    return;
+            }
+            _postTripDemandSystems.Add(system);
+        }
+
         public void RunMonth(SimulationDate month)
         {
             _finance.ApplyTaxRatesForMonth(month);
@@ -96,6 +119,8 @@ namespace OpenSimCity.Application.Bootstrap
             _urbanEconomy.RunMonth(month);
             _growth.RunMonth(month);
             _tripDemand.RunMonth(month);
+            for (var index = 0; index < _postTripDemandSystems.Count; index++)
+                _postTripDemandSystems[index].RunMonth(month);
             _trafficRouting?.RunMonth(month);
 
             TaxIncome(out var residential, out var commercial, out var industrial);

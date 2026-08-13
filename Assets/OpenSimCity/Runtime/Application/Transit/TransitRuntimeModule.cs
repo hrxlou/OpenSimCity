@@ -1,8 +1,10 @@
 using System;
 using System.Runtime.CompilerServices;
+using OpenSimCity.Application.Bootstrap;
 using OpenSimCity.Application.Commands;
 using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.World;
+using OpenSimCity.Core.Time;
 using OpenSimCity.Simulation.Economy;
 using OpenSimCity.Simulation.Transit;
 
@@ -12,8 +14,9 @@ namespace OpenSimCity.Application.Transit
     /// Post-MVP capability module attached to a base CityRuntime without moving
     /// authoritative collections into Unity objects. It consumes the base runtime's
     /// command sequence and persistent municipal balance while owning transit state.
+    /// The module registers in the deterministic post-TripDemand monthly seam.
     /// </summary>
-    public sealed class TransitRuntimeModule
+    public sealed class TransitRuntimeModule : IMonthlySimulationSystem
     {
         private readonly CityRuntime _runtime;
 
@@ -46,6 +49,7 @@ namespace OpenSimCity.Application.Transit
                 runtime.TripDemandSystem,
                 ModeChoice);
             ReadModel = new TransitReadModel(this);
+            runtime.MunicipalFinanceSystem.RegisterPostTripDemandSystem(this);
         }
 
         public CityRuntime Runtime => _runtime;
@@ -79,33 +83,40 @@ namespace OpenSimCity.Application.Transit
         }
 
         /// <summary>
-        /// Runs after the base runtime has produced TripDemand for a month. The
-        /// operating charge is accrued once and classified as infrastructure in the
-        /// current municipal ledger compatibility seam.
+        /// Runs after the same month's TripDemand and before municipal settlement.
+        /// Operating expense is charged and classified exactly once per month.
         /// </summary>
-        public void RunCurrentMonth()
+        public void RunMonth(SimulationDate month)
         {
-            if (!_runtime.TripDemandSystem.State.HasProcessedMonth)
-                return;
-            var month = _runtime.TripDemandSystem.State.LastProcessedMonth;
-            Network.ApplyBudgetForMonth(month);
+            if (!_runtime.TripDemandSystem.State.HasProcessedMonth ||
+                _runtime.TripDemandSystem.State.LastProcessedMonth != month)
+            {
+                throw new InvalidOperationException(
+                    "Transit requires aggregate trip demand from the same month.");
+            }
 
+            Network.ApplyBudgetForMonth(month);
             int effectiveBudget;
             bool affordable;
             if (Network.HasProcessedOperatingPeriod && Network.LastOperatingMonth == month)
             {
-                affordable = Network.LastProjectedOperatingExpense == 0 || Network.LastPaidOperatingExpense > 0;
+                affordable = Network.LastProjectedOperatingExpense == 0 ||
+                             Network.LastPaidOperatingExpense > 0;
                 effectiveBudget = affordable ? Network.ActiveBudgetPermille : 0;
             }
             else
             {
-                var projected = Network.CalculateOperatingExpense(Parameters, Network.ActiveBudgetPermille);
+                var projected = Network.CalculateOperatingExpense(
+                    Parameters,
+                    Network.ActiveBudgetPermille);
                 affordable = _runtime.Finance.CanAfford(projected);
                 var paid = 0;
                 if (affordable && projected > 0)
                 {
                     if (!_runtime.Finance.TrySpend(projected))
+                    {
                         affordable = false;
+                    }
                     else
                     {
                         _runtime.Finance.RecordConstructionExpense(
@@ -114,6 +125,7 @@ namespace OpenSimCity.Application.Transit
                         paid = projected;
                     }
                 }
+
                 Network.RecordOperatingPeriod(month, projected, paid);
                 effectiveBudget = affordable ? Network.ActiveBudgetPermille : 0;
             }
@@ -123,16 +135,44 @@ namespace OpenSimCity.Application.Transit
             ReadModel.RefreshIfNeeded();
         }
 
-        public bool RefreshDerived()
+        public void RunCurrentMonth()
         {
             if (!_runtime.TripDemandSystem.State.HasProcessedMonth)
+                return;
+            RunMonth(_runtime.TripDemandSystem.State.LastProcessedMonth);
+        }
+
+        /// <summary>
+        /// Rebuilds only derived transit caches for an already-recorded operating
+        /// period. It never charges funds, advances a month or applies a pending
+        /// budget, so UI/read-model observation cannot create simulation results.
+        /// </summary>
+        public bool RefreshDerived()
+        {
+            if (!_runtime.TripDemandSystem.State.HasProcessedMonth ||
+                !Network.HasProcessedOperatingPeriod ||
+                Network.LastOperatingMonth != _runtime.TripDemandSystem.State.LastProcessedMonth)
+            {
                 return false;
-            var affordable = !Network.HasProcessedOperatingPeriod ||
-                             Network.LastProjectedOperatingExpense == 0 ||
+            }
+
+            var month = Network.LastOperatingMonth;
+            var affordable = Network.LastProjectedOperatingExpense == 0 ||
                              Network.LastPaidOperatingExpense > 0;
             var effectiveBudget = affordable ? Network.ActiveBudgetPermille : 0;
-            var changed = ModeChoice.RefreshIfNeeded(effectiveBudget, affordable);
-            changed |= PrivateVehicleRouting.RefreshIfNeeded();
+            var changed = false;
+            if (!ModeChoice.State.HasProcessedMonth || ModeChoice.State.LastProcessedMonth != month)
+            {
+                ModeChoice.RunMonth(month, effectiveBudget, affordable);
+                PrivateVehicleRouting.RunMonth(month);
+                changed = true;
+            }
+            else
+            {
+                changed = ModeChoice.RefreshIfNeeded(effectiveBudget, affordable);
+                changed |= PrivateVehicleRouting.RefreshIfNeeded();
+            }
+
             changed |= ReadModel.RefreshIfNeeded();
             return changed;
         }
