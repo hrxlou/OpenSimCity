@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using OpenSimCity.Core.Time;
 using OpenSimCity.Simulation.Economy;
 
@@ -36,25 +37,17 @@ namespace OpenSimCity.Simulation.Specialization
             raw = checked(raw + imported);
 
             var material = Transform(
-                State.Stage(SpecializationStageKind.MaterialPreparation),
-                env,
-                raw,
-                intermediate,
+                State.Stage(SpecializationStageKind.MaterialPreparation), env, raw, intermediate,
                 checked(env.PoweredIndustrialJobs * _parameters.MaterialCapacityPerPoweredJob),
-                _parameters.MaterialYieldPermille,
-                SpecializationBottleneckReason.RawMaterialShortage);
+                _parameters.MaterialYieldPermille, SpecializationBottleneckReason.RawMaterialShortage);
             raw -= material.Input;
             intermediate = checked(intermediate + material.Output);
             Apply(SpecializationStageKind.MaterialPreparation, material);
 
             var assembly = Transform(
-                State.Stage(SpecializationStageKind.Assembly),
-                env,
-                intermediate,
-                finished,
+                State.Stage(SpecializationStageKind.Assembly), env, intermediate, finished,
                 checked(env.PoweredIndustrialJobs * _parameters.AssemblyCapacityPerPoweredJob),
-                _parameters.AssemblyYieldPermille,
-                SpecializationBottleneckReason.IntermediateShortage);
+                _parameters.AssemblyYieldPermille, SpecializationBottleneckReason.IntermediateShortage);
             intermediate -= assembly.Input;
             finished = checked(finished + assembly.Output);
             Apply(SpecializationStageKind.Assembly, assembly);
@@ -65,19 +58,9 @@ namespace OpenSimCity.Simulation.Specialization
             State.SetInventories(raw, intermediate, finished);
 
             var revenue = checked(exported * _parameters.ExportUnitPrice);
-            var cost = checked(imported * _parameters.RawImportUnitCost +
-                               env.PoweredIndustrialJobs * _parameters.OperatingCostPerPoweredJob);
-            var progress = Progress(env, exported);
-            State.CompleteMonth(
-                month,
-                imported,
-                material.Output,
-                assembly.Output,
-                exported,
-                revenue,
-                cost,
-                progress,
-                Diagnostics(env, material.Output + assembly.Output, revenue - cost));
+            var cost = checked(imported * _parameters.RawImportUnitCost + env.PoweredIndustrialJobs * _parameters.OperatingCostPerPoweredJob);
+            State.CompleteMonth(month, imported, material.Output, assembly.Output, exported, revenue, cost,
+                Progress(env, exported), Diagnostics(env, material.Output + assembly.Output, revenue - cost));
         }
 
         public void RestoreFromDto(UrbanManufacturingStateDto dto)
@@ -97,32 +80,18 @@ namespace OpenSimCity.Simulation.Specialization
             var material = State.Stage(SpecializationStageKind.MaterialPreparation);
             var assembly = State.Stage(SpecializationStageKind.Assembly);
             var export = State.Stage(SpecializationStageKind.Export);
-            if (!material.IsUnlocked && env.ExternalMarketConnected && env.IndustrialJobs >= _parameters.MaterialUnlockJobs)
-                material.Unlock();
-            if (!assembly.IsUnlocked && material.IsUnlocked && env.IndustrialJobs >= _parameters.AssemblyUnlockJobs &&
-                State.CumulativeMaterialOutput >= _parameters.AssemblyUnlockCumulativeMaterial)
-                assembly.Unlock();
-            if (!export.IsUnlocked && assembly.IsUnlocked && env.IndustrialJobs >= _parameters.ExportUnlockJobs &&
-                State.CumulativeFinishedOutput >= _parameters.ExportUnlockCumulativeFinished &&
-                env.GoodsTransportPermille >= _parameters.ExportUnlockTransportPermille)
-                export.Unlock();
+            if (!material.IsUnlocked && env.ExternalMarketConnected && env.IndustrialJobs >= _parameters.MaterialUnlockJobs) material.Unlock();
+            if (!assembly.IsUnlocked && material.IsUnlocked && env.IndustrialJobs >= _parameters.AssemblyUnlockJobs && State.CumulativeMaterialOutput >= _parameters.AssemblyUnlockCumulativeMaterial) assembly.Unlock();
+            if (!export.IsUnlocked && assembly.IsUnlocked && env.IndustrialJobs >= _parameters.ExportUnlockJobs && State.CumulativeFinishedOutput >= _parameters.ExportUnlockCumulativeFinished && env.GoodsTransportPermille >= _parameters.ExportUnlockTransportPermille) export.Unlock();
         }
 
         private int Import(SpecializationEnvironmentSnapshot env, int inventory)
         {
-            if (!State.Stage(SpecializationStageKind.MaterialPreparation).IsUnlocked || !env.ExternalMarketConnected)
-                return 0;
+            if (!State.Stage(SpecializationStageKind.MaterialPreparation).IsUnlocked || !env.ExternalMarketConnected) return 0;
             return Math.Min(_parameters.RawImportCapacity, Math.Max(0, _parameters.InventoryLimit - inventory));
         }
 
-        private StageResult Transform(
-            SpecializationStageState stage,
-            SpecializationEnvironmentSnapshot env,
-            int inputInventory,
-            int outputInventory,
-            int capacity,
-            int yieldPermille,
-            SpecializationBottleneckReason shortage)
+        private StageResult Transform(SpecializationStageState stage, SpecializationEnvironmentSnapshot env, int inputInventory, int outputInventory, int capacity, int yieldPermille, SpecializationBottleneckReason shortage)
         {
             if (!stage.IsUnlocked) return StageResult.Blocked(SpecializationBottleneckReason.Locked);
             if (env.IndustrialJobs <= 0) return StageResult.Blocked(SpecializationBottleneckReason.LaborShortage);
