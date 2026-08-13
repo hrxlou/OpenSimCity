@@ -6,7 +6,6 @@ using OpenSimCity.Application.Transit;
 using OpenSimCity.Core;
 using OpenSimCity.Core.Mathematics;
 using OpenSimCity.Simulation.Districts;
-using OpenSimCity.Simulation.Traffic;
 
 namespace OpenSimCity.Application.Districts
 {
@@ -75,18 +74,17 @@ namespace OpenSimCity.Application.Districts
         public bool RefreshIfNeeded()
         {
             _module.PruneMissingDistricts();
+            _module.Districts.ReadModel.RefreshIfNeeded();
             _services.ReadModel.RefreshIfNeeded();
             _spatial.RefreshIfNeeded();
             var trafficVersion = _module.Runtime.TrafficRoutingSystem.State.Version;
             var transitVersion = TransitRuntimeRegistry.TryGet(_module.Runtime, out var transit) ? transit.ModeChoice.State.Version : -1;
             if (_policyVersion == _module.Policies.Version && _districtVersion == _module.Districts.Districts.Version &&
                 _buildingVersion == _module.Runtime.Buildings.Version && _trafficVersion == trafficVersion &&
-                _transitVersion == transitVersion && _spatialVersion == _spatial.Fields.Version) return false;
+                _transitVersion == transitVersion && _spatialVersion == _spatial.Fields.FieldVersion) return false;
 
             var rows = new List<DistrictStatsViewData>();
             var districtRows = _module.Districts.ReadModel.Snapshot.Districts;
-            _module.Districts.ReadModel.RefreshIfNeeded();
-            districtRows = _module.Districts.ReadModel.Snapshot.Districts;
             for (var index = 0; index < districtRows.Count; index++) rows.Add(BuildDistrict(districtRows[index], transit));
             Snapshot = new DistrictPolicyReadModelSnapshot
             {
@@ -101,7 +99,7 @@ namespace OpenSimCity.Application.Districts
             _buildingVersion = _module.Runtime.Buildings.Version;
             _trafficVersion = trafficVersion;
             _transitVersion = transitVersion;
-            _spatialVersion = _spatial.Fields.Version;
+            _spatialVersion = _spatial.Fields.FieldVersion;
             return true;
         }
 
@@ -123,8 +121,9 @@ namespace OpenSimCity.Application.Districts
             var assignments = _module.Runtime.TrafficRoutingSystem.State.Assignments;
             for (var index = 0; index < assignments.Count; index++)
             {
-                var route = assignments[index].Route; var touches = false;
-                for (var cellIndex = 0; cellIndex < route.Cells.Count && !touches; cellIndex++) touches = cells.Contains(route.Cells[cellIndex]);
+                var touches = false;
+                for (var cellIndex = 0; cellIndex < assignments[index].Route.Cells.Count && !touches; cellIndex++)
+                    touches = cells.Contains(assignments[index].Route.Cells[cellIndex]);
                 if (touches) routed = checked(routed + assignments[index].Amount);
             }
 
@@ -153,8 +152,6 @@ namespace OpenSimCity.Application.Districts
             {
                 var kind = (DistrictPolicyKind)kindIndex;
                 _module.Policies.TryGet(district.DistrictId, kind, out var state);
-                var monthly = _module.Parameters.MonthlyCost(kind);
-                var input = kind == DistrictPolicyKind.HeavyVehicleRestriction ? _module.Parameters.HeavyVehiclePenaltyPermille : _module.Parameters.TransitBusCostPermille;
                 if (state != null) policyCost = checked(policyCost + state.LastPaidCost);
                 policyRows.Add(new DistrictPolicyViewData
                 {
@@ -165,20 +162,27 @@ namespace OpenSimCity.Application.Districts
                     PendingEnabled = state != null && state.PendingEnabled,
                     PendingYear = state != null && state.HasPending ? state.PendingEffectiveMonth.Year : 0,
                     PendingMonth = state != null && state.HasPending ? state.PendingEffectiveMonth.Month : 0,
-                    MonthlyCost = monthly,
-                    InputPermille = input,
+                    MonthlyCost = _module.Parameters.MonthlyCost(kind),
+                    InputPermille = kind == DistrictPolicyKind.HeavyVehicleRestriction ? _module.Parameters.HeavyVehiclePenaltyPermille : _module.Parameters.TransitBusCostPermille,
                     LastProjectedCost = state?.LastProjectedCost ?? 0,
                     LastPaidCost = state?.LastPaidCost ?? 0,
                     Reason = state?.LastReason ?? DistrictPolicyOperatingReason.Disabled
                 });
             }
+
             return new DistrictStatsViewData
             {
-                DistrictId = district.DistrictId, Name = district.Name, Population = population, Jobs = jobs,
-                RoutedTrips = routed, BusTrips = bus, PrivateVehicleTrips = privateVehicles,
+                DistrictId = district.DistrictId,
+                Name = district.Name,
+                Population = population,
+                Jobs = jobs,
+                RoutedTrips = routed,
+                BusTrips = bus,
+                PrivateVehicleTrips = privateVehicles,
                 ServiceCoveragePermille = coverageCount == 0 ? 0 : coverageTotal / coverageCount,
                 Pollution = district.Cells.Count == 0 ? 0 : (int)Math.Min(int.MaxValue, pollution / district.Cells.Count),
-                PolicyCost = policyCost, Policies = policyRows.AsReadOnly()
+                PolicyCost = policyCost,
+                Policies = policyRows.AsReadOnly()
             };
         }
     }
