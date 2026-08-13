@@ -25,7 +25,7 @@ namespace OpenSimCity.Tests.EditMode
 
             module.ModeChoice.CostPolicy = new HalfCostPolicy();
             Assert.That(module.RefreshDerived(), Is.True);
-            var adjusted = module.ModeChoice.State.Rows.Single(row => row.Key == baseline.Key);
+            var adjusted = module.ModeChoice.State.Rows.Single(row => row.Key.Equals(baseline.Key));
 
             Assert.That(adjusted.BusGeneralizedCostSeconds, Is.EqualTo(Math.Max(1, baseline.BusGeneralizedCostSeconds / 2)));
             Assert.That(adjusted.CarGeneralizedCostSeconds, Is.EqualTo(baseline.CarGeneralizedCostSeconds));
