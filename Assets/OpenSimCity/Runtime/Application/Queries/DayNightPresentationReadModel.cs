@@ -10,7 +10,6 @@ namespace OpenSimCity.Application.Queries
         public int Day { get; internal set; }
         public int DayPhasePermille { get; internal set; }
         public bool IsNight { get; internal set; }
-        public SimulationSpeed SimulationSpeed { get; internal set; }
         public long SourceTick { get; internal set; }
     }
 
@@ -19,7 +18,6 @@ namespace OpenSimCity.Application.Queries
         private const int DaysPerMonth = 30;
         private readonly CityRuntime _runtime;
         private long _sourceTick = long.MinValue;
-        private SimulationSpeed _sourceSpeed = (SimulationSpeed)255;
 
         public DayNightPresentationReadModel(CityRuntime runtime)
         {
@@ -33,8 +31,7 @@ namespace OpenSimCity.Application.Queries
         public bool RefreshIfNeeded()
         {
             var tick = _runtime.Clock.CurrentTick.Value;
-            var speed = _runtime.Clock.Speed;
-            if (_sourceTick == tick && _sourceSpeed == speed) return false;
+            if (_sourceTick == tick) return false;
             var scheduler = _runtime.MonthlyScheduler;
             var periodStart = scheduler.NextRunTick.Value - (scheduler.TicksPerMonth - 1L);
             var progressed = tick - periodStart;
@@ -49,11 +46,9 @@ namespace OpenSimCity.Application.Queries
                 Day = day,
                 DayPhasePermille = phase,
                 IsNight = phase < 220 || phase >= 780,
-                SimulationSpeed = speed,
                 SourceTick = tick
             };
             _sourceTick = tick;
-            _sourceSpeed = speed;
             Version = checked(Version + 1);
             return true;
         }
