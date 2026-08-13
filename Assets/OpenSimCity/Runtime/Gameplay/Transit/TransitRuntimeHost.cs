@@ -58,7 +58,7 @@ namespace OpenSimCity.Gameplay.Transit
 
             _boundRuntime = runtime;
             Module = TransitRuntimeRegistry.GetOrCreate(runtime);
-            Tool = new TransitConstructionTool(Module);
+            Tool = TransitConstructionToolRegistry.GetOrCreate(Module);
             _observedDemandVersion = -1;
             ModuleChanged?.Invoke(Module);
         }
