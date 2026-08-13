@@ -1,26 +1,32 @@
 using System;
 using System.IO;
+using OpenSimCity.Application.Bootstrap;
+using OpenSimCity.Application.Onboarding;
 using OpenSimCity.Application.Persistence;
+using OpenSimCity.Application.World;
 using OpenSimCity.Gameplay.Construction;
 using UnityEngine;
 
 namespace OpenSimCity.Platform.Persistence
 {
     /// <summary>
-    /// Unity-side composition root for P4 persistence. It supplies the platform
-    /// save directory and JSON codec, processes queued application commands, and
-    /// blocks world input while a save/load operation owns the clock.
+    /// Unity-side composition root for persistence plus profile-level onboarding.
+    /// City saves and onboarding preferences use separate files and contracts.
     /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(100)]
     public sealed class CityPersistenceHost : MonoBehaviour
     {
         public const string SaveDirectoryName = "Saves";
+        public const string ProfileDirectoryName = "Profile";
+        public const string OnboardingProfileFileName = "onboarding.json";
 
         [SerializeField] private CityRuntimeHost runtimeHost;
         [SerializeField] private ConstructionInputDriver inputDriver;
 
         private CityPersistenceController _controller;
+        private OnboardingProgressController _onboarding;
+        private ReleaseSessionActions _releaseSession;
 
         public CityPersistenceController Controller => _controller;
         public string StorageRootDirectory { get; private set; }
@@ -29,6 +35,8 @@ namespace OpenSimCity.Platform.Persistence
         private static void ResetContext()
         {
             CityPersistenceContext.Reset();
+            OnboardingContext.Reset();
+            ReleaseSessionContext.Reset();
         }
 
         public void ConfigureReferences(
@@ -61,10 +69,7 @@ namespace OpenSimCity.Platform.Persistence
             Initialize(null);
         }
 
-        /// <summary>
-        /// Test seam for PlayMode isolation. Product composition always calls the
-        /// parameterless overload and therefore uses persistentDataPath/Saves.
-        /// </summary>
+        /// <summary>Test seam for PlayMode isolation.</summary>
         public void ReinitializeForTests(string storageRootDirectory)
         {
             if (string.IsNullOrWhiteSpace(storageRootDirectory))
@@ -102,11 +107,68 @@ namespace OpenSimCity.Platform.Persistence
                     : UnityEngine.Application.version);
             _controller.ViewModelChanged += HandleViewModelChanged;
             CityPersistenceContext.SetCurrent(_controller);
+
+            var profilePath = ResolveOnboardingProfilePath(StorageRootDirectory);
+            _onboarding = new OnboardingProgressController(
+                runtimeHost.Runtime,
+                new JsonFileOnboardingProfileStore(profilePath));
+            OnboardingContext.SetCurrent(_onboarding);
+
+            _releaseSession = new ReleaseSessionActions(
+                StartNewCity,
+                ContinueCity,
+                key => _controller != null && _controller.RequestLoad(key),
+                () => _controller?.ViewModel);
+            ReleaseSessionContext.SetCurrent(_releaseSession);
             HandleViewModelChanged(_controller.ViewModel);
+        }
+
+        private bool StartNewCity()
+        {
+            if (_controller == null || _controller.ViewModel?.IsBusy == true || runtimeHost == null)
+                return false;
+
+            _onboarding?.ResetForNewProfile();
+            var storageRoot = StorageRootDirectory;
+            ShutdownController();
+            runtimeHost.ReplaceRuntime(NewCityRuntimeFactory.Create(CityRuntimeOptions.Default));
+            Initialize(storageRoot);
+            return true;
+        }
+
+        private bool ContinueCity()
+        {
+            if (_controller == null || _controller.ViewModel?.IsBusy == true)
+                return false;
+            var slots = _controller.ViewModel?.Slots;
+            if (slots == null)
+                return false;
+
+            CitySaveSlotViewModel best = null;
+            for (var index = 0; index < slots.Count; index++)
+            {
+                var candidate = slots[index];
+                if (candidate == null || !candidate.HasSave)
+                    continue;
+                if (best == null || candidate.CreatedUtcTicks > best.CreatedUtcTicks ||
+                    (candidate.CreatedUtcTicks == best.CreatedUtcTicks && candidate.Kind == CitySaveSlotKind.Manual))
+                    best = candidate;
+            }
+            return best != null && _controller.RequestLoad(best.SaveKey);
         }
 
         private void ShutdownController()
         {
+            if (_releaseSession != null)
+            {
+                ReleaseSessionContext.ClearCurrent(_releaseSession);
+                _releaseSession = null;
+            }
+            if (_onboarding != null)
+            {
+                OnboardingContext.ClearCurrent(_onboarding);
+                _onboarding = null;
+            }
             if (_controller != null)
             {
                 _controller.ViewModelChanged -= HandleViewModelChanged;
@@ -121,6 +183,15 @@ namespace OpenSimCity.Platform.Persistence
         private void HandleViewModelChanged(CityPersistenceViewModel viewModel)
         {
             inputDriver?.SetInteractionEnabled(viewModel == null || !viewModel.IsBusy);
+            if (viewModel?.State == CityPersistenceOperationState.Loaded && _controller?.Runtime != null)
+                _onboarding?.BindRuntime(_controller.Runtime);
+        }
+
+        private static string ResolveOnboardingProfilePath(string saveRoot)
+        {
+            var saveDirectory = Path.GetFullPath(saveRoot);
+            var parent = Directory.GetParent(saveDirectory)?.FullName ?? saveDirectory;
+            return Path.Combine(parent, ProfileDirectoryName, OnboardingProfileFileName);
         }
     }
 }
