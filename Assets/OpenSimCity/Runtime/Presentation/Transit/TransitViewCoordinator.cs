@@ -10,8 +10,9 @@ using UnityEngine;
 namespace OpenSimCity.Presentation.Transit
 {
     /// <summary>
-    /// Single scheduler for sampled buses, ordered line geometry and stop markers.
-    /// Generated view objects have no scripts and are recycled centrally.
+    /// Single scheduler for sampled buses, ordered line geometry, direction marks,
+    /// stop markers and blocked-OD warnings. Generated view objects have no scripts
+    /// and are recycled centrally.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class TransitViewCoordinator : MonoBehaviour
@@ -47,6 +48,8 @@ namespace OpenSimCity.Presentation.Transit
         public int PooledBusCount => _busScheduler?.PooledCount ?? 0;
         public int RenderedLineCount => _overlayRenderer?.ActiveLineCount ?? 0;
         public int RenderedStopCount => _overlayRenderer?.ActiveStopCount ?? 0;
+        public int RenderedDirectionCount => _overlayRenderer?.ActiveDirectionCount ?? 0;
+        public int RenderedIssueCount => _overlayRenderer?.ActiveIssueCount ?? 0;
         public TransitOverlayReadModel OverlayModel => _overlay;
         public TransitVehicleSamplingReadModel SamplingModel => _sampling;
 
@@ -103,7 +106,11 @@ namespace OpenSimCity.Presentation.Transit
             if (_observedOverlayVersion != _overlay.Version)
             {
                 _observedOverlayVersion = _overlay.Version;
-                _overlayRenderer.Rebuild(_overlay.Lines, _overlay.Stops, _context.WorldBounds);
+                _overlayRenderer.Rebuild(
+                    _overlay.Lines,
+                    _overlay.Stops,
+                    _overlay.Issues,
+                    _context.WorldBounds);
                 _overlayRenderer.SetVisible(overlayVisible);
             }
 
@@ -198,35 +205,51 @@ namespace OpenSimCity.Presentation.Transit
         }
     }
 
-    /// <summary>Central pool for behaviour-free line renderers and stop markers.</summary>
+    /// <summary>
+    /// Central pool for behaviour-free line renderers, stop markers, direction marks
+    /// and warning marks. Shape and orientation provide non-color state channels.
+    /// </summary>
     public sealed class TransitOverlayRenderer : IDisposable
     {
         private readonly Transform _parent;
         private readonly Material _lineMaterial;
-        private readonly Material _stopMaterial;
+        private readonly Material _markerMaterial;
         private readonly List<LineRenderer> _activeLines = new List<LineRenderer>();
         private readonly Stack<LineRenderer> _pooledLines = new Stack<LineRenderer>();
         private readonly List<GameObject> _activeStops = new List<GameObject>();
         private readonly Stack<GameObject> _pooledStops = new Stack<GameObject>();
+        private readonly List<GameObject> _activeDirections = new List<GameObject>();
+        private readonly Stack<GameObject> _pooledDirections = new Stack<GameObject>();
+        private readonly List<GameObject> _activeIssues = new List<GameObject>();
+        private readonly Stack<GameObject> _pooledIssues = new Stack<GameObject>();
         private bool _visible = true;
 
-        public TransitOverlayRenderer(Transform parent, Material lineMaterial, Material stopMaterial)
+        public TransitOverlayRenderer(Transform parent, Material lineMaterial, Material markerMaterial)
         {
             _parent = parent ?? throw new ArgumentNullException(nameof(parent));
             _lineMaterial = lineMaterial ?? throw new ArgumentNullException(nameof(lineMaterial));
-            _stopMaterial = stopMaterial ?? throw new ArgumentNullException(nameof(stopMaterial));
+            _markerMaterial = markerMaterial ?? throw new ArgumentNullException(nameof(markerMaterial));
         }
 
         public int ActiveLineCount => _activeLines.Count;
         public int ActiveStopCount => _activeStops.Count;
+        public int ActiveDirectionCount => _activeDirections.Count;
+        public int ActiveIssueCount => _activeIssues.Count;
 
         public void Rebuild(
             IReadOnlyList<TransitOverlayLineData> lines,
             IReadOnlyList<TransitOverlayStopData> stops,
+            IReadOnlyList<TransitOverlayIssueData> issues,
             WorldBoundsReadModel bounds)
         {
-            ResizeLines(lines?.Count ?? 0);
-            ResizeStops(stops?.Count ?? 0);
+            var lineCount = lines?.Count ?? 0;
+            var stopCount = stops?.Count ?? 0;
+            var issueCount = issues?.Count ?? 0;
+            ResizeLines(lineCount);
+            ResizeStops(stopCount);
+            ResizeDirections(lineCount);
+            ResizeIssues(issueCount);
+
             for (var index = 0; index < _activeLines.Count; index++)
             {
                 var source = lines[index];
@@ -236,6 +259,10 @@ namespace OpenSimCity.Presentation.Transit
                 for (var cellIndex = 0; cellIndex < source.Cells.Count; cellIndex++)
                     renderer.SetPosition(cellIndex, CellCenter(bounds, source.Cells[cellIndex], bounds.CellSize * 0.07f));
                 renderer.gameObject.name = $"TransitLine-{source.LineId.Value}";
+
+                var direction = _activeDirections[index];
+                direction.name = $"TransitDirection-{source.LineId.Value}";
+                ConfigureDirection(direction.transform, source.Cells, bounds);
             }
             for (var index = 0; index < _activeStops.Count; index++)
             {
@@ -243,10 +270,23 @@ namespace OpenSimCity.Presentation.Transit
                 var view = _activeStops[index];
                 view.name = $"TransitStop-{source.Id.Value}";
                 view.transform.localPosition = CellCenter(bounds, source.RoadCell, bounds.CellSize * 0.12f);
+                view.transform.localRotation = Quaternion.identity;
                 view.transform.localScale = new Vector3(
                     bounds.CellSize * 0.22f,
                     bounds.CellSize * 0.12f,
                     bounds.CellSize * 0.22f);
+            }
+            for (var index = 0; index < _activeIssues.Count; index++)
+            {
+                var source = issues[index];
+                var view = _activeIssues[index];
+                view.name = $"TransitIssue-{source.Reason}-{source.OriginId.Value}";
+                view.transform.localPosition = CellCenter(bounds, source.OriginRoadCell, bounds.CellSize * 0.25f);
+                view.transform.localRotation = Quaternion.Euler(0f, 45f, 0f);
+                view.transform.localScale = new Vector3(
+                    bounds.CellSize * 0.16f,
+                    bounds.CellSize * 0.34f,
+                    bounds.CellSize * 0.16f);
             }
             SetVisible(_visible);
         }
@@ -256,14 +296,17 @@ namespace OpenSimCity.Presentation.Transit
             _visible = value;
             for (var index = 0; index < _activeLines.Count; index++)
                 _activeLines[index].enabled = value;
-            for (var index = 0; index < _activeStops.Count; index++)
-                _activeStops[index].SetActive(value);
+            SetActive(_activeStops, value);
+            SetActive(_activeDirections, value);
+            SetActive(_activeIssues, value);
         }
 
         public void Clear()
         {
             ResizeLines(0);
             ResizeStops(0);
+            ResizeDirections(0);
+            ResizeIssues(0);
         }
 
         public void Dispose()
@@ -271,8 +314,9 @@ namespace OpenSimCity.Presentation.Transit
             Clear();
             while (_pooledLines.Count > 0)
                 UnityEngine.Object.Destroy(_pooledLines.Pop().gameObject);
-            while (_pooledStops.Count > 0)
-                UnityEngine.Object.Destroy(_pooledStops.Pop());
+            DestroyPool(_pooledStops);
+            DestroyPool(_pooledDirections);
+            DestroyPool(_pooledIssues);
         }
 
         private void ResizeLines(int count)
@@ -292,22 +336,23 @@ namespace OpenSimCity.Presentation.Transit
             }
         }
 
-        private void ResizeStops(int count)
-        {
-            while (_activeStops.Count > count)
-            {
-                var last = _activeStops[_activeStops.Count - 1];
-                _activeStops.RemoveAt(_activeStops.Count - 1);
-                last.SetActive(false);
-                _pooledStops.Push(last);
-            }
-            while (_activeStops.Count < count)
-            {
-                var stop = _pooledStops.Count > 0 ? _pooledStops.Pop() : CreateStop();
-                stop.SetActive(true);
-                _activeStops.Add(stop);
-            }
-        }
+        private void ResizeStops(int count) => ResizeViews(
+            _activeStops,
+            _pooledStops,
+            count,
+            () => CreatePrimitive("TransitStop", PrimitiveType.Cylinder));
+
+        private void ResizeDirections(int count) => ResizeViews(
+            _activeDirections,
+            _pooledDirections,
+            count,
+            () => CreatePrimitive("TransitDirection", PrimitiveType.Cube));
+
+        private void ResizeIssues(int count) => ResizeViews(
+            _activeIssues,
+            _pooledIssues,
+            count,
+            () => CreatePrimitive("TransitIssue", PrimitiveType.Cube));
 
         private LineRenderer CreateLine()
         {
@@ -324,20 +369,84 @@ namespace OpenSimCity.Presentation.Transit
             return line;
         }
 
-        private GameObject CreateStop()
+        private GameObject CreatePrimitive(string name, PrimitiveType type)
         {
-            var view = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            view.name = "TransitStop";
+            var view = GameObject.CreatePrimitive(type);
+            view.name = name;
             view.hideFlags = HideFlags.DontSave;
             view.transform.SetParent(_parent, false);
             var collider = view.GetComponent<Collider>();
             if (collider != null) UnityEngine.Object.Destroy(collider);
             var renderer = view.GetComponent<Renderer>();
-            if (renderer != null) renderer.sharedMaterial = _stopMaterial;
+            if (renderer != null) renderer.sharedMaterial = _markerMaterial;
             return view;
         }
 
-        private static Vector3 CellCenter(WorldBoundsReadModel bounds, OpenSimCity.Core.Mathematics.CellCoord cell, float height)
+        private static void ConfigureDirection(
+            Transform marker,
+            IReadOnlyList<OpenSimCity.Core.Mathematics.CellCoord> cells,
+            WorldBoundsReadModel bounds)
+        {
+            if (cells == null || cells.Count == 0)
+            {
+                marker.localScale = Vector3.zero;
+                return;
+            }
+            var fromIndex = Math.Max(0, (cells.Count - 1) / 2);
+            var toIndex = Math.Min(cells.Count - 1, fromIndex + 1);
+            if (fromIndex == toIndex && fromIndex > 0)
+                fromIndex--;
+            var from = CellCenter(bounds, cells[fromIndex], bounds.CellSize * 0.15f);
+            var to = CellCenter(bounds, cells[toIndex], bounds.CellSize * 0.15f);
+            var delta = to - from;
+            marker.localPosition = Vector3.Lerp(from, to, 0.5f);
+            marker.localRotation = delta.sqrMagnitude <= 0.0001f
+                ? Quaternion.identity
+                : Quaternion.LookRotation(delta.normalized, Vector3.up);
+            marker.localScale = new Vector3(
+                bounds.CellSize * 0.11f,
+                bounds.CellSize * 0.07f,
+                bounds.CellSize * 0.42f);
+        }
+
+        private static void ResizeViews(
+            IList<GameObject> active,
+            Stack<GameObject> pooled,
+            int count,
+            Func<GameObject> create)
+        {
+            while (active.Count > count)
+            {
+                var lastIndex = active.Count - 1;
+                var view = active[lastIndex];
+                active.RemoveAt(lastIndex);
+                view.SetActive(false);
+                pooled.Push(view);
+            }
+            while (active.Count < count)
+            {
+                var view = pooled.Count > 0 ? pooled.Pop() : create();
+                view.SetActive(true);
+                active.Add(view);
+            }
+        }
+
+        private static void SetActive(IReadOnlyList<GameObject> views, bool value)
+        {
+            for (var index = 0; index < views.Count; index++)
+                views[index].SetActive(value);
+        }
+
+        private static void DestroyPool(Stack<GameObject> pool)
+        {
+            while (pool.Count > 0)
+                UnityEngine.Object.Destroy(pool.Pop());
+        }
+
+        private static Vector3 CellCenter(
+            WorldBoundsReadModel bounds,
+            OpenSimCity.Core.Mathematics.CellCoord cell,
+            float height)
         {
             return new Vector3(
                 bounds.MinX + (cell.X + 0.5f) * bounds.CellSize,
