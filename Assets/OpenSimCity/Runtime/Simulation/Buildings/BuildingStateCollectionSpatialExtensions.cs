@@ -11,11 +11,13 @@ namespace OpenSimCity.Simulation.Buildings
                 var rows = buildings.Buildings;
                 for (var index = 0; index < rows.Count; index++)
                 {
-                    if (rows[index].Anchor == cell)
-                    {
-                        building = rows[index];
-                        return true;
-                    }
+                    var candidate = rows[index];
+                    var footprint = candidate.Footprint;
+                    if (cell.X < candidate.Anchor.X || cell.X >= candidate.Anchor.X + footprint.Width ||
+                        cell.Y < candidate.Anchor.Y || cell.Y >= candidate.Anchor.Y + footprint.Height)
+                        continue;
+                    building = candidate;
+                    return true;
                 }
             }
 
