@@ -18,5 +18,16 @@ namespace OpenSimCity.Tests.EditMode
             Assert.That(CityRuntimeOptions.Default.Width, Is.EqualTo(WorldState.DefaultWidth));
             Assert.That(CityRuntimeOptions.Default.Height, Is.EqualTo(WorldState.DefaultHeight));
         }
+
+        [Test]
+        public void PassingBothLanesOnlyMakesExpansionEligible()
+        {
+            var result = P8MapScopeDecision.Evaluate(
+                new P8BenchmarkGateResult(true, P8BenchmarkGateReason.Passed, "pass"),
+                new P8BenchmarkGateResult(true, P8BenchmarkGateReason.Passed, "pass"));
+            Assert.That(result.Scope, Is.EqualTo(P8MapScopeKind.ExpansionEligible));
+            Assert.That(WorldState.DefaultWidth, Is.EqualTo(64));
+            Assert.That(WorldState.DefaultHeight, Is.EqualTo(64));
+        }
     }
 }
