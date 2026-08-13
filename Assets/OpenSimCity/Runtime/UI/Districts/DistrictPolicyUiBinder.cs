@@ -25,7 +25,6 @@ namespace OpenSimCity.UI.Districts
         public void Configure(UIDocument target) { document = target; BuildPanel(); }
         private void OnEnable() { if (document == null) document = GetComponent<UIDocument>(); BuildPanel(); }
         private void OnDisable() { _panel?.RemoveFromHierarchy(); _panel = null; _context = null; _module = null; _readModel = null; }
-
         private void Update()
         {
             BindIfNeeded();
@@ -33,8 +32,7 @@ namespace OpenSimCity.UI.Districts
             _readModel.RefreshIfNeeded();
             var selection = DistrictSelection.Current;
             if (_version == _readModel.Snapshot.Version && _selectionVersion == selection.Version) return;
-            _version = _readModel.Snapshot.Version; _selectionVersion = selection.Version;
-            RefreshText();
+            _version = _readModel.Snapshot.Version; _selectionVersion = selection.Version; RefreshText();
         }
 
         private void BindIfNeeded()
@@ -92,7 +90,7 @@ namespace OpenSimCity.UI.Districts
             }
 
             var period = _readModel.Snapshot.HasProcessedMonth ? $"{_readModel.Snapshot.Year}-{_readModel.Snapshot.Month:00}" : "미정산";
-            _summary.text = $"{active.Name} · 지난 기간 {period}\n인구 {active.Population} · 일자리 {active.Jobs} · 통과 통행 {active.RoutedTrips}\n버스 {active.BusTrips} · 자동차 {active.PrivateVehicleTrips} · 서비스 {active.ServiceCoveragePermille}/1000\n오염 {active.Pollution} · 지난 정책 지출 {active.PolicyCost}";
+            _summary.text = $"{active.Name} · 지난 기간 {period}\n인구 {active.Population} · 일자리 {active.Jobs} · 통과 통행 {active.RoutedTrips} · 소음 {active.TrafficNoisePermille}/1000\n버스 {active.BusTrips} · 자동차 {active.PrivateVehicleTrips} · 서비스 {active.ServiceCoveragePermille}/1000\n오염 {active.Pollution} · 지난 정책 지출 {active.PolicyCost}";
             var builder = new StringBuilder();
             for (var index = 0; index < active.Policies.Count; index++)
             {
