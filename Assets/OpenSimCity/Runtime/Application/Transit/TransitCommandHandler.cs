@@ -131,6 +131,9 @@ namespace OpenSimCity.Application.Transit
 
         private TransitCommandResult Evaluate(PlaceTransitStopCommand command)
         {
+            if (!command.StopId.IsValid)
+                return Reject(TransitCommandOperation.PlaceStop, TransitCommandFailureReason.InvalidCommand,
+                    _parameters.StopConstructionCost, command.StopId);
             if (!_roads.IsInBounds(command.RoadCell))
                 return Reject(TransitCommandOperation.PlaceStop, TransitCommandFailureReason.OutOfBounds,
                     _parameters.StopConstructionCost, command.StopId);
@@ -155,6 +158,8 @@ namespace OpenSimCity.Application.Transit
 
         private TransitCommandResult Evaluate(RemoveTransitStopCommand command)
         {
+            if (!command.StopId.IsValid)
+                return Reject(TransitCommandOperation.RemoveStop, TransitCommandFailureReason.InvalidCommand, 0, command.StopId);
             if (!_network.TryGetStop(command.StopId, out _))
                 return Reject(TransitCommandOperation.RemoveStop, TransitCommandFailureReason.StopNotFound, 0, command.StopId);
             var lines = _network.Lines;
@@ -171,6 +176,9 @@ namespace OpenSimCity.Application.Transit
 
         private TransitCommandResult Evaluate(UpsertTransitLineCommand command)
         {
+            if (!command.LineId.IsValid)
+                return Reject(TransitCommandOperation.UpsertLine, TransitCommandFailureReason.InvalidCommand, 0,
+                    default(TransitStopId), command.LineId);
             if (command.ServiceUnits < 1)
                 return Reject(TransitCommandOperation.UpsertLine, TransitCommandFailureReason.InvalidServiceUnits, 0,
                     default(TransitStopId), command.LineId);
@@ -213,6 +221,9 @@ namespace OpenSimCity.Application.Transit
 
         private TransitCommandResult Evaluate(DeleteTransitLineCommand command)
         {
+            if (!command.LineId.IsValid)
+                return Reject(TransitCommandOperation.DeleteLine, TransitCommandFailureReason.InvalidCommand, 0,
+                    default(TransitStopId), command.LineId);
             return _network.TryGetLine(command.LineId, out _)
                 ? TransitCommandResult.Valid(TransitCommandOperation.DeleteLine, 0, _funds.Funds,
                     default(TransitStopId), command.LineId)
@@ -246,7 +257,7 @@ namespace OpenSimCity.Application.Transit
                 return _network.TryRemoveLine(delete.LineId);
             if (command is SetTransitBudgetCommand budget)
             {
-                _network.ScheduleBudget(budget.BudgetPermille, _currentMonth().AddMonths(1));
+                _network.ScheduleBudget(budget.BudgetPermille, _currentMonth());
                 return true;
             }
             return false;
