@@ -133,9 +133,13 @@ namespace OpenSimCity.Application.Verification
                 var parcel = parcels[index];
                 if (!parcel.IsDevelopmentEligible || parcel.Width != 1 || parcel.Height != 1 || !definitions.TryGetValue(parcel.ZoneType, out var definition)) continue;
                 var id = new StableId(BuildingIdPrefix | (ulong)(uint)(created + 1));
-                if (!runtime.Buildings.Create(id, definition.Id, parcel.Id, parcel.Anchor,
-                    definition.OccupancyCapacity, definition.JobCapacity))
-                    throw new InvalidOperationException($"Benchmark building seed failed at parcel {parcel.Id}.");
+                runtime.Buildings.Create(
+                    id,
+                    definition.Id,
+                    parcel.Id,
+                    parcel.Anchor,
+                    definition.OccupancyCapacity,
+                    definition.JobCapacity);
                 created++;
             }
         }
