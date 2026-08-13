@@ -12,12 +12,26 @@ namespace OpenSimCity.Simulation.Districts
         private readonly IReadOnlyList<CellCoord> _readOnlyCells;
 
         public DistrictState(StableId id, string name, uint colorRgba)
+            : this(id, name, colorRgba, Array.Empty<CellCoord>())
+        {
+        }
+
+        public DistrictState(StableId id, string name, uint colorRgba, IEnumerable<CellCoord> cells)
         {
             if (!id.IsValid) throw new ArgumentException("District requires a stable ID.", nameof(id));
+            if (cells == null) throw new ArgumentNullException(nameof(cells));
             Id = id;
             Name = NormalizeName(name);
             ColorRgba = colorRgba;
             _readOnlyCells = _cells.AsReadOnly();
+            var ordered = new List<CellCoord>(cells);
+            ordered.Sort();
+            for (var index = 0; index < ordered.Count; index++)
+            {
+                if (index > 0 && ordered[index] == ordered[index - 1])
+                    throw new ArgumentException("District cells must be unique.", nameof(cells));
+                _cells.Add(ordered[index]);
+            }
         }
 
         public StableId Id { get; }
