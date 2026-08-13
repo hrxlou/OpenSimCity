@@ -7,16 +7,17 @@ using OpenSimCity.Simulation.Population;
 namespace OpenSimCity.Application.Bootstrap
 {
     /// <summary>
-    /// Owns the monthly run order. On each month boundary it drives its registered
-    /// monthly systems in registration order for the same completed month, so later
-    /// systems (market/RCI) observe the state earlier systems (population/employment)
-    /// already produced. Simulation systems never schedule themselves.
+    /// Owns the monthly run order. Registered pre-core systems run first in stable
+    /// registration order, followed by the immutable core systems supplied at
+    /// construction. Simulation systems never schedule themselves.
     /// </summary>
     public sealed class MonthlySimulationScheduler : IApplicationTickSystem
     {
         public const int DefaultTicksPerMonth = 300;
 
         private readonly IMonthlySimulationSystem[] _monthlySystems;
+        private readonly List<IMonthlySimulationSystem> _preCoreSystems =
+            new List<IMonthlySimulationSystem>();
         private readonly int _ticksPerMonth;
         private SimulationDate _nextMonth;
         private SimulationTick _nextRunTick;
@@ -61,8 +62,26 @@ namespace OpenSimCity.Application.Bootstrap
         public int CompletedMonths { get; private set; }
         public SimulationDate NextMonth => _nextMonth;
         public SimulationTick NextRunTick => _nextRunTick;
+        public IReadOnlyList<IMonthlySimulationSystem> PreCoreSystems => _preCoreSystems.AsReadOnly();
 
         public event Action<SimulationDate> MonthCompleted;
+
+        /// <summary>
+        /// Registers a monthly capability before Population and the core finance
+        /// composition. Duplicate references are ignored. Registration order is the
+        /// deterministic tie-breaker between capability systems.
+        /// </summary>
+        public void RegisterPreCoreSystem(IMonthlySimulationSystem system)
+        {
+            if (system == null)
+                throw new ArgumentNullException(nameof(system));
+            for (var index = 0; index < _preCoreSystems.Count; index++)
+            {
+                if (ReferenceEquals(_preCoreSystems[index], system))
+                    return;
+            }
+            _preCoreSystems.Add(system);
+        }
 
         public void ProcessTick(SimulationTick tick)
         {
@@ -75,13 +94,14 @@ namespace OpenSimCity.Application.Bootstrap
             }
 
             var completedMonth = _nextMonth;
+            for (var index = 0; index < _preCoreSystems.Count; index++)
+                _preCoreSystems[index].RunMonth(completedMonth);
             for (var index = 0; index < _monthlySystems.Length; index++)
                 _monthlySystems[index].RunMonth(completedMonth);
             _nextMonth = _nextMonth.AddMonths(1);
             CompletedMonths = checked(CompletedMonths + 1);
             _nextRunTick = AddTicks(tick, _ticksPerMonth);
-            if (MonthCompleted != null)
-                MonthCompleted(completedMonth);
+            MonthCompleted?.Invoke(completedMonth);
         }
 
         internal void RestoreState(
