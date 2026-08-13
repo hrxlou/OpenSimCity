@@ -3,6 +3,7 @@ using OpenSimCity.Application.Transit;
 using OpenSimCity.Application.World;
 using OpenSimCity.Gameplay.Construction;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace OpenSimCity.Gameplay.Transit
 {
@@ -66,11 +67,35 @@ namespace OpenSimCity.Gameplay.Transit
 
     public static class TransitGameplayBootstrap
     {
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void Install()
+        private static bool _subscribed;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void Subscribe()
         {
+            if (_subscribed)
+                return;
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            _subscribed = true;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void InstallInitial()
+        {
+            Install(SceneManager.GetActiveScene());
+        }
+
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (mode == LoadSceneMode.Single || scene == SceneManager.GetActiveScene())
+                Install(scene);
+        }
+
+        private static void Install(Scene scene)
+        {
+            if (!scene.IsValid() || !scene.isLoaded)
+                return;
             var cityHost = UnityEngine.Object.FindFirstObjectByType<CityRuntimeHost>();
-            if (cityHost == null)
+            if (cityHost == null || cityHost.gameObject.scene != scene)
                 return;
             var transitHost = cityHost.GetComponent<TransitRuntimeHost>();
             if (transitHost == null)
