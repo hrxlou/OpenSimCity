@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
+using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.Verification;
 
 namespace OpenSimCity.Tests.EditMode
@@ -18,6 +19,8 @@ namespace OpenSimCity.Tests.EditMode
             Assert.That(stress.Height, Is.EqualTo(256));
             Assert.That(target.RequiredBuildingCount, Is.EqualTo(2000));
             Assert.That(target.RequestedVisibleVehicleCount, Is.EqualTo(500));
+            Assert.That(TrafficVisualizationReadModel.MaximumAllowedVehicleSamples,
+                Is.GreaterThanOrEqualTo(target.RequestedVisibleVehicleCount));
             Assert.That(target.RequiredRepeatCount, Is.EqualTo(3));
             Assert.That(target.WarmupFrames, Is.EqualTo(stress.WarmupFrames));
             Assert.That(target.SampleFrames, Is.EqualTo(stress.SampleFrames));
