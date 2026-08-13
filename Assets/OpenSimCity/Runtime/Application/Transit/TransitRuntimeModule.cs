@@ -2,6 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using OpenSimCity.Application.Bootstrap;
 using OpenSimCity.Application.Commands;
+using OpenSimCity.Application.Districts;
 using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.World;
 using OpenSimCity.Core.Time;
@@ -26,6 +27,7 @@ namespace OpenSimCity.Application.Transit
         {
             _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
             Parameters = parameters ?? TransitModeChoiceParameters.Default;
+            var districtPolicies = DistrictPolicyRuntimeRegistry.GetOrCreate(runtime);
             Network = new TransitNetworkState();
             Commands = new TransitCommandHandler(
                 Network,
@@ -41,7 +43,10 @@ namespace OpenSimCity.Application.Transit
                 runtime.RoadGraph,
                 runtime.RoadDefinitions,
                 runtime.TripDemandSystem,
-                Parameters);
+                Parameters)
+            {
+                CostPolicy = districtPolicies.TransitInput
+            };
             PrivateVehicleRouting = new TransitPrivateVehicleRoutingSystem(
                 runtime.Roads,
                 runtime.RoadGraph,
