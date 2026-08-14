@@ -2,7 +2,6 @@ using System;
 using System.Text;
 using OpenSimCity.Application.Districts;
 using OpenSimCity.Application.World;
-using OpenSimCity.Simulation.Districts;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -56,8 +55,8 @@ namespace OpenSimCity.UI.Districts
             var title = new Label("지구 정책") { name = "osc-district-policy-title" }; title.style.unityFontStyleAndWeight = FontStyle.Bold; _panel.Add(title);
             _summary = AddLabel("osc-district-policy-summary");
             _policies = AddLabel("osc-district-policy-rows");
-            AddButton("화물차 제한 전환", () => Toggle(DistrictPolicyKind.HeavyVehicleRestriction));
-            AddButton("대중교통 보조금 전환", () => Toggle(DistrictPolicyKind.TransitSubsidy));
+            AddButton("화물차 제한 전환", ToggleHeavyVehicleRestriction);
+            AddButton("대중교통 보조금 전환", ToggleTransitSubsidy);
             _advice = AddLabel("osc-district-policy-advice");
             document.rootVisualElement.Add(_panel);
         }
@@ -65,14 +64,22 @@ namespace OpenSimCity.UI.Districts
         private Label AddLabel(string name) { var label = new Label { name = name }; label.style.whiteSpace = WhiteSpace.Normal; _panel.Add(label); return label; }
         private void AddButton(string text, Action action) { _panel.Add(new Button(action) { text = text }); }
 
-        private void Toggle(DistrictPolicyKind kind)
+        private void ToggleHeavyVehicleRestriction()
+        {
+            Toggle(module => module.ToggleHeavyVehicleRestriction(DistrictSelection.Current.ActiveDistrictId));
+        }
+
+        private void ToggleTransitSubsidy()
+        {
+            Toggle(module => module.ToggleTransitSubsidy(DistrictSelection.Current.ActiveDistrictId));
+        }
+
+        private void Toggle(Func<DistrictPolicyRuntimeModule, OpenSimCity.Application.Commands.CommandExecutionResult> action)
         {
             var id = DistrictSelection.Current.ActiveDistrictId;
             if (_module == null || !id.IsValid) { _advice.text = "먼저 지구를 선택하세요."; return; }
-            _module.Policies.TryGet(id, kind, out var state);
-            var currentDesired = state != null && state.HasPending ? state.PendingEnabled : state != null && state.IsEnabled;
-            var result = _module.Execute(new SetDistrictPolicyCommand(id, kind, !currentDesired));
-            _advice.text = result.IsApplied ? $"다음 월부터 {(currentDesired ? "해제" : "적용")} 예약됨" : result.Message;
+            var result = action(_module);
+            _advice.text = result.IsApplied ? "다음 월부터 정책 변경이 예약됐습니다." : result.Message;
             _readModel.RefreshIfNeeded();
         }
 
@@ -95,11 +102,19 @@ namespace OpenSimCity.UI.Districts
             for (var index = 0; index < active.Policies.Count; index++)
             {
                 var row = active.Policies[index];
-                var name = row.Kind == DistrictPolicyKind.HeavyVehicleRestriction ? "화물차 제한" : "대중교통 보조금";
-                var input = row.Kind == DistrictPolicyKind.HeavyVehicleRestriction ? $"화물 route preference 1000→{row.InputPermille}" : $"bus generalized cost 1000→{row.InputPermille}";
-                builder.Append(name).Append(" · ").Append(row.Effective ? "효과 적용" : row.Enabled ? "효과 미적용" : "꺼짐")
+                var isHeavyVehicleRestriction = index == 0;
+                var name = isHeavyVehicleRestriction ? "화물차 제한" : "대중교통 보조금";
+                var input = isHeavyVehicleRestriction ? $"화물 route preference 1000→{row.InputPermille}" : $"bus generalized cost 1000→{row.InputPermille}";
+                var operatingReason = !row.Enabled
+                    ? "꺼짐"
+                    : row.Effective
+                        ? "효과 적용"
+                        : row.LastProjectedCost > 0 && row.LastPaidCost == 0
+                            ? "예산 부족"
+                            : "효과 미적용";
+                builder.Append(name).Append(" · ").Append(operatingReason)
                     .Append(" · 월 비용 ").Append(row.MonthlyCost).Append(" · ").Append(input)
-                    .Append("\n지난 비용 ").Append(row.LastPaidCost).Append('/').Append(row.LastProjectedCost).Append(" · 원인 ").Append(row.Reason);
+                    .Append("\n지난 비용 ").Append(row.LastPaidCost).Append('/').Append(row.LastProjectedCost);
                 if (row.HasPending) builder.Append(" · 다음 적용 ").Append(row.PendingYear).Append('-').Append(row.PendingMonth.ToString("00")).Append(row.PendingEnabled ? " ON" : " OFF");
                 if (index + 1 < active.Policies.Count) builder.Append('\n');
             }
