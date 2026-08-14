@@ -1,5 +1,4 @@
 using OpenSimCity.Application.Services;
-using OpenSimCity.Gameplay.Services;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -9,7 +8,7 @@ namespace OpenSimCity.UI.Services
     public sealed class ServiceResponsePanel : MonoBehaviour
     {
         private PublicServiceUiBinder _binder;
-        private PublicServiceRuntimeHost _host;
+        private PublicServiceRuntimeModule _module;
         private ServiceResponseProjection _projection;
         private VisualElement _section;
         private Label _status;
@@ -19,11 +18,16 @@ namespace OpenSimCity.UI.Services
         private void Update()
         {
             if (_binder == null) _binder = GetComponent<PublicServiceUiBinder>();
-            if (_host == null) _host = Object.FindFirstObjectByType<PublicServiceRuntimeHost>();
             var panel = _binder?.Panel;
-            if (panel == null || _host?.Module == null) return;
+            var module = _binder?.Module;
+            if (panel == null || module == null) return;
+            if (!ReferenceEquals(module, _module))
+            {
+                _module = module;
+                _projection = new ServiceResponseProjection(module);
+                _version = -1;
+            }
             if (_section == null || _section.parent != panel) Build(panel);
-            if (_projection == null) _projection = new ServiceResponseProjection(_host.Module);
             _projection.RefreshIfNeeded();
             var settings = ServiceResponseSettings.Current;
             if (_version == _projection.Version && _settingsVersion == settings.Version) return;

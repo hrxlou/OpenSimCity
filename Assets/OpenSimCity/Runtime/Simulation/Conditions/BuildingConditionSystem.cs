@@ -121,9 +121,9 @@ namespace OpenSimCity.Simulation.Conditions
             if (dto == null)
                 throw new ArgumentNullException(nameof(dto));
             if (dto.BuildingId == 0 ||
-                !Enum.IsDefined(typeof(BuildingConditionStage), dto.Stage) ||
-                !Enum.IsDefined(typeof(BuildingConditionReason), dto.TopReason) ||
-                !Enum.IsDefined(typeof(RedevelopmentBlockReason), dto.RedevelopmentBlockReason))
+                !IsDefinedByteEnum<BuildingConditionStage>(dto.Stage) ||
+                !IsDefinedByteEnum<BuildingConditionReason>(dto.TopReason) ||
+                !IsDefinedByteEnum<RedevelopmentBlockReason>(dto.RedevelopmentBlockReason))
             {
                 throw new ArgumentException("Condition state DTO contains an unknown identity or enum.", nameof(dto));
             }
@@ -133,7 +133,7 @@ namespace OpenSimCity.Simulation.Conditions
             {
                 var factor = factorsSource[index] ??
                              throw new ArgumentException("Condition factors cannot contain null.", nameof(dto));
-                if (!Enum.IsDefined(typeof(BuildingConditionReason), factor.Reason) ||
+                if (!IsDefinedByteEnum<BuildingConditionReason>(factor.Reason) ||
                     factor.Reason == (int)BuildingConditionReason.None)
                 {
                     throw new ArgumentException("Condition factor uses an unknown reason.", nameof(dto));
@@ -156,6 +156,13 @@ namespace OpenSimCity.Simulation.Conditions
                 (RedevelopmentBlockReason)dto.RedevelopmentBlockReason,
                 factors);
             return state;
+        }
+
+        private static bool IsDefinedByteEnum<TEnum>(int value) where TEnum : struct
+        {
+            if (value < byte.MinValue || value > byte.MaxValue)
+                return false;
+            return Enum.IsDefined(typeof(TEnum), Enum.ToObject(typeof(TEnum), (byte)value));
         }
     }
 

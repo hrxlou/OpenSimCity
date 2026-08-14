@@ -10,7 +10,9 @@ namespace OpenSimCity.Tests.EditMode
 {
     public sealed class RoadUpgradeUxBenchmarkTests
     {
-        private const ulong ExpectedRoadChecksum = 0xB7B3B055E1A33B45UL;
+        // This UX fixture upgrades only the first row of a 128x128 world. Do not
+        // reuse the P5-04A full-grid hierarchy benchmark checksum here.
+        private const ulong ExpectedRoadChecksum = 0x21C6D3A14B4FB4C5UL;
 
         [Test]
         public void LargeGridPreviewReconfigurationAndCommitRemainDeterministic()

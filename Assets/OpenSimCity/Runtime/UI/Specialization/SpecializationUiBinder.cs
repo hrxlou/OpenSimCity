@@ -64,9 +64,7 @@ namespace OpenSimCity.UI.Specialization
             _context = current;
             _module = current == null
                 ? null
-                : SpecializationRuntimeRegistry.GetOrCreate(
-                    current.Runtime,
-                    new CitySpecializationEnvironment(current.Runtime));
+                : OpenSimCity.Application.UiRuntimeFacades.GetSpecialization(current.Runtime);
             _readModel = _module == null ? null : new SpecializationReadModel(_module);
             _version = -1;
         }

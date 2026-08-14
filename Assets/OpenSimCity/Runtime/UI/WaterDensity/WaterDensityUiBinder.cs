@@ -2,8 +2,7 @@ using System;
 using System.Text;
 using OpenSimCity.Application.Input;
 using OpenSimCity.Application.WaterDensity;
-using OpenSimCity.Gameplay.WaterDensity;
-using OpenSimCity.Simulation.Development;
+using OpenSimCity.Application.World;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -13,7 +12,8 @@ namespace OpenSimCity.UI.WaterDensity
     public sealed class WaterDensityUiBinder : MonoBehaviour
     {
         [SerializeField] private UIDocument document;
-        private WaterDensityRuntimeHost _host;
+        private CityRuntimeContext _context;
+        private WaterDensityRuntimeModule _module;
         private VisualElement _panel;
         private Label _summary;
         private Label _selection;
@@ -47,20 +47,30 @@ namespace OpenSimCity.UI.WaterDensity
             ReleaseKeyboard();
             _panel?.RemoveFromHierarchy();
             _panel = null;
+            _context = null;
+            _module = null;
         }
 
         private void Update()
         {
-            if (_host == null) _host = UnityEngine.Object.FindFirstObjectByType<WaterDensityRuntimeHost>();
-            var module = _host?.Module;
-            if (module == null) return;
-            module.ReadModel.RefreshIfNeeded();
-            var readVersion = module.ReadModel.Snapshot.Version;
+            BindIfNeeded();
+            if (_module == null) return;
+            _module.ReadModel.RefreshIfNeeded();
+            var readVersion = _module.ReadModel.Snapshot.Version;
             var selectionVersion = WaterDensitySelection.Current.Version;
             if (_readVersion == readVersion && _selectionVersion == selectionVersion) return;
             _readVersion = readVersion;
             _selectionVersion = selectionVersion;
             RefreshText();
+        }
+
+        private void BindIfNeeded()
+        {
+            var current = CityRuntimeContext.Current;
+            if (ReferenceEquals(current, _context)) return;
+            _context = current;
+            _module = current == null ? null : WaterDensityRuntimeRegistry.GetOrCreate(current.Runtime);
+            _readVersion = -1;
         }
 
         private void Rebuild()
@@ -126,12 +136,17 @@ namespace OpenSimCity.UI.WaterDensity
 
         private void PlacePump()
         {
-            if (_host == null || !WaterDensitySelection.Current.SelectedCell.HasValue)
+            if (_module == null || !WaterDensitySelection.Current.SelectedCell.HasValue)
             {
                 _feedback.text = "빈 도로 인접 셀을 먼저 선택하세요.";
                 return;
             }
-            var result = _host.PlacePump(WaterDensitySelection.Current.SelectedCell.Value);
+            var cell = WaterDensitySelection.Current.SelectedCell.Value;
+            var producerId = _module.ProducerIdFor(cell);
+            var result = _module.Execute(new PlaceWaterProducerCommand(
+                producerId,
+                WaterDensityDefinitionIds.Pump,
+                cell));
             _feedback.text = result.IsApplied ? "수도 펌프를 배치했습니다." : result.Message;
             RefreshText();
         }
@@ -149,14 +164,13 @@ namespace OpenSimCity.UI.WaterDensity
             if (_summary == null || _selection == null || _details == null ||
                 _factors == null || _feedback == null || _waterOverlay == null ||
                 _densityOverlay == null) return;
-            var module = _host?.Module;
-            if (module == null)
+            if (_module == null)
             {
                 _summary.text = "수도·밀도 runtime을 기다리는 중";
                 return;
             }
-            module.ReadModel.RefreshIfNeeded();
-            var snapshot = module.ReadModel.Snapshot;
+            _module.ReadModel.RefreshIfNeeded();
+            var snapshot = _module.ReadModel.Snapshot;
             _summary.text = snapshot.HasProcessedMonth
                 ? $"적용 기간 {snapshot.Year}년 {snapshot.Month}월 · 수도 {snapshot.WaterSupplied}/{snapshot.WaterRequested} · 펌프 {snapshot.Producers.Count}"
                 : $"아직 처리된 월 없음 · 펌프 {snapshot.Producers.Count}";
@@ -212,7 +226,7 @@ namespace OpenSimCity.UI.WaterDensity
                     var factor = selectedBuilding.Factors[index];
                     factors.Append('\n');
                     factors.Append(factor.IsSatisfied ? "✓ " : "- ");
-                    factors.Append(FactorText(factor.Kind));
+                    factors.Append(FactorText(index));
                     factors.Append(' ');
                     factors.Append(factor.CurrentValue);
                     factors.Append('/');
@@ -247,14 +261,14 @@ namespace OpenSimCity.UI.WaterDensity
             }
         }
 
-        private static string FactorText(DensityUpgradeFactorKind kind)
+        private static string FactorText(int index)
         {
-            switch (kind)
+            switch (index)
             {
-                case DensityUpgradeFactorKind.CityPopulation: return "도시 인구";
-                case DensityUpgradeFactorKind.WaterSupply: return "수도 공급";
-                case DensityUpgradeFactorKind.LandValue: return "토지가치";
-                case DensityUpgradeFactorKind.RoadTier: return "도로 등급";
+                case 0: return "도시 인구";
+                case 1: return "수도 공급";
+                case 2: return "토지가치";
+                case 3: return "도로 등급";
                 default: return "서비스";
             }
         }

@@ -75,7 +75,7 @@ namespace OpenSimCity.Tests.EditMode
                 InitialFunds = 10_000
             });
             var definition = runtime.BuildingDefinitions.Definitions
-                .Single(item => item.ZoneType == ZoneType.ResidentialLow);
+                .First(item => item.ZoneType == ZoneType.ResidentialLow);
             buildingId = new StableId(0xB220_0000_0000_0301UL);
             runtime.Buildings.Add(new BuildingState(
                 buildingId,

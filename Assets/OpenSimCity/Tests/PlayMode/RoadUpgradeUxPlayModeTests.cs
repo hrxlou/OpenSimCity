@@ -21,7 +21,7 @@ namespace OpenSimCity.Tests.PlayMode
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            CityRuntimeContext.ResetForTests();
+            CityRuntimeContext.Reset();
             var operation = SceneManager.LoadSceneAsync("CityPrototype", LoadSceneMode.Single);
             while (!operation.isDone)
                 yield return null;
@@ -32,7 +32,7 @@ namespace OpenSimCity.Tests.PlayMode
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            CityRuntimeContext.ResetForTests();
+            CityRuntimeContext.Reset();
             yield return null;
         }
 
@@ -90,7 +90,7 @@ namespace OpenSimCity.Tests.PlayMode
             yield return null;
             Assert.That(context.ActiveOverlaySnapshot.Kind,
                 Is.EqualTo(PlacementOverlayKind.RoadHierarchy));
-            Assert.That(overlayRenderer.ActiveCellCount, Is.EqualTo(4));
+            Assert.That(overlayRenderer.OverlayCellCount, Is.EqualTo(4));
             Assert.That(context.ActiveOverlaySnapshot.Cells.All(cell => cell.Label == "↔"), Is.True);
 
             var committed = context.Tool.CommitDrag();
@@ -103,7 +103,7 @@ namespace OpenSimCity.Tests.PlayMode
             Assert.That(context.Runtime.Roads.Cells.Count(cell => cell.IsOccupied), Is.EqualTo(4));
             Assert.That(context.ActiveOverlaySnapshot.Cells.All(cell =>
                 cell.Category == PlacementOverlayCategory.RoadAvenue && cell.Label == "→"), Is.True);
-            Assert.That(overlayRenderer.ActiveCellCount, Is.EqualTo(4));
+            Assert.That(overlayRenderer.OverlayCellCount, Is.EqualTo(4));
             Assert.That(panel.Query<Label>().ToList().Any(label =>
                 label.text.Contains("건설값") && label.text.Contains("차액")), Is.True);
 

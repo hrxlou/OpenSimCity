@@ -95,7 +95,7 @@ namespace OpenSimCity.Tests.EditMode
                 new CellCoord(3, 3))).IsApplied, Is.True);
             runtime.Parcels.RefreshIfNeeded();
             var parcel = runtime.Parcels.Parcels.Single();
-            var definition = runtime.BuildingDefinitions.Definitions.Single(row =>
+            var definition = runtime.BuildingDefinitions.Definitions.First(row =>
                 row.ZoneType == ZoneType.ResidentialLow &&
                 row.Footprint.Width <= parcel.Width &&
                 row.Footprint.Height <= parcel.Height);

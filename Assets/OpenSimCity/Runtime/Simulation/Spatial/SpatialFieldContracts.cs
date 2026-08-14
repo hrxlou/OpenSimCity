@@ -140,6 +140,9 @@ namespace OpenSimCity.Simulation.Spatial
         public static readonly StableId TrafficNoise = new StableId(Namespace | 0x03UL);
         public static readonly StableId CrimePressure = new StableId(Namespace | 0x04UL);
         public static readonly StableId CivicImprovement = new StableId(Namespace | 0x05UL);
+        public static readonly StableId SmallRoadNoise = new StableId(Namespace | 0x06UL);
+        public static readonly StableId StreetRoadNoise = new StableId(Namespace | 0x07UL);
+        public static readonly StableId AvenueRoadNoise = new StableId(Namespace | 0x08UL);
     }
 
     public sealed class SpatialSourceDefinitionCatalog
@@ -188,7 +191,19 @@ namespace OpenSimCity.Simulation.Spatial
                     landValueDelta: -60, pollution: 0, noise: 30, crime: 450, parkAmenity: 0),
                 new SpatialSourceDefinition(
                     SpatialSourceDefinitionIds.CivicImprovement, "Civic improvement", 4,
-                    landValueDelta: 100, pollution: -20, noise: -20, crime: -300, parkAmenity: 50)
+                    landValueDelta: 100, pollution: -20, noise: -20, crime: -300, parkAmenity: 50),
+                // Derived road sources use the road hierarchy's authoritative noise-emission
+                // scale (15/30/70) instead of the generic 400-point traffic fixture source.
+                // These IDs are rebuildable and never persisted in capability snapshots.
+                new SpatialSourceDefinition(
+                    SpatialSourceDefinitionIds.SmallRoadNoise, "Small-road noise", 3,
+                    landValueDelta: 0, pollution: 0, noise: 15, crime: 0, parkAmenity: 0),
+                new SpatialSourceDefinition(
+                    SpatialSourceDefinitionIds.StreetRoadNoise, "Street-road noise", 3,
+                    landValueDelta: 0, pollution: 0, noise: 30, crime: 0, parkAmenity: 0),
+                new SpatialSourceDefinition(
+                    SpatialSourceDefinitionIds.AvenueRoadNoise, "Avenue-road noise", 3,
+                    landValueDelta: 0, pollution: 0, noise: 70, crime: 0, parkAmenity: 0)
             });
         }
     }

@@ -18,8 +18,7 @@ namespace OpenSimCity.UI.Transit
         [SerializeField] private UIDocument document;
 
         private CityRuntimeContext _context;
-        private TransitRuntimeModule _module;
-        private TransitConstructionTool _tool;
+        private TransitUiController _controller;
         private VisualElement _panel;
         private Label _summary;
         private Label _reason;
@@ -31,8 +30,6 @@ namespace OpenSimCity.UI.Transit
         private int _observedReadVersion = -1;
 
         public VisualElement Panel => _panel;
-        public TransitRuntimeModule Module => _module;
-        public TransitConstructionTool Tool => _tool;
 
         public void Configure(UIDocument target)
         {
@@ -49,7 +46,7 @@ namespace OpenSimCity.UI.Transit
 
         private void OnDisable()
         {
-            UnbindTool();
+            UnbindController();
             ReleaseInputCaptures();
             _panel?.RemoveFromHierarchy();
             _panel = null;
@@ -58,11 +55,10 @@ namespace OpenSimCity.UI.Transit
         private void Update()
         {
             BindRuntimeIfNeeded();
-            if (_module == null)
+            if (_controller == null)
                 return;
-            _module.RefreshDerived();
-            _module.ReadModel.RefreshIfNeeded();
-            var snapshot = _module.ReadModel.Snapshot;
+            _controller.Refresh();
+            var snapshot = _controller.Snapshot;
             if (_observedReadVersion == snapshot.Version)
                 return;
             _observedReadVersion = snapshot.Version;
@@ -74,22 +70,23 @@ namespace OpenSimCity.UI.Transit
             var current = CityRuntimeContext.Current;
             if (ReferenceEquals(current, _context))
                 return;
-            UnbindTool();
+            UnbindController();
             _context = current;
-            _module = current == null ? null : TransitRuntimeRegistry.GetOrCreate(current.Runtime);
-            _tool = _module == null ? null : TransitConstructionToolRegistry.GetOrCreate(_module);
-            if (_tool != null)
-                _tool.PreviewChanged += HandlePreviewChanged;
+            _controller = current == null ? null : TransitUiController.Create(current.Runtime);
+            if (_controller != null)
+                _controller.PreviewChanged += HandlePreviewChanged;
             _observedReadVersion = -1;
             UpdateLabels();
         }
 
-        private void UnbindTool()
+        private void UnbindController()
         {
-            if (_tool != null)
-                _tool.PreviewChanged -= HandlePreviewChanged;
-            _tool = null;
-            _module = null;
+            if (_controller != null)
+            {
+                _controller.PreviewChanged -= HandlePreviewChanged;
+                _controller.Dispose();
+            }
+            _controller = null;
         }
 
         private void RebuildPanel()
@@ -118,15 +115,15 @@ namespace OpenSimCity.UI.Transit
             _panel.Add(title);
 
             var toolRow = Row();
-            toolRow.Add(Button("정류장 (B)", () => _tool?.SelectStopPlacement()));
-            toolRow.Add(Button("노선 (N)", () => _tool?.SelectLineEditor()));
-            toolRow.Add(Button("취소", () => _tool?.Cancel()));
+            toolRow.Add(Button("정류장 (B)", () => _controller?.SelectStopPlacement()));
+            toolRow.Add(Button("노선 (N)", () => _controller?.SelectNewLine()));
+            toolRow.Add(Button("취소", () => _controller?.Cancel()));
             _panel.Add(toolRow);
 
             var lineRow = Row();
             _commitLine = Button("노선 확정 (Enter)", CommitLine);
             lineRow.Add(_commitLine);
-            lineRow.Add(Button("마지막 정류장 제거", () => _tool?.RemoveLastLineStop()));
+            lineRow.Add(Button("마지막 정류장 제거", () => _controller?.RemoveLastLineStop()));
             _panel.Add(lineRow);
 
             _budget = new SliderInt("운행 예산", 0, 1000) { name = "osc-transit-budget" };
@@ -154,23 +151,23 @@ namespace OpenSimCity.UI.Transit
 
         private void CommitLine()
         {
-            if (_tool == null)
+            if (_controller == null)
                 return;
-            var result = _tool.Commit();
+            var result = _controller.Commit();
             _preview.text = result.IsApplied ? "노선 명령이 적용되었습니다." : result.Message;
         }
 
         private void ApplyBudget()
         {
-            if (_module == null)
+            if (_controller == null)
                 return;
-            var result = _module.Execute(new SetTransitBudgetCommand(_budget.value));
+            var result = _controller.SetBudget(_budget.value);
             _preview.text = result.IsApplied
                 ? $"운행 예산 {_budget.value}/1000이 다음 월에 적용됩니다."
                 : result.Message;
         }
 
-        private void HandlePreviewChanged(TransitConstructionPreview preview)
+        private void HandlePreviewChanged(TransitUiPreview preview)
         {
             if (_preview == null)
                 return;
@@ -190,14 +187,14 @@ namespace OpenSimCity.UI.Transit
         {
             if (_summary == null || _reason == null || _budget == null)
                 return;
-            if (_module == null)
+            if (_controller == null)
             {
                 _summary.text = "도시 runtime을 기다리는 중";
                 _reason.text = string.Empty;
                 return;
             }
 
-            var snapshot = _module.ReadModel.Snapshot;
+            var snapshot = _controller.Snapshot;
             _budget.SetValueWithoutNotify(
                 snapshot.HasPendingBudget ? snapshot.PendingBudgetPermille : snapshot.ActiveBudgetPermille);
             _summary.text =

@@ -46,6 +46,16 @@ namespace OpenSimCity.Application.Districts
             return Commands.Execute(new CommandEnvelope(sequence.Stamp, command)).WithStamp(sequence.Stamp);
         }
 
+        public CommandExecutionResult ToggleHeavyVehicleRestriction(StableId districtId)
+        {
+            return TogglePolicy(districtId, DistrictPolicyKind.HeavyVehicleRestriction);
+        }
+
+        public CommandExecutionResult ToggleTransitSubsidy(StableId districtId)
+        {
+            return TogglePolicy(districtId, DistrictPolicyKind.TransitSubsidy);
+        }
+
         public void RunMonth(SimulationDate month)
         {
             if (HasProcessedMonth && month.CompareTo(LastProcessedMonth) <= 0)
@@ -172,6 +182,17 @@ namespace OpenSimCity.Application.Districts
             for (var index = 0; index < rows.Count; index++)
                 if (!Districts.Districts.TryGet(rows[index].DistrictId, out _)) removed.Add(rows[index].DistrictId);
             foreach (var id in removed) Policies.RemoveDistrict(id);
+        }
+
+        private CommandExecutionResult TogglePolicy(StableId districtId, DistrictPolicyKind kind)
+        {
+            if (!districtId.IsValid)
+                return CommandExecutionResult.Rejected("Select a district before changing policy.");
+            Policies.TryGet(districtId, kind, out var state);
+            var currentDesired = state != null && state.HasPending
+                ? state.PendingEnabled
+                : state != null && state.IsEnabled;
+            return Execute(new SetDistrictPolicyCommand(districtId, kind, !currentDesired));
         }
     }
 

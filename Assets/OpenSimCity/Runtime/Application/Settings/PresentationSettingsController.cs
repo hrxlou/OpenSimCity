@@ -130,7 +130,7 @@ namespace OpenSimCity.Application.Settings
             var map = new Dictionary<PresentationInputAction, string>();
             var rows = _settings.BindingOverrides ?? Array.Empty<PresentationBindingOverrideDto>();
             for (var index = 0; index < rows.Length; index++)
-                if (rows[index] != null && Enum.IsDefined(typeof(PresentationInputAction), rows[index].Action))
+                if (rows[index] != null && IsDefinedInputAction(rows[index].Action))
                     map[(PresentationInputAction)rows[index].Action] = rows[index].ControlPath;
             return map;
         }
@@ -144,7 +144,7 @@ namespace OpenSimCity.Application.Settings
             {
                 SchemaVersion = PresentationSettingsDto.CurrentSchemaVersion,
                 UiScalePercent = source.UiScalePercent == 125 || source.UiScalePercent == 150 ? source.UiScalePercent : 100,
-                VisualMode = Enum.IsDefined(typeof(AccessibilityVisualMode), source.VisualMode) ? source.VisualMode : (int)AccessibilityVisualMode.Standard,
+                VisualMode = IsDefinedVisualMode(source.VisualMode) ? source.VisualMode : (int)AccessibilityVisualMode.Standard,
                 StrongFocusVisible = source.StrongFocusVisible,
                 MasterVolumePermille = source.SchemaVersion == 1 ? 1000 : ClampVolume(source.MasterVolumePermille, 1000),
                 MusicVolumePermille = source.SchemaVersion == 1 ? 700 : ClampVolume(source.MusicVolumePermille, 700),
@@ -162,7 +162,7 @@ namespace OpenSimCity.Application.Settings
             for (var index = 0; index < rows.Length; index++)
             {
                 var row = rows[index];
-                if (row == null || !Enum.IsDefined(typeof(PresentationInputAction), row.Action) ||
+                if (row == null || !IsDefinedInputAction(row.Action) ||
                     !PresentationInputBindingDefaults.IsAllowedKeyboardPath(row.ControlPath)) continue;
                 var action = (PresentationInputAction)row.Action;
                 var conflict = false;
@@ -177,6 +177,18 @@ namespace OpenSimCity.Application.Settings
             }
             result.BindingOverrides = ToSortedArray(map);
             return result;
+        }
+
+        private static bool IsDefinedVisualMode(int value)
+        {
+            return value >= byte.MinValue && value <= byte.MaxValue &&
+                   Enum.IsDefined(typeof(AccessibilityVisualMode), (AccessibilityVisualMode)(byte)value);
+        }
+
+        private static bool IsDefinedInputAction(int value)
+        {
+            return value >= byte.MinValue && value <= byte.MaxValue &&
+                   Enum.IsDefined(typeof(PresentationInputAction), (PresentationInputAction)(byte)value);
         }
 
         private static int ClampVolume(int value, int fallback) => value < 0 || value > 1000 ? fallback : value;
