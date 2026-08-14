@@ -1,7 +1,9 @@
 using System.Collections;
+using System.Reflection;
 using NUnit.Framework;
 using OpenSimCity.Application.Input;
 using OpenSimCity.UI.Foundation;
+using OpenSimCity.UI.Release;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -11,6 +13,18 @@ namespace OpenSimCity.Tests.PlayMode
 {
     public sealed class SystemPanelDockPlayModeTests
     {
+        private static readonly string[] ExpectedPanels =
+        {
+            "osc-transit-panel",
+            "osc-public-service-panel",
+            "osc-spatial-fields-panel",
+            "osc-water-density-panel",
+            "osc-building-condition-panel",
+            "osc-specialization-panel",
+            "osc-district-panel",
+            "osc-district-policy-panel"
+        };
+
         [TearDown]
         public void TearDown()
         {
@@ -20,9 +34,7 @@ namespace OpenSimCity.Tests.PlayMode
         [UnityTest]
         public IEnumerator ReleaseMenuStartsModalAndSuppressesSystemPanelDock()
         {
-            yield return SceneManager.LoadSceneAsync("CityPrototype", LoadSceneMode.Single);
-            yield return null;
-            yield return null;
+            yield return LoadCityPrototype();
 
             var bootstrap = Object.FindAnyObjectByType<UiFoundationBootstrap>();
             Assert.That(bootstrap, Is.Not.Null, "CityPrototype has no UiFoundationBootstrap.");
@@ -35,51 +47,51 @@ namespace OpenSimCity.Tests.PlayMode
             Assert.That(bootstrap.SystemPanelDock.resolvedStyle.display, Is.EqualTo(DisplayStyle.None));
             Assert.That(UiInputBoundary.Current.IsPointerOverUi, Is.True,
                 "An open release menu must block world pointer input.");
+
+            var binder = Object.FindAnyObjectByType<ReleaseMenuBinder>();
+            Assert.That(binder, Is.Not.Null, "The release menu binder was not installed.");
+            var toggleMenu = typeof(ReleaseMenuBinder).GetMethod(
+                "ToggleMenu",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(toggleMenu, Is.Not.Null);
+            toggleMenu.Invoke(binder, null);
+            yield return null;
+
+            Assert.That(backdrop.resolvedStyle.display, Is.EqualTo(DisplayStyle.None));
+            Assert.That(bootstrap.SystemPanelDock.resolvedStyle.display, Is.EqualTo(DisplayStyle.Flex));
         }
 
-        [Test]
-        public void DockAdoptsNormalizesOrdersAndSuppressesKnownPanels()
+        [UnityTest]
+        public IEnumerator AllSystemPanelsAreAdoptedNormalizedAndDeterministicallyOrdered()
         {
-            var documentRoot = new VisualElement();
-            var foundationRoot = new VisualElement();
-            var dock = UiSystemPanelDock.Create();
-            foundationRoot.Add(dock);
-            documentRoot.Add(foundationRoot);
+            yield return LoadCityPrototype();
 
-            var district = AbsolutePanel("osc-district-panel", 334f, 340f);
-            var service = AbsolutePanel("osc-public-service-panel", 12f, 164f);
-            var transit = AbsolutePanel("osc-transit-panel", 12f, 190f);
-            documentRoot.Add(district);
-            documentRoot.Add(service);
-            documentRoot.Add(transit);
+            var bootstrap = Object.FindAnyObjectByType<UiFoundationBootstrap>();
+            var documentRoot = bootstrap.Root.parent;
+            var dock = bootstrap.SystemPanelDock;
+            var previousIndex = -1;
 
-            UiSystemPanelDock.Sync(documentRoot, dock, false);
+            for (var index = 0; index < ExpectedPanels.Length; index++)
+            {
+                var panel = documentRoot.Q<VisualElement>(ExpectedPanels[index]);
+                Assert.That(panel, Is.Not.Null, ExpectedPanels[index] + " was not installed.");
+                Assert.That(panel.parent, Is.SameAs(dock.contentContainer),
+                    ExpectedPanels[index] + " did not move into the shared dock.");
+                Assert.That(panel.style.position.value, Is.EqualTo(Position.Relative),
+                    ExpectedPanels[index] + " still owns an absolute screen position.");
 
-            Assert.That(transit.parent, Is.SameAs(dock.contentContainer));
-            Assert.That(service.parent, Is.SameAs(dock.contentContainer));
-            Assert.That(district.parent, Is.SameAs(dock.contentContainer));
-            Assert.That(transit.style.position.value, Is.EqualTo(Position.Relative));
-            Assert.That(service.style.position.value, Is.EqualTo(Position.Relative));
-            Assert.That(district.style.position.value, Is.EqualTo(Position.Relative));
-            Assert.That(dock.contentContainer.IndexOf(transit), Is.LessThan(dock.contentContainer.IndexOf(service)));
-            Assert.That(dock.contentContainer.IndexOf(service), Is.LessThan(dock.contentContainer.IndexOf(district)));
-            Assert.That(dock.style.display.value, Is.EqualTo(DisplayStyle.Flex));
-
-            UiSystemPanelDock.Sync(documentRoot, dock, true);
-            Assert.That(dock.style.display.value, Is.EqualTo(DisplayStyle.None));
-
-            UiSystemPanelDock.Sync(documentRoot, dock, false);
-            Assert.That(dock.style.display.value, Is.EqualTo(DisplayStyle.Flex));
+                var dockIndex = dock.contentContainer.IndexOf(panel);
+                Assert.That(dockIndex, Is.GreaterThan(previousIndex),
+                    ExpectedPanels[index] + " is out of deterministic dock order.");
+                previousIndex = dockIndex;
+            }
         }
 
-        private static VisualElement AbsolutePanel(string name, float left, float top)
+        private static IEnumerator LoadCityPrototype()
         {
-            var panel = new VisualElement { name = name };
-            panel.style.position = Position.Absolute;
-            panel.style.left = left;
-            panel.style.top = top;
-            panel.style.width = 330f;
-            return panel;
+            yield return SceneManager.LoadSceneAsync("CityPrototype", LoadSceneMode.Single);
+            yield return null;
+            yield return null;
         }
     }
 }
