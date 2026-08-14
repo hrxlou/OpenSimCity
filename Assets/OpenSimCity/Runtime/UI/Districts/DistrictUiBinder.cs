@@ -2,6 +2,7 @@ using System;
 using OpenSimCity.Application.Districts;
 using OpenSimCity.Application.World;
 using OpenSimCity.Core;
+using OpenSimCity.UI.Foundation;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -52,8 +53,6 @@ namespace OpenSimCity.UI.Districts
             if (!isActiveAndEnabled || document == null || document.rootVisualElement == null) return;
             _panel?.RemoveFromHierarchy();
             _panel = new VisualElement { name = "osc-district-panel" };
-            _panel.style.position = Position.Absolute;
-            _panel.style.left = 12; _panel.style.top = 340; _panel.style.width = 310;
             _panel.style.paddingLeft = 10; _panel.style.paddingRight = 10; _panel.style.paddingTop = 8; _panel.style.paddingBottom = 8;
             _panel.style.backgroundColor = new Color(0.06f, 0.07f, 0.08f, 0.94f);
             var title = new Label("지구 편집") { name = "osc-district-title" }; title.style.unityFontStyleAndWeight = FontStyle.Bold; _panel.Add(title);
@@ -66,7 +65,7 @@ namespace OpenSimCity.UI.Districts
             AddButton("지구 삭제", DeleteActive);
             AddButton("경계 표시 토글", () => DistrictSelection.Current.SetOverlayVisible(!DistrictSelection.Current.OverlayVisible));
             _list = new VisualElement { name = "osc-district-list" }; _panel.Add(_list);
-            document.rootVisualElement.Add(_panel);
+            UiSystemPanelDock.Dock(document.rootVisualElement, _panel);
         }
 
         private void AddButton(string text, Action action)

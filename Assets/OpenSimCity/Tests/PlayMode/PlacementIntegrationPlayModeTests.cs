@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using OpenSimCity.Application.Construction;
 using OpenSimCity.Application.Input;
@@ -14,6 +15,7 @@ using OpenSimCity.Presentation.Utilities;
 using OpenSimCity.Presentation.Buildings;
 using OpenSimCity.Presentation.Roads;
 using OpenSimCity.UI.Placement;
+using OpenSimCity.UI.Release;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -114,6 +116,15 @@ namespace OpenSimCity.Tests.PlayMode
         {
             yield return SceneManager.LoadSceneAsync("CityPrototype", LoadSceneMode.Single);
             yield return null;
+            yield return null;
+
+            var menu = Object.FindAnyObjectByType<ReleaseMenuBinder>();
+            Assert.That(menu, Is.Not.Null, "CityPrototype has no ReleaseMenuBinder.");
+            var toggleMenu = typeof(ReleaseMenuBinder).GetMethod(
+                "ToggleMenu",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(toggleMenu, Is.Not.Null);
+            toggleMenu.Invoke(menu, null);
             yield return null;
         }
 

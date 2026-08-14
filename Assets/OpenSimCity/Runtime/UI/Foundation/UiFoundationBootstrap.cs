@@ -43,6 +43,8 @@ namespace OpenSimCity.UI.Foundation
 
         public SavePanelView SavePanel { get; private set; }
 
+        public ScrollView SystemPanelDock { get; private set; }
+
         public StyleSheet ConfiguredTokensStyleSheet => tokensStyleSheet;
 
         public StyleSheet ConfiguredComponentsStyleSheet => componentsStyleSheet;
@@ -88,6 +90,7 @@ namespace OpenSimCity.UI.Foundation
 
             Root?.RemoveFromHierarchy();
             Root = null;
+            SystemPanelDock = null;
         }
 
         private void Build(VisualElement documentRoot)
@@ -124,6 +127,7 @@ namespace OpenSimCity.UI.Foundation
             GlobalHud = new GlobalHudView();
             SimulationControls = new SimulationControlsView();
             SavePanel = new SavePanelView();
+            SystemPanelDock = UiSystemPanelDock.Create();
 
             var centre = new VisualElement { name = "osc-world-view-spacer" };
             centre.pickingMode = PickingMode.Ignore;
@@ -148,6 +152,7 @@ namespace OpenSimCity.UI.Foundation
 
             middle.Add(ToolRail);
             middle.Add(centre);
+            middle.Add(SystemPanelDock);
             middle.Add(rightColumn);
 
             Root.Add(GlobalHud);
@@ -163,6 +168,7 @@ namespace OpenSimCity.UI.Foundation
             _bridge.AddPointerSource(GlobalHud);
             _bridge.AddPointerSource(SimulationControls);
             _bridge.AddPointerSource(SavePanel);
+            _bridge.AddPointerSource(SystemPanelDock);
             _bridge.Attach();
         }
 
@@ -176,6 +182,102 @@ namespace OpenSimCity.UI.Foundation
             root.style.paddingRight = Screen.width - safeArea.xMax;
             root.style.paddingTop = Screen.height - safeArea.yMax;
             root.style.paddingBottom = safeArea.yMin;
+        }
+    }
+
+    /// <summary>
+    /// Owns layout for feature panels that previously attached themselves directly
+    /// to the UIDocument with unrelated absolute coordinates. Binders register new
+    /// panels here, while Sync also adopts any legacy panel that appears at the
+    /// document root so menu visibility and deterministic ordering stay central.
+    /// </summary>
+    internal static class UiSystemPanelDock
+    {
+        internal const string Name = "osc-system-panel-dock";
+
+        private static readonly string[] PanelNames =
+        {
+            "osc-transit-panel",
+            "osc-public-service-panel",
+            "osc-spatial-fields-panel",
+            "osc-water-density-panel",
+            "osc-building-condition-panel",
+            "osc-specialization-panel",
+            "osc-district-panel",
+            "osc-district-policy-panel"
+        };
+
+        internal static ScrollView Create()
+        {
+            var dock = new ScrollView { name = Name };
+            dock.pickingMode = PickingMode.Position;
+            dock.style.width = 380f;
+            dock.style.minWidth = 320f;
+            dock.style.maxWidth = 380f;
+            dock.style.flexShrink = 0f;
+            dock.style.marginLeft = 8f;
+            dock.style.marginRight = 8f;
+            dock.style.marginTop = 8f;
+            dock.style.marginBottom = 8f;
+            dock.style.display = DisplayStyle.None;
+            dock.contentContainer.style.flexDirection = FlexDirection.Column;
+            return dock;
+        }
+
+        internal static void Dock(VisualElement documentRoot, VisualElement panel)
+        {
+            if (documentRoot == null || panel == null)
+                return;
+
+            var dock = documentRoot.Q<ScrollView>(Name);
+            if (dock == null)
+            {
+                documentRoot.Add(panel);
+                return;
+            }
+
+            Normalize(panel);
+            dock.contentContainer.Add(panel);
+        }
+
+        internal static void Sync(VisualElement documentRoot, ScrollView dock, bool suppressed)
+        {
+            if (documentRoot == null || dock == null)
+                return;
+
+            var content = dock.contentContainer;
+            var nextIndex = 0;
+            for (var index = 0; index < PanelNames.Length; index++)
+            {
+                var panel = documentRoot.Q<VisualElement>(PanelNames[index]);
+                if (panel == null || ReferenceEquals(panel, dock))
+                    continue;
+
+                Normalize(panel);
+                if (!ReferenceEquals(panel.parent, content) || content.IndexOf(panel) != nextIndex)
+                {
+                    panel.RemoveFromHierarchy();
+                    content.Insert(nextIndex, panel);
+                }
+                nextIndex++;
+            }
+
+            dock.style.display = !suppressed && nextIndex > 0
+                ? DisplayStyle.Flex
+                : DisplayStyle.None;
+        }
+
+        private static void Normalize(VisualElement panel)
+        {
+            panel.style.position = Position.Relative;
+            panel.style.left = StyleKeyword.Auto;
+            panel.style.right = StyleKeyword.Auto;
+            panel.style.top = StyleKeyword.Auto;
+            panel.style.bottom = StyleKeyword.Auto;
+            panel.style.width = StyleKeyword.Auto;
+            panel.style.alignSelf = Align.Stretch;
+            panel.style.flexShrink = 0f;
+            panel.style.marginBottom = 8f;
         }
     }
 }

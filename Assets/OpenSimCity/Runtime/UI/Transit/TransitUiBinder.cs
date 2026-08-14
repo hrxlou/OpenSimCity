@@ -3,6 +3,7 @@ using OpenSimCity.Application.Input;
 using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.Transit;
 using OpenSimCity.Application.World;
+using OpenSimCity.UI.Foundation;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -95,10 +96,6 @@ namespace OpenSimCity.UI.Transit
                 return;
             _panel?.RemoveFromHierarchy();
             _panel = new VisualElement { name = "osc-transit-panel" };
-            _panel.style.position = Position.Absolute;
-            _panel.style.left = 12;
-            _panel.style.top = 190;
-            _panel.style.width = 310;
             _panel.style.paddingLeft = 10;
             _panel.style.paddingRight = 10;
             _panel.style.paddingTop = 8;
@@ -145,7 +142,7 @@ namespace OpenSimCity.UI.Transit
             _panel.RegisterCallback<PointerLeaveEvent>(_ => ReleasePointer());
             _panel.RegisterCallback<FocusInEvent>(_ => CaptureKeyboard());
             _panel.RegisterCallback<FocusOutEvent>(_ => ReleaseKeyboard());
-            document.rootVisualElement.Add(_panel);
+            UiSystemPanelDock.Dock(document.rootVisualElement, _panel);
             UpdateLabels();
         }
 

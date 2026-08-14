@@ -4,6 +4,7 @@ using OpenSimCity.Application.Conditions;
 using OpenSimCity.Application.Input;
 using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.World;
+using OpenSimCity.UI.Foundation;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -99,10 +100,6 @@ namespace OpenSimCity.UI.Conditions
                 return;
             _panel?.RemoveFromHierarchy();
             _panel = new VisualElement { name = "osc-building-condition-panel" };
-            _panel.style.position = Position.Absolute;
-            _panel.style.right = 12;
-            _panel.style.bottom = 12;
-            _panel.style.width = 330;
             _panel.style.paddingLeft = 10;
             _panel.style.paddingRight = 10;
             _panel.style.paddingTop = 8;
@@ -143,7 +140,7 @@ namespace OpenSimCity.UI.Conditions
             _panel.RegisterCallback<PointerLeaveEvent>(_ => ReleasePointer());
             _panel.RegisterCallback<FocusInEvent>(_ => CaptureKeyboard());
             _panel.RegisterCallback<FocusOutEvent>(_ => ReleaseKeyboard());
-            document.rootVisualElement.Add(_panel);
+            UiSystemPanelDock.Dock(document.rootVisualElement, _panel);
             UpdateText();
         }
 

@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using OpenSimCity.Application.Specialization;
 using OpenSimCity.Application.World;
+using OpenSimCity.UI.Foundation;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -74,10 +75,6 @@ namespace OpenSimCity.UI.Specialization
             if (!isActiveAndEnabled || document == null || document.rootVisualElement == null) return;
             _panel?.RemoveFromHierarchy();
             _panel = new VisualElement { name = "osc-specialization-panel" };
-            _panel.style.position = Position.Absolute;
-            _panel.style.right = 12;
-            _panel.style.top = 340;
-            _panel.style.width = 330;
             _panel.style.paddingLeft = 10;
             _panel.style.paddingRight = 10;
             _panel.style.paddingTop = 8;
@@ -90,7 +87,7 @@ namespace OpenSimCity.UI.Specialization
             _stages = AddLabel("osc-specialization-stages");
             _diagnostics = AddLabel("osc-specialization-diagnostics");
             _advice = AddLabel("osc-specialization-advice");
-            document.rootVisualElement.Add(_panel);
+            UiSystemPanelDock.Dock(document.rootVisualElement, _panel);
         }
 
         private Label AddLabel(string name)
