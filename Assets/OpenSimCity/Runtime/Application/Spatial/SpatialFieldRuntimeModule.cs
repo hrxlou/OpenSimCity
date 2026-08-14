@@ -5,6 +5,7 @@ using OpenSimCity.Application.Commands;
 using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.World;
 using OpenSimCity.Core;
+using OpenSimCity.Simulation.Roads;
 using OpenSimCity.Simulation.Spatial;
 using OpenSimCity.Simulation.Zones;
 
@@ -140,7 +141,7 @@ namespace OpenSimCity.Application.Spatial
                 current.Add(id);
                 changed |= Fields.UpsertSource(new SpatialFieldSourceState(
                     id,
-                    SpatialSourceDefinitionIds.TrafficNoise,
+                    RoadNoiseDefinition(roads[index].DefinitionId),
                     roads[index].Coordinate));
             }
             foreach (var previous in _roadSourceIds)
@@ -152,6 +153,18 @@ namespace OpenSimCity.Application.Spatial
             foreach (var id in current)
                 _roadSourceIds.Add(id);
             return changed;
+        }
+
+        private static StableId RoadNoiseDefinition(StableId roadDefinitionId)
+        {
+            if (roadDefinitionId == RoadHierarchyDefaults.SmallRoadDefinitionId)
+                return SpatialSourceDefinitionIds.SmallRoadNoise;
+            if (roadDefinitionId == RoadHierarchyDefaults.StreetDefinitionId)
+                return SpatialSourceDefinitionIds.StreetRoadNoise;
+            if (roadDefinitionId == RoadHierarchyDefaults.AvenueDefinitionId)
+                return SpatialSourceDefinitionIds.AvenueRoadNoise;
+            throw new InvalidOperationException(
+                $"Road definition {roadDefinitionId.Value} has no spatial-noise mapping.");
         }
 
         private bool SynchronizeBuildingSources()
