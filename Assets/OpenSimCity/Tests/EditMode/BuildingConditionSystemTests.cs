@@ -141,7 +141,7 @@ namespace OpenSimCity.Tests.EditMode
                 InitialFunds = 10_000
             });
             var definition = runtime.BuildingDefinitions.Definitions
-                .Single(item => item.ZoneType == ZoneType.ResidentialLow);
+                .First(item => item.ZoneType == ZoneType.ResidentialLow);
             var building = new BuildingState(
                 new StableId(0xB200000000000001UL),
                 definition.Id,
@@ -195,7 +195,7 @@ namespace OpenSimCity.Tests.EditMode
                 Seed = 0x621UL
             });
             var definition = runtime.BuildingDefinitions.Definitions
-                .Single(item => item.ZoneType == ZoneType.ResidentialLow);
+                .First(item => item.ZoneType == ZoneType.ResidentialLow);
             runtime.Buildings.Add(new BuildingState(
                 new StableId(0xB200000000000002UL),
                 definition.Id,
