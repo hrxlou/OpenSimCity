@@ -1,14 +1,13 @@
 name: Nightly full tests
 
-# 병합 후 전체 테스트(build-windows.yml의 tests job)를 제거한 대신, 회귀를 잡는 안전망으로
-# main 전체 EditMode+PlayMode를 여기서 유지한다.
-#
-# 기본은 수동 실행(workflow_dispatch)이며, 야간 스케줄은 아래 schedule 주석을 풀어 켠다.
-# self-hosted 러너가 1대이므로 스케줄을 켤 경우 다른 CI와 겹치지 않는 시간대를 고른다.
+# main 전체 EditMode+PlayMode 회귀를 self-hosted Windows Unity 러너에서 실행한다.
+# main push 직후 한 번, 매일 03:00 KST, 필요 시 수동 실행을 지원한다.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
-  # schedule:
-  #   - cron: '0 18 * * *'  # 매일 03:00 KST (UTC 18:00)
+  schedule:
+    - cron: '0 18 * * *'  # 매일 03:00 KST (UTC 18:00)
 
 concurrency:
   group: nightly-full-tests
@@ -19,22 +18,71 @@ jobs:
     name: Full EditMode + PlayMode on main
     runs-on: [self-hosted, Windows, unity]
     timeout-minutes: 70
+    env:
+      SOURCE_DIR: source-nightly-${{ github.run_id }}
     steps:
-      - name: Checkout
+      - name: Checkout isolated main source
         uses: actions/checkout@v7
         with:
           ref: main
           lfs: true
           clean: true
+          path: ${{ env.SOURCE_DIR }}
 
       - name: Run EditMode + PlayMode tests
         shell: cmd
+        working-directory: ${{ env.SOURCE_DIR }}
         run: powershell -NoProfile -ExecutionPolicy Bypass -File "Tools\CI\run-unity-tests.ps1" all
+
+      - name: Print failed Unity test cases
+        if: failure()
+        shell: powershell
+        working-directory: ${{ env.SOURCE_DIR }}
+        run: |
+          $xmlFiles = Get-ChildItem -Path TestResults -Filter *.xml -ErrorAction SilentlyContinue
+          if (-not $xmlFiles) {
+            Write-Host "No Unity test XML files were produced."
+            exit 0
+          }
+          foreach ($file in $xmlFiles) {
+            [xml]$document = Get-Content -Path $file.FullName
+            $failed = $document.SelectNodes("//test-case[@result='Failed']")
+            Write-Host "::group::$($file.Name) failed cases"
+            if (-not $failed -or $failed.Count -eq 0) {
+              Write-Host "No failed test cases in this XML."
+            } else {
+              foreach ($case in $failed) {
+                Write-Host "FAILED: $($case.fullname)"
+                $message = $case.failure.message
+                if ($message) { Write-Host $message.InnerText }
+                $stack = $case.failure.'stack-trace'
+                if ($stack) { Write-Host $stack.InnerText }
+              }
+            }
+            Write-Host "::endgroup::"
+          }
+
+      - name: Print Unity logs on failure
+        if: failure()
+        shell: powershell
+        working-directory: ${{ env.SOURCE_DIR }}
+        run: |
+          $logs = Get-ChildItem -Path TestResults -Filter *.log -ErrorAction SilentlyContinue
+          if (-not $logs) {
+            Write-Host "No Unity log files were produced."
+            exit 0
+          }
+          foreach ($log in $logs) {
+            Write-Host "::group::$($log.Name)"
+            Get-Content -Path $log.FullName -Tail 500
+            Write-Host "::endgroup::"
+          }
 
       - name: Upload test results
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: nightly-test-results-${{ github.run_id }}
-          path: TestResults
+          path: ${{ env.SOURCE_DIR }}/TestResults
           if-no-files-found: warn
