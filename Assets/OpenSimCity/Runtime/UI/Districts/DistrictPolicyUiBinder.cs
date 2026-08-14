@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using OpenSimCity.Application.Districts;
 using OpenSimCity.Application.World;
+using OpenSimCity.UI.Foundation;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -49,7 +50,6 @@ namespace OpenSimCity.UI.Districts
             if (!isActiveAndEnabled || document == null || document.rootVisualElement == null) return;
             _panel?.RemoveFromHierarchy();
             _panel = new VisualElement { name = "osc-district-policy-panel" };
-            _panel.style.position = Position.Absolute; _panel.style.left = 334; _panel.style.top = 340; _panel.style.width = 360;
             _panel.style.paddingLeft = 10; _panel.style.paddingRight = 10; _panel.style.paddingTop = 8; _panel.style.paddingBottom = 8;
             _panel.style.backgroundColor = new Color(0.06f, 0.07f, 0.08f, 0.94f);
             var title = new Label("지구 정책") { name = "osc-district-policy-title" }; title.style.unityFontStyleAndWeight = FontStyle.Bold; _panel.Add(title);
@@ -58,7 +58,7 @@ namespace OpenSimCity.UI.Districts
             AddButton("화물차 제한 전환", ToggleHeavyVehicleRestriction);
             AddButton("대중교통 보조금 전환", ToggleTransitSubsidy);
             _advice = AddLabel("osc-district-policy-advice");
-            document.rootVisualElement.Add(_panel);
+            UiSystemPanelDock.Dock(document.rootVisualElement, _panel);
         }
 
         private Label AddLabel(string name) { var label = new Label { name = name }; label.style.whiteSpace = WhiteSpace.Normal; _panel.Add(label); return label; }
