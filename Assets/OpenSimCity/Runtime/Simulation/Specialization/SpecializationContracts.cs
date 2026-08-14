@@ -246,7 +246,13 @@ namespace OpenSimCity.Simulation.Specialization
             if (rows.Length != _stages.Length) throw new ArgumentException("Specialization snapshot requires exactly three stage rows.", nameof(dto));
             for (var index = 0; index < rows.Length; index++)
             {
-                if (rows[index] == null || rows[index].Kind != index || !Enum.IsDefined(typeof(SpecializationBottleneckReason), rows[index].Bottleneck))
+                if (rows[index] == null ||
+                    rows[index].Kind != index ||
+                    rows[index].Bottleneck < byte.MinValue ||
+                    rows[index].Bottleneck > byte.MaxValue ||
+                    !Enum.IsDefined(
+                        typeof(SpecializationBottleneckReason),
+                        (SpecializationBottleneckReason)rows[index].Bottleneck))
                     throw new ArgumentException("Specialization stage rows are invalid.", nameof(dto));
                 _stages[index].Restore(rows[index].IsUnlocked, rows[index].LastInput, rows[index].LastOutput, rows[index].LastLoss, rows[index].UtilizationPermille, (SpecializationBottleneckReason)rows[index].Bottleneck);
             }
