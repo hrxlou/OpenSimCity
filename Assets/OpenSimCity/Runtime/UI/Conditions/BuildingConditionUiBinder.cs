@@ -86,7 +86,7 @@ namespace OpenSimCity.UI.Conditions
             _context = current;
             _module = current == null
                 ? null
-                : BuildingConditionRuntimeRegistry.GetOrCreate(current.Runtime);
+                : OpenSimCity.Application.UiRuntimeFacades.GetBuildingConditions(current.Runtime);
             _observedReadVersion = -1;
             _observedSelectionVersion = -1;
             _observedMapVersion = -1;
