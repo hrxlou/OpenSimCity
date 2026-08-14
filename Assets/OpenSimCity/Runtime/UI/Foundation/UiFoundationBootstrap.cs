@@ -186,11 +186,10 @@ namespace OpenSimCity.UI.Foundation
     }
 
     /// <summary>
-    /// Owns layout for the feature panels that used to attach themselves directly
-    /// to the UIDocument with unrelated absolute coordinates. Existing binders can
-    /// continue creating their panels independently; the dock adopts each known
-    /// panel, removes its absolute offsets, and gives it a deterministic position
-    /// in one scrollable side stack.
+    /// Owns layout for feature panels that previously attached themselves directly
+    /// to the UIDocument with unrelated absolute coordinates. Binders register new
+    /// panels here, while Sync also adopts any legacy panel that appears at the
+    /// document root so menu visibility and deterministic ordering stay central.
     /// </summary>
     internal static class UiSystemPanelDock
     {
@@ -224,6 +223,22 @@ namespace OpenSimCity.UI.Foundation
             dock.contentContainer.style.flexDirection = FlexDirection.Column;
             dock.contentContainer.style.gap = 8f;
             return dock;
+        }
+
+        internal static void Dock(VisualElement documentRoot, VisualElement panel)
+        {
+            if (documentRoot == null || panel == null)
+                return;
+
+            var dock = documentRoot.Q<ScrollView>(Name);
+            if (dock == null)
+            {
+                documentRoot.Add(panel);
+                return;
+            }
+
+            Normalize(panel);
+            dock.contentContainer.Add(panel);
         }
 
         internal static void Sync(VisualElement documentRoot, ScrollView dock, bool suppressed)
