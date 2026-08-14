@@ -39,7 +39,7 @@ namespace OpenSimCity.UI.Districts
             var current = CityRuntimeContext.Current;
             if (ReferenceEquals(current, _context)) return;
             _context = current;
-            _module = current == null ? null : DistrictPolicyRuntimeRegistry.GetOrCreate(current.Runtime);
+            _module = current == null ? null : OpenSimCity.Application.UiRuntimeFacades.GetDistrictPolicies(current.Runtime);
             _readModel = _module == null ? null : new DistrictPolicyReadModel(_module);
             _version = -1;
         }
