@@ -175,7 +175,8 @@ namespace OpenSimCity.Simulation.Roads
 
             for (var index = 0; index < _results.Length; index++)
             {
-                var cell = _roadNetwork.Cells[index].Coordinate;
+                var roadCell = _roadNetwork.Cells[index];
+                var cell = roadCell.Coordinate;
                 if (!occupied[index])
                 {
                     _results[index] = new RoadConnectivityResult(
@@ -204,7 +205,8 @@ namespace OpenSimCity.Simulation.Roads
                     distances[index],
                     nearestGateIds[index],
                     GetDistanceBand(distances[index]),
-                    unreachableReason);
+                    unreachableReason,
+                    roadCell.TravelDirection);
             }
 
             _sourceVersion = _roadNetwork.Version;
