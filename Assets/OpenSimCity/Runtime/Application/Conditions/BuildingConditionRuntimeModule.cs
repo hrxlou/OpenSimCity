@@ -18,11 +18,6 @@ namespace OpenSimCity.Application.Conditions
     {
         private readonly CityRuntime _runtime;
 
-        internal BuildingConditionRuntimeModule(BuildingConditionRuntimeModule unused)
-        {
-            throw new NotSupportedException();
-        }
-
         internal BuildingConditionRuntimeModule(CityRuntime runtime, BuildingConditionParameters parameters = null, int redevelopmentCost = 500)
         {
             _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
