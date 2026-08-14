@@ -16,6 +16,7 @@ namespace OpenSimCity.UI.Release
         private UiFoundationBootstrap _bootstrap;
         private VisualElement _boundRoot;
         private CityRuntimeContext _boundContext;
+        private VisualElement _menuBackdrop;
         private VisualElement _menu;
         private VisualElement _loadSection;
         private VisualElement _settingsSection;
@@ -50,8 +51,9 @@ namespace OpenSimCity.UI.Release
         {
             BindContext(null);
             ReleasePointer();
-            _menu?.RemoveFromHierarchy();
+            _menuBackdrop?.RemoveFromHierarchy();
             _tutorial?.RemoveFromHierarchy();
+            _menuBackdrop = null;
             _menu = null;
             _tutorial = null;
             _boundRoot = null;
@@ -68,6 +70,8 @@ namespace OpenSimCity.UI.Release
             }
 
             EnsureOpenButton();
+            UiSystemPanelDock.Sync(_boundRoot.parent, _bootstrap.SystemPanelDock, _menuOpen);
+
             var context = CityRuntimeContext.Current;
             if (!ReferenceEquals(context, _boundContext)) BindContext(context);
             var onboarding = OnboardingContext.Current;
@@ -81,20 +85,30 @@ namespace OpenSimCity.UI.Release
 
         private void BuildUi()
         {
-            _menu?.RemoveFromHierarchy();
+            _menuBackdrop?.RemoveFromHierarchy();
             _tutorial?.RemoveFromHierarchy();
+
+            _menuBackdrop = new VisualElement { name = "osc-release-menu-backdrop" };
+            _menuBackdrop.style.position = Position.Absolute;
+            _menuBackdrop.style.left = 0f;
+            _menuBackdrop.style.right = 0f;
+            _menuBackdrop.style.top = 0f;
+            _menuBackdrop.style.bottom = 0f;
+            _menuBackdrop.style.alignItems = Align.Center;
+            _menuBackdrop.style.justifyContent = Justify.Center;
+            _menuBackdrop.style.backgroundColor = new Color(0.015f, 0.02f, 0.03f, 0.82f);
+            _menuBackdrop.pickingMode = PickingMode.Position;
+            HookPointerBoundary(_menuBackdrop);
 
             _menu = new VisualElement { name = "osc-release-menu" };
             _menu.AddToClassList(UiFoundationNames.PanelClass);
-            _menu.style.position = Position.Absolute;
-            _menu.style.left = 24;
-            _menu.style.top = 72;
-            _menu.style.width = 360;
+            _menu.style.position = Position.Relative;
+            _menu.style.width = 420f;
+            _menu.style.maxWidth = Length.Percent(92f);
             _menu.style.paddingLeft = 16;
             _menu.style.paddingRight = 16;
             _menu.style.paddingTop = 16;
             _menu.style.paddingBottom = 16;
-            HookPointerBoundary(_menu);
 
             var title = new Label("OpenSimCity") { name = "osc-release-title" };
             title.AddToClassList(UiFoundationNames.PanelTitleClass);
@@ -121,7 +135,9 @@ namespace OpenSimCity.UI.Release
             _settingsSection.Add(_hints);
             _settingsSection.style.display = DisplayStyle.None;
             _menu.Add(_settingsSection);
-            _boundRoot.Add(_menu);
+
+            _menuBackdrop.Add(_menu);
+            _boundRoot.Add(_menuBackdrop);
 
             _tutorial = new VisualElement { name = "osc-onboarding-card" };
             _tutorial.AddToClassList(UiFoundationNames.PanelClass);
@@ -257,12 +273,22 @@ namespace OpenSimCity.UI.Release
 
         private void ApplyVisibility()
         {
-            if (_menu != null) _menu.style.display = _menuOpen ? DisplayStyle.Flex : DisplayStyle.None;
+            if (_menuBackdrop != null)
+            {
+                _menuBackdrop.style.display = _menuOpen ? DisplayStyle.Flex : DisplayStyle.None;
+                if (_menuOpen) _menuBackdrop.BringToFront();
+            }
+
             if (_tutorial != null)
             {
                 var showTutorial = !_menuOpen && OnboardingContext.Current?.Snapshot != null;
                 _tutorial.style.display = showTutorial ? DisplayStyle.Flex : DisplayStyle.None;
+                if (showTutorial) _tutorial.BringToFront();
             }
+
+            UiSystemPanelDock.Sync(_boundRoot?.parent, _bootstrap?.SystemPanelDock, _menuOpen);
+            if (_menuOpen) CapturePointer();
+            else ReleasePointer();
             _openButton?.EnableInClassList(UiFoundationNames.ItemSelectedClass, _menuOpen);
         }
 
