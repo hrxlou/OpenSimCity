@@ -1,12 +1,12 @@
+using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace OpenSimCity.Presentation.Services
 {
     /// <summary>
-    /// Reinstalls the transient service view root after every scene transition.
-    /// The original AfterSceneLoad bootstrap covers initial startup; this hook owns
-    /// subsequent single-scene loads without persisting view objects.
+    /// Reinstalls transient service presentation adapters after scene transitions.
+    /// They remain scene-owned and are never persisted across loads.
     /// </summary>
     public static class PublicServiceSceneBootstrap
     {
@@ -20,14 +20,33 @@ namespace OpenSimCity.Presentation.Services
             _subscribed = true;
         }
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void InstallInitial() => Install(SceneManager.GetActiveScene());
+
         private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            if (mode == LoadSceneMode.Single || scene == SceneManager.GetActiveScene())
+                Install(scene);
+        }
+
+        private static void Install(Scene scene)
+        {
             if (!scene.IsValid() || !scene.isLoaded) return;
-            if (mode != LoadSceneMode.Single && scene != SceneManager.GetActiveScene()) return;
-            if (Object.FindFirstObjectByType<PublicServiceViewCoordinator>() != null) return;
-            var root = new GameObject(PublicServiceViewCoordinator.RuntimeObjectName);
-            SceneManager.MoveGameObjectToScene(root, scene);
-            root.AddComponent<PublicServiceViewCoordinator>();
+            if (!string.Equals(scene.name, "CityPrototype", StringComparison.Ordinal)) return;
+
+            if (Object.FindFirstObjectByType<PublicServiceViewCoordinator>() == null)
+            {
+                var root = new GameObject(PublicServiceViewCoordinator.RuntimeObjectName);
+                SceneManager.MoveGameObjectToScene(root, scene);
+                root.AddComponent<PublicServiceViewCoordinator>();
+            }
+
+            if (Object.FindFirstObjectByType<ServiceResponseView>() == null)
+            {
+                var root = new GameObject("ServiceResponseViews");
+                SceneManager.MoveGameObjectToScene(root, scene);
+                root.AddComponent<ServiceResponseView>();
+            }
         }
     }
 }
