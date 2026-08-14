@@ -25,6 +25,15 @@ namespace OpenSimCity.Simulation.Roads
         private readonly ExternalConnectionState[] _externalConnections;
         private readonly RoadConnectivityResult[] _results;
         private readonly IReadOnlyList<RoadConnectivityResult> _readOnlyResults;
+        private readonly RoadConnectivityResult[] _previousResults;
+        private readonly bool[] _occupied;
+        private readonly RoadConnectionMask[] _connectionMasks;
+        private readonly int[] _componentIds;
+        private readonly int[] _distances;
+        private readonly StableId[] _nearestGateIds;
+        private readonly Queue<int> _componentQueue;
+        private readonly DistanceQueue _distanceQueue;
+        private readonly List<CellCoord> _changedCells;
         private IReadOnlyList<CellCoord> _readOnlyDirtyCells = Array.AsReadOnly(Array.Empty<CellCoord>());
         private int _sourceVersion = -1;
         private int _graphVersion;
@@ -36,8 +45,19 @@ namespace OpenSimCity.Simulation.Roads
         {
             _roadNetwork = roadNetwork ?? throw new ArgumentNullException(nameof(roadNetwork));
             _externalConnections = CopyAndSortConnections(externalConnections);
-            _results = new RoadConnectivityResult[_roadNetwork.CellCount];
+
+            var cellCount = _roadNetwork.CellCount;
+            _results = new RoadConnectivityResult[cellCount];
             _readOnlyResults = Array.AsReadOnly(_results);
+            _previousResults = new RoadConnectivityResult[cellCount];
+            _occupied = new bool[cellCount];
+            _connectionMasks = new RoadConnectionMask[cellCount];
+            _componentIds = new int[cellCount];
+            _distances = new int[cellCount];
+            _nearestGateIds = new StableId[cellCount];
+            _componentQueue = new Queue<int>(cellCount);
+            _distanceQueue = new DistanceQueue(cellCount);
+            _changedCells = new List<CellCoord>(cellCount);
 
             Rebuild();
         }
@@ -155,23 +175,23 @@ namespace OpenSimCity.Simulation.Roads
 
         private void Rebuild()
         {
-            var previous = new RoadConnectivityResult[_results.Length];
-            Array.Copy(_results, previous, _results.Length);
+            Array.Copy(_results, _previousResults, _results.Length);
             var wasInitialized = _sourceVersion >= 0;
 
             var occupied = BuildOccupancy();
             var connectionMasks = BuildConnectionMasks(occupied);
             var componentIds = BuildComponents(occupied);
-            var distances = new int[_results.Length];
-            var nearestGateIds = new StableId[_results.Length];
-            for (var index = 0; index < distances.Length; index++)
-                distances[index] = UnreachableDistance;
+            for (var index = 0; index < _distances.Length; index++)
+            {
+                _distances[index] = UnreachableDistance;
+                _nearestGateIds[index] = StableId.Invalid;
+            }
 
             var activeGateCount = CalculateExternalGateDistances(
                 occupied,
                 connectionMasks,
-                distances,
-                nearestGateIds);
+                _distances,
+                _nearestGateIds);
 
             for (var index = 0; index < _results.Length; index++)
             {
@@ -191,7 +211,7 @@ namespace OpenSimCity.Simulation.Roads
                 }
 
                 var unreachableReason = RoadUnreachableReason.None;
-                if (distances[index] == UnreachableDistance)
+                if (_distances[index] == UnreachableDistance)
                 {
                     unreachableReason = activeGateCount == 0
                         ? RoadUnreachableReason.NoEnabledExternalRoadGate
@@ -202,33 +222,34 @@ namespace OpenSimCity.Simulation.Roads
                     cell,
                     connectionMasks[index],
                     componentIds[index],
-                    distances[index],
-                    nearestGateIds[index],
-                    GetDistanceBand(distances[index]),
+                    _distances[index],
+                    _nearestGateIds[index],
+                    GetDistanceBand(_distances[index]),
                     unreachableReason,
                     roadCell.TravelDirection);
             }
 
             _sourceVersion = _roadNetwork.Version;
             _graphVersion = _sourceVersion;
-            UpdateDirtyCells(previous, wasInitialized);
+            UpdateDirtyCells(_previousResults, wasInitialized);
         }
 
         private bool[] BuildOccupancy()
         {
-            var occupied = new bool[_roadNetwork.CellCount];
-            for (var index = 0; index < occupied.Length; index++)
-                occupied[index] = _roadNetwork.Cells[index].IsOccupied;
-            return occupied;
+            for (var index = 0; index < _occupied.Length; index++)
+                _occupied[index] = _roadNetwork.Cells[index].IsOccupied;
+            return _occupied;
         }
 
         private RoadConnectionMask[] BuildConnectionMasks(bool[] occupied)
         {
-            var masks = new RoadConnectionMask[occupied.Length];
             for (var index = 0; index < occupied.Length; index++)
             {
                 if (!occupied[index])
+                {
+                    _connectionMasks[index] = RoadConnectionMask.None;
                     continue;
+                }
 
                 var cell = _roadNetwork.Cells[index].Coordinate;
                 var mask = RoadConnectionMask.None;
@@ -240,43 +261,42 @@ namespace OpenSimCity.Simulation.Roads
                     mask |= RoadConnectionMask.South;
                 if (IsOccupied(occupied, cell.X - 1, cell.Y))
                     mask |= RoadConnectionMask.West;
-                masks[index] = mask;
+                _connectionMasks[index] = mask;
             }
 
-            return masks;
+            return _connectionMasks;
         }
 
         private int[] BuildComponents(bool[] occupied)
         {
-            var componentIds = new int[occupied.Length];
-            for (var index = 0; index < componentIds.Length; index++)
-                componentIds[index] = NoComponent;
+            for (var index = 0; index < _componentIds.Length; index++)
+                _componentIds[index] = NoComponent;
 
-            var queue = new Queue<int>();
+            _componentQueue.Clear();
             for (var rootIndex = 0; rootIndex < occupied.Length; rootIndex++)
             {
-                if (!occupied[rootIndex] || componentIds[rootIndex] != NoComponent)
+                if (!occupied[rootIndex] || _componentIds[rootIndex] != NoComponent)
                     continue;
 
                 // The minimum row-major member is deterministic and keeps an
                 // unrelated component's label stable across local edits.
-                componentIds[rootIndex] = rootIndex;
-                queue.Enqueue(rootIndex);
-                while (queue.Count > 0)
+                _componentIds[rootIndex] = rootIndex;
+                _componentQueue.Enqueue(rootIndex);
+                while (_componentQueue.Count > 0)
                 {
-                    var current = queue.Dequeue();
+                    var current = _componentQueue.Dequeue();
                     VisitNeighborsInStableOrder(current, neighbor =>
                     {
-                        if (!occupied[neighbor] || componentIds[neighbor] != NoComponent)
+                        if (!occupied[neighbor] || _componentIds[neighbor] != NoComponent)
                             return;
 
-                        componentIds[neighbor] = rootIndex;
-                        queue.Enqueue(neighbor);
+                        _componentIds[neighbor] = rootIndex;
+                        _componentQueue.Enqueue(neighbor);
                     });
                 }
             }
 
-            return componentIds;
+            return _componentIds;
         }
 
         private int CalculateExternalGateDistances(
@@ -285,7 +305,7 @@ namespace OpenSimCity.Simulation.Roads
             int[] distances,
             StableId[] nearestGateIds)
         {
-            var queue = new DistanceQueue();
+            _distanceQueue.Clear();
             var activeGateCount = 0;
             for (var index = 0; index < _externalConnections.Length; index++)
             {
@@ -299,12 +319,12 @@ namespace OpenSimCity.Simulation.Roads
 
                 distances[cellIndex] = 0;
                 nearestGateIds[cellIndex] = gate.Id;
-                queue.Enqueue(new DistanceQueueEntry(0, gate.Id, cellIndex));
+                _distanceQueue.Enqueue(new DistanceQueueEntry(0, gate.Id, cellIndex));
             }
 
-            while (queue.Count > 0)
+            while (_distanceQueue.Count > 0)
             {
-                var current = queue.Dequeue();
+                var current = _distanceQueue.Dequeue();
                 if (distances[current.CellIndex] != current.Distance ||
                     nearestGateIds[current.CellIndex] != current.GateId)
                 {
@@ -327,7 +347,7 @@ namespace OpenSimCity.Simulation.Roads
 
                         distances[neighbor] = candidateDistance;
                         nearestGateIds[neighbor] = current.GateId;
-                        queue.Enqueue(new DistanceQueueEntry(
+                        _distanceQueue.Enqueue(new DistanceQueueEntry(
                             candidateDistance,
                             current.GateId,
                             neighbor));
@@ -354,14 +374,14 @@ namespace OpenSimCity.Simulation.Roads
 
         private void UpdateDirtyCells(RoadConnectivityResult[] previous, bool wasInitialized)
         {
-            var changedCells = new List<CellCoord>();
+            _changedCells.Clear();
             for (var index = 0; index < _results.Length; index++)
             {
                 if (!wasInitialized || previous[index] != _results[index])
-                    changedCells.Add(_results[index].Cell);
+                    _changedCells.Add(_results[index].Cell);
             }
 
-            var cells = changedCells.ToArray();
+            var cells = _changedCells.ToArray();
             _readOnlyDirtyCells = Array.AsReadOnly(cells);
             _dirtyRegion = RoadGraphDirtyRegion.FromSortedCells(cells);
         }
@@ -492,9 +512,19 @@ namespace OpenSimCity.Simulation.Roads
         /// </summary>
         private sealed class DistanceQueue
         {
-            private readonly List<DistanceQueueEntry> _entries = new List<DistanceQueueEntry>();
+            private readonly List<DistanceQueueEntry> _entries;
+
+            public DistanceQueue(int capacity)
+            {
+                _entries = new List<DistanceQueueEntry>(capacity);
+            }
 
             public int Count => _entries.Count;
+
+            public void Clear()
+            {
+                _entries.Clear();
+            }
 
             public void Enqueue(DistanceQueueEntry entry)
             {
