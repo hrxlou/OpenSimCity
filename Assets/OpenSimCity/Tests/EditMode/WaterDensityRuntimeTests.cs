@@ -125,7 +125,7 @@ namespace OpenSimCity.Tests.EditMode
             var runtime = new CityRuntime(new CityRuntimeOptions { Width = 8, Height = 8, Seed = 0x702UL, InitialFunds = 20_000 });
             var road = runtime.Execute(new PlaceRoadCommand(runtime.DefaultRoadDefinitionId, new CellCoord(0, 4), new CellCoord(6, 4)));
             Assert.That(road.IsApplied, Is.True, road.Message);
-            var definition = runtime.BuildingDefinitions.Definitions.Single(item => item.ZoneType == ZoneType.ResidentialLow);
+            var definition = runtime.BuildingDefinitions.Definitions.First(item => item.ZoneType == ZoneType.ResidentialLow);
             building = new BuildingState(new StableId(0xB702000000000101UL), definition.Id, new StableId(0xA702000000000101UL), new CellCoord(2, 2), definition.Footprint, definition.OccupancyCapacity, 0);
             runtime.Buildings.Add(building);
             return runtime;
