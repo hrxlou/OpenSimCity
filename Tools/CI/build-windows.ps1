@@ -1,13 +1,8 @@
 #requires -Version 5.1
 <#
 .SYNOPSIS
-    로컬 Windows에서 StandaloneWindows64 빌드를 만든다.
-    CI(build-windows.yml)와 동일한 진입점(OpenSimCity.Editor.BuildScript.PerformWindowsBuild)을
-    호출해 로컬 빌드와 CI 빌드가 같은 방식으로 재현되게 한다.
-
-.EXAMPLE
-    ./Tools/CI/build-windows.ps1
-    ./Tools/CI/build-windows.ps1 -OutputPath D:\out\OpenSimCity.exe
+    Windows에서 P9 release profile 기반 StandaloneWindows64 빌드를 만든다.
+    BuildScript가 build result와 release evidence JSON을 기록한다.
 #>
 [CmdletBinding()]
 param(
@@ -36,12 +31,26 @@ if (-not $OutputPath) {
     $OutputPath = Join-Path $RepoRoot 'build\StandaloneWindows64\OpenSimCity.exe'
 }
 
+$SourceCommit = (& git -C $RepoRoot rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0 -or -not $SourceCommit) {
+    Write-Error 'release build source commit을 읽지 못했다.'
+    exit 1
+}
+$StatusRows = @(& git -C $RepoRoot status --porcelain --untracked-files=all)
+if ($LASTEXITCODE -ne 0) {
+    Write-Error 'git clean-checkout 상태를 읽지 못했다.'
+    exit 1
+}
+$CleanCheckout = if ($StatusRows.Count -eq 0) { '1' } else { '0' }
+
 $LogDir = Join-Path $RepoRoot 'TestResults'
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 $LogFile = Join-Path $LogDir 'build-windows.log'
 $ResultFile = Join-Path $LogDir 'build-windows.result'
+$EvidenceFile = Join-Path $LogDir 'build-windows.release-evidence.json'
 if (Test-Path $LogFile) { Remove-Item $LogFile -Force }
 if (Test-Path $ResultFile) { Remove-Item $ResultFile -Force }
+if (Test-Path $EvidenceFile) { Remove-Item $EvidenceFile -Force }
 
 $unityArgs = @(
     '-batchmode'
@@ -52,17 +61,17 @@ $unityArgs = @(
     '-executeMethod', 'OpenSimCity.Editor.BuildScript.PerformWindowsBuild'
     '-osc-buildPath', $OutputPath
     '-osc-buildResultPath', $ResultFile
+    '-osc-buildEvidencePath', $EvidenceFile
+    '-osc-sourceCommit', $SourceCommit
+    '-osc-cleanCheckout', $CleanCheckout
     '-logFile', $LogFile
 )
 
 Write-Host "Building StandaloneWindows64 -> $OutputPath"
+Write-Host "Release source=$SourceCommit cleanCheckout=$CleanCheckout"
 & $UnityEditor @unityArgs
 $unityExitCode = $LASTEXITCODE
 
-# Unity는 첫 프로세스가 내부적으로 재실행(relaunch)하며 원래 프로세스 핸들을
-# 먼저 종료하는 경우가 있어, 이 프로세스의 종료 코드는 신뢰할 수 없다.
-# 대신 BuildScript.cs가 BuildReport에서 만든 machine-readable 결과 파일을 기다린다.
-# 로그 문구는 사람이 읽는 진단용이며 성공 판정 계약으로 사용하지 않는다.
 $timeoutSeconds = 1800
 $elapsed = 0
 while (-not (Test-Path $ResultFile) -and $elapsed -lt $timeoutSeconds) {
@@ -76,9 +85,10 @@ if (-not (Test-Path $ResultFile)) {
 }
 
 $outcome = (Get-Content -Path $ResultFile -TotalCount 1 -ErrorAction Stop).Trim()
-if ($outcome -eq 'Succeeded' -and (Test-Path $OutputPath)) {
+if ($outcome -eq 'Succeeded' -and (Test-Path $OutputPath) -and (Test-Path $EvidenceFile)) {
     Write-Host "Windows build succeeded: $OutputPath"
+    Write-Host "Release evidence: $EvidenceFile"
 } else {
-    Write-Error "Windows 빌드 실패 (result=$outcome, Unity exit code=$unityExitCode). 로그: $LogFile, 결과: $ResultFile"
+    Write-Error "Windows 빌드 실패 (result=$outcome, Unity exit code=$unityExitCode). 로그: $LogFile, 결과: $ResultFile, evidence: $EvidenceFile"
     exit 1
 }
