@@ -48,10 +48,14 @@ namespace OpenSimCity.UI.HUD
         private Button _oneX;
         private Button _twoX;
         private Button _fourX;
-        private string _lastRefreshKey;
+        private int _lastHudVersion;
+        private SimulationSpeed _lastSimulationSpeed;
+        private bool _hasRefreshKey;
 
+        /// <summary>Whether the HUD currently has both a runtime context and UI root.</summary>
         public bool IsBound => _boundContext != null && _boundRoot != null;
 
+        /// <summary>Assigns the shared UI foundation used to build and bind the HUD.</summary>
         public void ConfigureReferences(UiFoundationBootstrap uiBootstrap)
         {
             bootstrap = uiBootstrap;
@@ -61,7 +65,7 @@ namespace OpenSimCity.UI.HUD
         {
             UnbindContext();
             _boundRoot = null;
-            _lastRefreshKey = null;
+            InvalidateRefreshKey();
         }
 
         private void Update()
@@ -87,7 +91,7 @@ namespace OpenSimCity.UI.HUD
         {
             BuildGlobalHud();
             BuildSimulationControls();
-            _lastRefreshKey = null;
+            InvalidateRefreshKey();
         }
 
         private void BuildGlobalHud()
@@ -160,7 +164,7 @@ namespace OpenSimCity.UI.HUD
             _boundContext = context;
             if (_boundContext != null)
                 _boundContext.Committed += HandleConstructionCommitted;
-            _lastRefreshKey = null;
+            InvalidateRefreshKey();
         }
 
         private void UnbindContext()
@@ -179,7 +183,7 @@ namespace OpenSimCity.UI.HUD
                 ? $"✓ {result.Message} · 비용 {result.Cost:N0}"
                 : $"! {result.Message}";
             _feedback.EnableInClassList(UiFoundationNames.ItemErrorClass, !result.Committed);
-            _lastRefreshKey = null;
+            InvalidateRefreshKey();
         }
 
         private void RefreshIfChanged()
@@ -194,13 +198,19 @@ namespace OpenSimCity.UI.HUD
             }
 
             var runtime = _boundContext.Runtime;
-            var key = string.Concat(
-                runtime.HudModel.Version, ":",
-                (int)runtime.Clock.Speed);
-            if (string.Equals(key, _lastRefreshKey, StringComparison.Ordinal))
+            var hudVersion = runtime.HudModel.Version;
+            var simulationSpeed = runtime.Clock.Speed;
+            if (_hasRefreshKey &&
+                hudVersion == _lastHudVersion &&
+                simulationSpeed == _lastSimulationSpeed)
+            {
                 return;
+            }
 
-            _lastRefreshKey = key;
+            _lastHudVersion = hudVersion;
+            _lastSimulationSpeed = simulationSpeed;
+            _hasRefreshKey = true;
+
             var hud = runtime.HudModel.Snapshot;
             _date.text = FormatDate(hud.CurrentYear, hud.CurrentMonth, hud.CurrentDay);
             _period.text = hud.HasSettledLedger ? FormatMonth(hud.LedgerYear, hud.LedgerMonth) : "월간 정산 전";
@@ -222,7 +232,12 @@ namespace OpenSimCity.UI.HUD
             else
                 SetDevelopmentUnavailable();
 
-            SetSpeedSelection(runtime.Clock.Speed);
+            SetSpeedSelection(simulationSpeed);
+        }
+
+        private void InvalidateRefreshKey()
+        {
+            _hasRefreshKey = false;
         }
 
         private void SetUnavailable()
@@ -326,7 +341,7 @@ namespace OpenSimCity.UI.HUD
                 ? "✓ 세율 변경이 다음 월에 적용됩니다."
                 : execution.Message;
             _feedback.EnableInClassList(UiFoundationNames.ItemErrorClass, !execution.IsApplied);
-            _lastRefreshKey = null;
+            InvalidateRefreshKey();
         }
 
         private Button AddSpeedButton(VisualElement parent, string name, string text, SimulationSpeed speed)
@@ -341,18 +356,20 @@ namespace OpenSimCity.UI.HUD
             return button;
         }
 
+        /// <summary>Requests a one-percent residential tax increase through the application command path.</summary>
         public void RequestResidentialTaxIncrease()
         {
             RequestTaxIncrease(TaxSector.Residential);
         }
 
+        /// <summary>Requests a simulation speed change unless persistence currently owns the interaction lock.</summary>
         public void RequestSimulationSpeed(SimulationSpeed speed)
         {
             if (CityPersistenceContext.Current?.ViewModel.IsBusy == true)
                 return;
 
             CityRuntimeContext.Current?.Runtime.SetSimulationSpeed(speed);
-            _lastRefreshKey = null;
+            InvalidateRefreshKey();
         }
 
         private void SetSpeedSelection(SimulationSpeed speed)
