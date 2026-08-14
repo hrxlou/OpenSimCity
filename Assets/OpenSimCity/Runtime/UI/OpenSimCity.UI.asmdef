@@ -3,9 +3,7 @@
   "rootNamespace": "OpenSimCity.UI",
   "references": [
     "OpenSimCity.Core",
-    "OpenSimCity.Simulation",
-    "OpenSimCity.Application",
-    "OpenSimCity.Gameplay"
+    "OpenSimCity.Application"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
