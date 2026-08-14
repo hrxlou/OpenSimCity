@@ -2,7 +2,7 @@ using System;
 using System.Text;
 using OpenSimCity.Application.Input;
 using OpenSimCity.Application.Services;
-using OpenSimCity.Gameplay.Services;
+using OpenSimCity.Application.World;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -12,7 +12,8 @@ namespace OpenSimCity.UI.Services
     public sealed class PublicServiceUiBinder : MonoBehaviour
     {
         [SerializeField] private UIDocument document;
-        private PublicServiceRuntimeHost _host;
+        private CityRuntimeContext _context;
+        private PublicServiceRuntimeModule _module;
         private VisualElement _panel;
         private Label _summary;
         private Label _selection;
@@ -25,6 +26,7 @@ namespace OpenSimCity.UI.Services
         private int _selectionVersion = -1;
 
         public VisualElement Panel => _panel;
+        internal PublicServiceRuntimeModule Module => _module;
 
         public void Configure(UIDocument target)
         {
@@ -44,20 +46,30 @@ namespace OpenSimCity.UI.Services
             ReleaseKeyboard();
             _panel?.RemoveFromHierarchy();
             _panel = null;
+            _context = null;
+            _module = null;
         }
 
         private void Update()
         {
-            if (_host == null) _host = UnityEngine.Object.FindFirstObjectByType<PublicServiceRuntimeHost>();
-            var module = _host?.Module;
-            if (module == null) return;
-            module.ReadModel.RefreshIfNeeded();
-            var readVersion = module.ReadModel.Snapshot.Version;
+            BindIfNeeded();
+            if (_module == null) return;
+            _module.ReadModel.RefreshIfNeeded();
+            var readVersion = _module.ReadModel.Snapshot.Version;
             var selectionVersion = PublicServiceSelection.Current.Version;
             if (_readVersion == readVersion && _selectionVersion == selectionVersion) return;
             _readVersion = readVersion;
             _selectionVersion = selectionVersion;
             RefreshText();
+        }
+
+        private void BindIfNeeded()
+        {
+            var current = CityRuntimeContext.Current;
+            if (ReferenceEquals(current, _context)) return;
+            _context = current;
+            _module = current == null ? null : PublicServiceRuntimeRegistry.GetOrCreate(current.Runtime);
+            _readVersion = -1;
         }
 
         private void Rebuild()
@@ -136,14 +148,17 @@ namespace OpenSimCity.UI.Services
 
         private void PlaceSelected()
         {
-            if (_host == null || !PublicServiceSelection.Current.SelectedCell.HasValue)
+            if (_module == null || !PublicServiceSelection.Current.SelectedCell.HasValue)
             {
                 _feedback.text = "월드에서 빈 도로 인접 셀을 먼저 선택하세요.";
                 return;
             }
-            var result = _host.Place(
-                PublicServiceSelection.Current.ActiveKind,
-                PublicServiceSelection.Current.SelectedCell.Value);
+            var kind = PublicServiceSelection.Current.ActiveKind;
+            var cell = PublicServiceSelection.Current.SelectedCell.Value;
+            var definitionId = PublicServiceDefinitionIds.For(kind);
+            var facilityId = _module.FacilityIdFor(definitionId, cell);
+            var result = _module.Execute(new PlaceServiceFacilityCommand(facilityId, definitionId, cell));
+            if (result.IsApplied) PublicServiceSelection.Current.SelectFacility(facilityId);
             _feedback.text = result.IsApplied ? "시설을 배치했습니다." : result.Message;
             RefreshText();
         }
@@ -158,12 +173,12 @@ namespace OpenSimCity.UI.Services
         private void SetBudget(int budgetPermille)
         {
             var selectedId = PublicServiceSelection.Current.SelectedFacilityId;
-            if (!selectedId.IsValid || _host == null)
+            if (!selectedId.IsValid || _module == null)
             {
                 _feedback.text = "예산을 변경할 시설 셀을 선택하세요.";
                 return;
             }
-            var result = _host.SetBudget(selectedId, budgetPermille);
+            var result = _module.Execute(new SetServiceBudgetCommand(selectedId, budgetPermille));
             _feedback.text = result.IsApplied
                 ? $"{budgetPermille / 10}% 예산을 다음 월에 적용합니다."
                 : result.Message;
@@ -174,14 +189,13 @@ namespace OpenSimCity.UI.Services
         {
             if (_summary == null || _selection == null || _facilities == null ||
                 _feedback == null || _coverage == null) return;
-            var module = _host?.Module;
-            if (module == null)
+            if (_module == null)
             {
                 _summary.text = "서비스 runtime을 기다리는 중";
                 return;
             }
-            module.ReadModel.RefreshIfNeeded();
-            var snapshot = module.ReadModel.Snapshot;
+            _module.ReadModel.RefreshIfNeeded();
+            var snapshot = _module.ReadModel.Snapshot;
             _summary.text = snapshot.HasProcessedMonth
                 ? $"적용 기간 {snapshot.Year}년 {snapshot.Month}월 · 제공 {snapshot.ServedTotal}/{snapshot.RequestedTotal} · 운영비 {snapshot.MonthlyCost}"
                 : "아직 처리된 서비스 월 없음";
