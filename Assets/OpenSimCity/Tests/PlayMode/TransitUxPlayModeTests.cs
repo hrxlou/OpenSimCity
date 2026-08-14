@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Linq;
 using NUnit.Framework;
+using OpenSimCity.Application.Bootstrap;
 using OpenSimCity.Application.Construction;
 using OpenSimCity.Application.Transit;
 using OpenSimCity.Application.World;
