@@ -4,6 +4,7 @@ using OpenSimCity.Application.World;
 using OpenSimCity.Core.Mathematics;
 using OpenSimCity.Gameplay.Construction;
 using OpenSimCity.Gameplay.Selection;
+using OpenSimCity.Simulation.Buildings;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
