@@ -34,14 +34,14 @@ namespace OpenSimCity.Presentation.Services
             if (!scene.IsValid() || !scene.isLoaded) return;
             if (!string.Equals(scene.name, "CityPrototype", StringComparison.Ordinal)) return;
 
-            if (Object.FindFirstObjectByType<PublicServiceViewCoordinator>() == null)
+            if (UnityEngine.Object.FindFirstObjectByType<PublicServiceViewCoordinator>() == null)
             {
                 var root = new GameObject(PublicServiceViewCoordinator.RuntimeObjectName);
                 SceneManager.MoveGameObjectToScene(root, scene);
                 root.AddComponent<PublicServiceViewCoordinator>();
             }
 
-            if (Object.FindFirstObjectByType<ServiceResponseView>() == null)
+            if (UnityEngine.Object.FindFirstObjectByType<ServiceResponseView>() == null)
             {
                 var root = new GameObject("ServiceResponseViews");
                 SceneManager.MoveGameObjectToScene(root, scene);
