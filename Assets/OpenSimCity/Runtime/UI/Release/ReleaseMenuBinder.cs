@@ -6,6 +6,7 @@ using OpenSimCity.Application.Persistence;
 using OpenSimCity.Application.World;
 using OpenSimCity.UI.Foundation;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 namespace OpenSimCity.UI.Release
@@ -34,12 +35,24 @@ namespace OpenSimCity.UI.Release
         private bool _pointerCaptured;
         private string _lastRefreshKey;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void RegisterSceneInstaller()
+        {
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
+            SceneManager.sceneLoaded += HandleSceneLoaded;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
             var bootstrap = UnityEngine.Object.FindAnyObjectByType<UiFoundationBootstrap>();
             if (bootstrap != null && bootstrap.GetComponent<ReleaseMenuBinder>() == null)
                 bootstrap.gameObject.AddComponent<ReleaseMenuBinder>();
+        }
+
+        private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            Install();
         }
 
         private void OnEnable()
@@ -125,7 +138,7 @@ namespace OpenSimCity.UI.Release
 
             _loadSection = new VisualElement { name = "osc-release-load-section" };
             _manualLoad = AddButton(_loadSection, "osc-release-load-manual", "수동 저장 불러오기", () => Load(CityPersistenceController.ManualSaveKey));
-            _autosaveLoad = AddButton(_loadSection, "osc-release-load-autosave", "자동 저장 불러오기", () => Load(CityPersistenceController.AutosaveKey));
+            _autosaveLoad = AddButton(_loadSection, "osc-release-load-autosave", "자동 저장 불러오기", () => Load(CityPersistenceController.AutosaveSaveKey));
             _loadSection.style.display = DisplayStyle.None;
             _menu.Add(_loadSection);
 
@@ -213,7 +226,7 @@ namespace OpenSimCity.UI.Release
             _lastRefreshKey = key;
 
             var manual = FindSlot(persistence, CityPersistenceController.ManualSaveKey);
-            var autosave = FindSlot(persistence, CityPersistenceController.AutosaveKey);
+            var autosave = FindSlot(persistence, CityPersistenceController.AutosaveSaveKey);
             var canContinue = (manual?.HasSave == true || autosave?.HasSave == true) && persistence?.IsBusy != true;
             _continue?.SetEnabled(canContinue);
             _manualLoad?.SetEnabled(manual?.HasSave == true && persistence?.IsBusy != true);
