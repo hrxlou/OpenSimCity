@@ -77,6 +77,20 @@ jobs:
             }
           }
 
+      - name: Annotate Unity compiler errors
+        if: failure()
+        shell: powershell
+        working-directory: ${{ env.SOURCE_DIR }}
+        run: |
+          $logs = Get-ChildItem -Path TestResults -Filter *.log -ErrorAction SilentlyContinue
+          foreach ($log in $logs) {
+            $matches = Select-String -Path $log.FullName -Pattern 'error CS[0-9]{4}:' -ErrorAction SilentlyContinue
+            foreach ($match in $matches) {
+              $message = ($match.Line -replace '[\r\n]+', ' ').Trim()
+              Write-Host "::error title=Unity compiler::$message"
+            }
+          }
+
       - name: Print failed Unity test cases
         if: failure()
         shell: powershell
@@ -97,7 +111,13 @@ jobs:
               foreach ($case in $failed) {
                 Write-Host "FAILED: $($case.fullname)"
                 $message = $case.failure.message
-                if ($message) { Write-Host $message.InnerText }
+                if ($message) {
+                  $oneLine = ($message.InnerText -replace '[\r\n]+', ' ').Trim()
+                  Write-Host $message.InnerText
+                  Write-Host "::error title=Unity test::$($case.fullname): $oneLine"
+                } else {
+                  Write-Host "::error title=Unity test::$($case.fullname) failed without a failure message."
+                }
                 $stack = $case.failure.'stack-trace'
                 if ($stack) { Write-Host $stack.InnerText }
               }
