@@ -33,7 +33,16 @@ namespace OpenSimCity.UI.Release
         private Button _openButton;
         private bool _menuOpen = true;
         private bool _pointerCaptured;
-        private string _lastRefreshKey;
+        private bool _hasRefreshKey;
+        private bool _lastHasPersistence;
+        private CityPersistenceOperationState _lastPersistenceState;
+        private int _lastPersistenceSlotCount;
+        private bool _lastHasOnboarding;
+        private OnboardingTaskKind _lastOnboardingTask;
+        private bool _lastHasProblem;
+        private string _lastProblemCode = string.Empty;
+        private bool _lastHintsEnabled;
+        private bool _lastMenuOpen;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void RegisterSceneInstaller()
@@ -70,6 +79,7 @@ namespace OpenSimCity.UI.Release
             _menu = null;
             _tutorial = null;
             _boundRoot = null;
+            InvalidateRefreshKey();
         }
 
         private void Update()
@@ -87,12 +97,6 @@ namespace OpenSimCity.UI.Release
 
             var context = CityRuntimeContext.Current;
             if (!ReferenceEquals(context, _boundContext)) BindContext(context);
-            var onboarding = OnboardingContext.Current;
-            if (onboarding != null && context != null)
-            {
-                onboarding.BindRuntime(context.Runtime);
-                onboarding.Refresh();
-            }
             Refresh();
         }
 
@@ -175,7 +179,7 @@ namespace OpenSimCity.UI.Release
             _boundRoot.Add(_tutorial);
 
             ApplyVisibility();
-            _lastRefreshKey = null;
+            InvalidateRefreshKey();
         }
 
         private void EnsureOpenButton()
@@ -200,13 +204,13 @@ namespace OpenSimCity.UI.Release
                 _boundContext.Committed += HandleCommitted;
                 OnboardingContext.Current?.BindRuntime(_boundContext.Runtime);
             }
-            _lastRefreshKey = null;
+            InvalidateRefreshKey();
         }
 
         private void HandleCommitted(Application.Construction.ConstructionCommitResult result)
         {
             OnboardingContext.Current?.ObserveConstruction(result);
-            _lastRefreshKey = null;
+            InvalidateRefreshKey();
         }
 
         private void Refresh()
@@ -215,15 +219,44 @@ namespace OpenSimCity.UI.Release
             var session = ReleaseSessionContext.Current;
             var persistence = session?.Persistence;
             var onboarding = OnboardingContext.Current?.Snapshot;
-            var key = string.Concat(
-                persistence?.State.ToString() ?? "none", ":",
-                persistence?.Slots?.Count ?? 0, ":",
-                onboarding?.Task.ToString() ?? "none", ":",
-                onboarding?.HasProblem == true ? onboarding.ProblemCode : "none", ":",
-                onboarding?.HintsEnabled == true ? "1" : "0", ":",
-                _menuOpen ? "open" : "closed");
-            if (string.Equals(key, _lastRefreshKey, StringComparison.Ordinal)) return;
-            _lastRefreshKey = key;
+
+            var hasPersistence = persistence != null;
+            var persistenceState = hasPersistence
+                ? persistence.State
+                : default(CityPersistenceOperationState);
+            var persistenceSlotCount = persistence?.Slots?.Count ?? 0;
+            var hasOnboarding = onboarding != null;
+            var onboardingTask = hasOnboarding
+                ? onboarding.Task
+                : default(OnboardingTaskKind);
+            var hasProblem = onboarding?.HasProblem == true;
+            var problemCode = hasProblem ? onboarding.ProblemCode ?? string.Empty : string.Empty;
+            var hintsEnabled = onboarding?.HintsEnabled == true;
+
+            if (_hasRefreshKey &&
+                _lastHasPersistence == hasPersistence &&
+                _lastPersistenceState == persistenceState &&
+                _lastPersistenceSlotCount == persistenceSlotCount &&
+                _lastHasOnboarding == hasOnboarding &&
+                _lastOnboardingTask == onboardingTask &&
+                _lastHasProblem == hasProblem &&
+                string.Equals(_lastProblemCode, problemCode, StringComparison.Ordinal) &&
+                _lastHintsEnabled == hintsEnabled &&
+                _lastMenuOpen == _menuOpen)
+            {
+                return;
+            }
+
+            _lastHasPersistence = hasPersistence;
+            _lastPersistenceState = persistenceState;
+            _lastPersistenceSlotCount = persistenceSlotCount;
+            _lastHasOnboarding = hasOnboarding;
+            _lastOnboardingTask = onboardingTask;
+            _lastHasProblem = hasProblem;
+            _lastProblemCode = problemCode;
+            _lastHintsEnabled = hintsEnabled;
+            _lastMenuOpen = _menuOpen;
+            _hasRefreshKey = true;
 
             var manual = FindSlot(persistence, CityPersistenceController.ManualSaveKey);
             var autosave = FindSlot(persistence, CityPersistenceController.AutosaveKey);
@@ -241,6 +274,11 @@ namespace OpenSimCity.UI.Release
                 _problemDetails.style.display = onboarding.HasProblem ? DisplayStyle.Flex : DisplayStyle.None;
             }
             ApplyVisibility();
+        }
+
+        private void InvalidateRefreshKey()
+        {
+            _hasRefreshKey = false;
         }
 
         private void ContinueCity()
@@ -262,7 +300,7 @@ namespace OpenSimCity.UI.Release
         {
             CityRuntimeContext.Current?.SetOverlay(PlacementOverlayKind.Parcel);
             OnboardingContext.Current?.MarkProblemDetailsViewed();
-            _lastRefreshKey = null;
+            InvalidateRefreshKey();
         }
 
         private void ToggleLoad()
@@ -281,7 +319,7 @@ namespace OpenSimCity.UI.Release
         {
             _menuOpen = !_menuOpen;
             ApplyVisibility();
-            _lastRefreshKey = null;
+            InvalidateRefreshKey();
         }
 
         private void ApplyVisibility()
