@@ -3,6 +3,7 @@
   "rootNamespace": "OpenSimCity.Gameplay",
   "references": [
     "OpenSimCity.Core",
+    "OpenSimCity.Simulation",
     "OpenSimCity.Application",
     "Unity.InputSystem"
   ],
