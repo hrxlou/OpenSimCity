@@ -22,7 +22,9 @@ namespace OpenSimCity.Tests.EditMode
         {
             var runtime = CreateRuntimeWithRoad(out _);
             var module = WaterDensityRuntimeRegistry.GetOrCreate(runtime);
-            var cell = new CellCoord(2, 3);
+            // The default residential fixture occupies (2,2)-(3,3). Keep the pump
+            // on a separate empty cell that is still adjacent to the road at y=4.
+            var cell = new CellCoord(5, 3);
             var producerId = module.ProducerIdFor(cell);
             var command = new PlaceWaterProducerCommand(producerId, WaterDensityDefinitionIds.Pump, cell);
             var preview = module.Commands.Preview(command);
