@@ -3,6 +3,7 @@
   "rootNamespace": "OpenSimCity.Presentation",
   "references": [
     "OpenSimCity.Core",
+    "OpenSimCity.Simulation",
     "OpenSimCity.Application"
   ],
   "includePlatforms": [],
