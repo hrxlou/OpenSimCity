@@ -55,9 +55,9 @@ namespace OpenSimCity.Simulation.Roads
             _componentIds = new int[cellCount];
             _distances = new int[cellCount];
             _nearestGateIds = new StableId[cellCount];
-            _componentQueue = new Queue<int>(cellCount);
-            _distanceQueue = new DistanceQueue(cellCount);
-            _changedCells = new List<CellCoord>(cellCount);
+            _componentQueue = new Queue<int>();
+            _distanceQueue = new DistanceQueue();
+            _changedCells = new List<CellCoord>();
 
             Rebuild();
         }
@@ -285,18 +285,29 @@ namespace OpenSimCity.Simulation.Roads
                 while (_componentQueue.Count > 0)
                 {
                     var current = _componentQueue.Dequeue();
-                    VisitNeighborsInStableOrder(current, neighbor =>
-                    {
-                        if (!occupied[neighbor] || _componentIds[neighbor] != NoComponent)
-                            return;
-
-                        _componentIds[neighbor] = rootIndex;
-                        _componentQueue.Enqueue(neighbor);
-                    });
+                    var x = current % Width;
+                    var y = current / Width;
+                    if (y > 0)
+                        TryVisitComponentNeighbor(current - Width, rootIndex, occupied);
+                    if (x > 0)
+                        TryVisitComponentNeighbor(current - 1, rootIndex, occupied);
+                    if (x + 1 < Width)
+                        TryVisitComponentNeighbor(current + 1, rootIndex, occupied);
+                    if (y + 1 < Height)
+                        TryVisitComponentNeighbor(current + Width, rootIndex, occupied);
                 }
             }
 
             return _componentIds;
+        }
+
+        private void TryVisitComponentNeighbor(int neighbor, int componentId, bool[] occupied)
+        {
+            if (!occupied[neighbor] || _componentIds[neighbor] != NoComponent)
+                return;
+
+            _componentIds[neighbor] = componentId;
+            _componentQueue.Enqueue(neighbor);
         }
 
         private int CalculateExternalGateDistances(
@@ -331,30 +342,65 @@ namespace OpenSimCity.Simulation.Roads
                     continue;
                 }
 
-                VisitConnectedNeighborsInStableOrder(
-                    current.CellIndex,
-                    connectionMasks[current.CellIndex],
-                    neighbor =>
-                    {
-                        var candidateDistance = checked(current.Distance + 1);
-                        var existingDistance = distances[neighbor];
-                        var existingGateId = nearestGateIds[neighbor];
-                        var isBetter = existingDistance == UnreachableDistance ||
-                                       candidateDistance < existingDistance ||
-                                       (candidateDistance == existingDistance && current.GateId < existingGateId);
-                        if (!isBetter)
-                            return;
-
-                        distances[neighbor] = candidateDistance;
-                        nearestGateIds[neighbor] = current.GateId;
-                        _distanceQueue.Enqueue(new DistanceQueueEntry(
-                            candidateDistance,
-                            current.GateId,
-                            neighbor));
-                    });
+                var mask = connectionMasks[current.CellIndex];
+                if ((mask & RoadConnectionMask.South) != 0)
+                {
+                    TryRelaxDistance(
+                        current,
+                        current.CellIndex - Width,
+                        distances,
+                        nearestGateIds);
+                }
+                if ((mask & RoadConnectionMask.West) != 0)
+                {
+                    TryRelaxDistance(
+                        current,
+                        current.CellIndex - 1,
+                        distances,
+                        nearestGateIds);
+                }
+                if ((mask & RoadConnectionMask.East) != 0)
+                {
+                    TryRelaxDistance(
+                        current,
+                        current.CellIndex + 1,
+                        distances,
+                        nearestGateIds);
+                }
+                if ((mask & RoadConnectionMask.North) != 0)
+                {
+                    TryRelaxDistance(
+                        current,
+                        current.CellIndex + Width,
+                        distances,
+                        nearestGateIds);
+                }
             }
 
             return activeGateCount;
+        }
+
+        private void TryRelaxDistance(
+            DistanceQueueEntry current,
+            int neighbor,
+            int[] distances,
+            StableId[] nearestGateIds)
+        {
+            var candidateDistance = checked(current.Distance + 1);
+            var existingDistance = distances[neighbor];
+            var existingGateId = nearestGateIds[neighbor];
+            var isBetter = existingDistance == UnreachableDistance ||
+                           candidateDistance < existingDistance ||
+                           (candidateDistance == existingDistance && current.GateId < existingGateId);
+            if (!isBetter)
+                return;
+
+            distances[neighbor] = candidateDistance;
+            nearestGateIds[neighbor] = current.GateId;
+            _distanceQueue.Enqueue(new DistanceQueueEntry(
+                candidateDistance,
+                current.GateId,
+                neighbor));
         }
 
         private bool IsActiveRoadGate(
@@ -391,37 +437,6 @@ namespace OpenSimCity.Simulation.Roads
             if ((uint)x >= (uint)Width || (uint)y >= (uint)Height)
                 return false;
             return occupied[y * Width + x];
-        }
-
-        private void VisitNeighborsInStableOrder(int index, Action<int> visitor)
-        {
-            var x = index % Width;
-            var y = index / Width;
-
-            // Neighbor indices are visited from smallest to largest.
-            if (y > 0)
-                visitor(index - Width);
-            if (x > 0)
-                visitor(index - 1);
-            if (x + 1 < Width)
-                visitor(index + 1);
-            if (y + 1 < Height)
-                visitor(index + Width);
-        }
-
-        private void VisitConnectedNeighborsInStableOrder(
-            int index,
-            RoadConnectionMask mask,
-            Action<int> visitor)
-        {
-            if ((mask & RoadConnectionMask.South) != 0)
-                visitor(index - Width);
-            if ((mask & RoadConnectionMask.West) != 0)
-                visitor(index - 1);
-            if ((mask & RoadConnectionMask.East) != 0)
-                visitor(index + 1);
-            if ((mask & RoadConnectionMask.North) != 0)
-                visitor(index + Width);
         }
 
         private static ExternalGateDistanceBand GetDistanceBand(int distance)
@@ -512,12 +527,7 @@ namespace OpenSimCity.Simulation.Roads
         /// </summary>
         private sealed class DistanceQueue
         {
-            private readonly List<DistanceQueueEntry> _entries;
-
-            public DistanceQueue(int capacity)
-            {
-                _entries = new List<DistanceQueueEntry>(capacity);
-            }
+            private readonly List<DistanceQueueEntry> _entries = new List<DistanceQueueEntry>();
 
             public int Count => _entries.Count;
 
