@@ -9,6 +9,7 @@ using OpenSimCity.Core.Mathematics;
 using OpenSimCity.Simulation.Buildings;
 using OpenSimCity.Simulation.Conditions;
 using OpenSimCity.Simulation.Spatial;
+using OpenSimCity.Simulation.Utilities;
 using OpenSimCity.Simulation.Zones;
 
 namespace OpenSimCity.Application.Conditions
@@ -16,6 +17,11 @@ namespace OpenSimCity.Application.Conditions
     public sealed class BuildingConditionRuntimeModule
     {
         private readonly CityRuntime _runtime;
+
+        internal BuildingConditionRuntimeModule(BuildingConditionRuntimeModule unused)
+        {
+            throw new NotSupportedException();
+        }
 
         internal BuildingConditionRuntimeModule(CityRuntime runtime, BuildingConditionParameters parameters = null, int redevelopmentCost = 500)
         {
