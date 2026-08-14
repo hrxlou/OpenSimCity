@@ -74,7 +74,8 @@ namespace OpenSimCity.Platform.Persistence
                 ? Path.Combine(UnityEngine.Application.persistentDataPath, SaveDirectoryName)
                 : Path.GetFullPath(storageRootDirectory);
             var storage = new AtomicFileCitySaveStorage(StorageRootDirectory);
-            var codec = new UnityJsonCitySnapshotPayloadCodec();
+            var innerCodec = new UnityJsonCitySnapshotPayloadCodec();
+            var codec = new ReleaseCatalogSnapshotPayloadCodec(innerCodec);
             var service = new CityPersistenceService(storage, codec,
                 new ICitySnapshotMigrationStep[] { new CitySnapshotV1ToV2Migration(codec) });
             _controller = new CityPersistenceController(
