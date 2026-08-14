@@ -209,7 +209,7 @@ namespace OpenSimCity.UI.Foundation
 
         internal static ScrollView Create()
         {
-            var dock = new ScrollView(ScrollViewMode.Vertical) { name = Name };
+            var dock = new ScrollView { name = Name };
             dock.pickingMode = PickingMode.Position;
             dock.style.width = 380f;
             dock.style.minWidth = 320f;
@@ -221,7 +221,6 @@ namespace OpenSimCity.UI.Foundation
             dock.style.marginBottom = 8f;
             dock.style.display = DisplayStyle.None;
             dock.contentContainer.style.flexDirection = FlexDirection.Column;
-            dock.contentContainer.style.gap = 8f;
             return dock;
         }
 
@@ -278,6 +277,7 @@ namespace OpenSimCity.UI.Foundation
             panel.style.width = StyleKeyword.Auto;
             panel.style.alignSelf = Align.Stretch;
             panel.style.flexShrink = 0f;
+            panel.style.marginBottom = 8f;
         }
     }
 }
