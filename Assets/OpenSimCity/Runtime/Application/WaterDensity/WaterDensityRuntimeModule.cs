@@ -685,16 +685,16 @@ namespace OpenSimCity.Application.WaterDensity
                 if (row.BuildingId == 0 || row.BuildingId <= previousBuilding ||
                     !Runtime.Buildings.TryGet(new StableId(row.BuildingId), out _))
                     throw new ArgumentException("Density rows require ordered known building IDs.", nameof(snapshot));
-                if (!Enum.IsDefined(typeof(DensityStage), row.Stage) ||
-                    !Enum.IsDefined(typeof(DensityStage), row.TargetStage) ||
-                    !Enum.IsDefined(typeof(DensityUpgradeBlockReason), row.TopReason))
+                if (!IsDefinedByteEnum<DensityStage>(row.Stage) ||
+                    !IsDefinedByteEnum<DensityStage>(row.TargetStage) ||
+                    !IsDefinedByteEnum<DensityUpgradeBlockReason>(row.TopReason))
                     throw new ArgumentException("Density row contains an unknown enum.", nameof(snapshot));
                 var factorDtos = row.Factors ?? Array.Empty<DensityUpgradeFactorDto>();
                 var factors = new DensityUpgradeFactor[factorDtos.Length];
                 for (var factorIndex = 0; factorIndex < factors.Length; factorIndex++)
                 {
                     var factor = factorDtos[factorIndex] ?? throw new ArgumentException("Density factors cannot contain null.", nameof(snapshot));
-                    if (!Enum.IsDefined(typeof(DensityUpgradeFactorKind), factor.Kind))
+                    if (!IsDefinedByteEnum<DensityUpgradeFactorKind>(factor.Kind))
                         throw new ArgumentException("Density factor kind is unknown.", nameof(snapshot));
                     factors[factorIndex] = new DensityUpgradeFactor(
                         (DensityUpgradeFactorKind)factor.Kind,
@@ -723,6 +723,13 @@ namespace OpenSimCity.Application.WaterDensity
                     : default);
             Runtime.PopulationSystem.CapacityResolver = _capacityResolver;
             ReadModel.RefreshIfNeeded();
+        }
+
+        private static bool IsDefinedByteEnum<TEnum>(int value) where TEnum : struct
+        {
+            if (value < byte.MinValue || value > byte.MaxValue)
+                return false;
+            return Enum.IsDefined(typeof(TEnum), Enum.ToObject(typeof(TEnum), (byte)value));
         }
 
         public sealed class RuntimeDensityProfileResolver : IDensityBuildingProfileResolver
