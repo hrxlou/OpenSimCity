@@ -17,6 +17,7 @@ namespace OpenSimCity.UI.Release
         private UiFoundationBootstrap _bootstrap;
         private VisualElement _boundRoot;
         private CityRuntimeContext _boundContext;
+        private OnboardingProgressController _boundOnboarding;
         private VisualElement _menuBackdrop;
         private VisualElement _menu;
         private VisualElement _loadSection;
@@ -72,6 +73,7 @@ namespace OpenSimCity.UI.Release
         private void OnDisable()
         {
             BindContext(null);
+            _boundOnboarding = null;
             ReleasePointer();
             _menuBackdrop?.RemoveFromHierarchy();
             _tutorial?.RemoveFromHierarchy();
@@ -97,6 +99,16 @@ namespace OpenSimCity.UI.Release
 
             var context = CityRuntimeContext.Current;
             if (!ReferenceEquals(context, _boundContext)) BindContext(context);
+
+            var onboarding = OnboardingContext.Current;
+            if (!ReferenceEquals(onboarding, _boundOnboarding))
+            {
+                _boundOnboarding = onboarding;
+                if (_boundOnboarding != null && _boundContext != null)
+                    _boundOnboarding.BindRuntime(_boundContext.Runtime);
+                InvalidateRefreshKey();
+            }
+
             Refresh();
         }
 
@@ -148,7 +160,7 @@ namespace OpenSimCity.UI.Release
 
             _settingsSection = new VisualElement { name = "osc-release-settings-section" };
             _hints = new Toggle("튜토리얼 힌트 표시") { name = "osc-release-setting-hints" };
-            _hints.RegisterValueChangedCallback(evt => OnboardingContext.Current?.SetHintsEnabled(evt.newValue));
+            _hints.RegisterValueChangedCallback(evt => _boundOnboarding?.SetHintsEnabled(evt.newValue));
             _settingsSection.Add(_hints);
             _settingsSection.style.display = DisplayStyle.None;
             _menu.Add(_settingsSection);
@@ -202,14 +214,14 @@ namespace OpenSimCity.UI.Release
             if (_boundContext != null)
             {
                 _boundContext.Committed += HandleCommitted;
-                OnboardingContext.Current?.BindRuntime(_boundContext.Runtime);
+                _boundOnboarding?.BindRuntime(_boundContext.Runtime);
             }
             InvalidateRefreshKey();
         }
 
         private void HandleCommitted(Application.Construction.ConstructionCommitResult result)
         {
-            OnboardingContext.Current?.ObserveConstruction(result);
+            _boundOnboarding?.ObserveConstruction(result);
             InvalidateRefreshKey();
         }
 
@@ -218,7 +230,7 @@ namespace OpenSimCity.UI.Release
             if (_menu == null || _tutorial == null) return;
             var session = ReleaseSessionContext.Current;
             var persistence = session?.Persistence;
-            var onboarding = OnboardingContext.Current?.Snapshot;
+            var onboarding = _boundOnboarding?.Snapshot;
 
             var hasPersistence = persistence != null;
             var persistenceState = hasPersistence
@@ -299,7 +311,7 @@ namespace OpenSimCity.UI.Release
         private void OpenProblemDetails()
         {
             CityRuntimeContext.Current?.SetOverlay(PlacementOverlayKind.Parcel);
-            OnboardingContext.Current?.MarkProblemDetailsViewed();
+            _boundOnboarding?.MarkProblemDetailsViewed();
             InvalidateRefreshKey();
         }
 
@@ -332,7 +344,7 @@ namespace OpenSimCity.UI.Release
 
             if (_tutorial != null)
             {
-                var showTutorial = !_menuOpen && OnboardingContext.Current?.Snapshot != null;
+                var showTutorial = !_menuOpen && _boundOnboarding?.Snapshot != null;
                 _tutorial.style.display = showTutorial ? DisplayStyle.Flex : DisplayStyle.None;
                 if (showTutorial) _tutorial.BringToFront();
             }
