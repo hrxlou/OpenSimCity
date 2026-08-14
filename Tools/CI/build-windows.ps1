@@ -84,7 +84,20 @@ Write-Host "Release source=$SourceCommit cleanCheckout=$CleanCheckout"
 & $UnityEditor @unityArgs
 $unityExitCode = $LASTEXITCODE
 
-$timeoutSeconds = 1800
+# If Unity exits before the executeMethod runs (for example because script compilation
+# failed), no result file can ever appear. Fail immediately instead of holding the only
+# self-hosted runner for the normal build timeout.
+if ($unityExitCode -ne 0 -and -not (Test-Path $ResultFile)) {
+    if (Test-Path $LogFile) {
+        Write-Host '--- Unity build log tail ---'
+        Get-Content -Path $LogFile -Tail 200 -ErrorAction SilentlyContinue
+        Write-Host '--- end Unity build log tail ---'
+    }
+    Write-Error "Unity가 build result를 기록하기 전에 종료했다 (exit code=$unityExitCode). 로그: $LogFile"
+    exit 1
+}
+
+$timeoutSeconds = 30
 $elapsed = 0
 while (-not (Test-Path $ResultFile) -and $elapsed -lt $timeoutSeconds) {
     Start-Sleep -Seconds 2

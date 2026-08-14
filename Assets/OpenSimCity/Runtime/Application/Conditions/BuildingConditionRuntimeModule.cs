@@ -9,6 +9,7 @@ using OpenSimCity.Core.Mathematics;
 using OpenSimCity.Simulation.Buildings;
 using OpenSimCity.Simulation.Conditions;
 using OpenSimCity.Simulation.Spatial;
+using OpenSimCity.Simulation.Utilities;
 using OpenSimCity.Simulation.Zones;
 
 namespace OpenSimCity.Application.Conditions
