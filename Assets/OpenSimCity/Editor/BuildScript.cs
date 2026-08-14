@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using OpenSimCity.Application.Verification;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -9,160 +10,184 @@ using UnityEngine;
 namespace OpenSimCity.Editor
 {
     /// <summary>
-    /// Standalone 빌드의 단일 진입점이다.
-    /// CI(game-ci unity-builder)와 로컬 Tools/CI/build-windows.ps1이 같은 메서드를 호출해
-    /// 빌드 결과가 두 환경에서 동일하게 재현되도록 한다.
+    /// Standalone release build entry point. Windows and macOS consume the same
+    /// ReleaseBuildProfile so product scenes/version/content identity cannot drift by platform.
     /// </summary>
     public static class BuildScript
     {
-        private const string ProductName = "OpenSimCity";
-        private const string DefaultRelativePath = "build/StandaloneWindows64/OpenSimCity.exe";
-
-        // Editor Build Settings에는 개발·벤치마크 Scene도 등록할 수 있지만 출시 Player에는
-        // 제품 진입 흐름에 필요한 Scene만 명시적으로 포함한다.
-        private static readonly string[] ReleaseScenes =
-        {
-            "Assets/OpenSimCity/Scenes/Bootstrap.unity",
-            "Assets/OpenSimCity/Scenes/MainMenu.unity",
-            "Assets/OpenSimCity/Scenes/CityPrototype.unity",
-        };
-
-        // 로컬 스크립트가 출력 경로를 넘길 때 사용하는 커스텀 인자.
         private const string BuildPathArg = "-osc-buildPath";
         private const string BuildResultPathArg = "-osc-buildResultPath";
+        private const string BuildEvidencePathArg = "-osc-buildEvidencePath";
+        private const string BuildSourceCommitArg = "-osc-sourceCommit";
+        private const string BuildCleanCheckoutArg = "-osc-cleanCheckout";
 
         [MenuItem("OpenSimCity/Build/Windows Standalone")]
         public static void PerformWindowsBuildMenu()
         {
-            BuildWindows(Path.Combine(ProjectRoot(), DefaultRelativePath));
+            var profile = ReleaseBuildProfile.Create(ReleaseBuildPlatform.Windows);
+            BuildStandalone(ReleaseBuildPlatform.Windows, BuildTarget.StandaloneWindows64,
+                Path.Combine(ProjectRoot(), profile.DefaultRelativeOutputPath));
         }
 
-        /// <summary>
-        /// 배치모드에서 -executeMethod 또는 buildMethod로 호출되는 진입점이다.
-        /// 실패 시 배치모드에서는 0이 아닌 코드로 종료해 CI가 실패를 감지하게 한다.
-        /// </summary>
+        [MenuItem("OpenSimCity/Build/macOS Standalone")]
+        public static void PerformMacOSBuildMenu()
+        {
+            var profile = ReleaseBuildProfile.Create(ReleaseBuildPlatform.MacOS);
+            BuildStandalone(ReleaseBuildPlatform.MacOS, BuildTarget.StandaloneOSX,
+                Path.Combine(ProjectRoot(), profile.DefaultRelativeOutputPath));
+        }
+
         public static void PerformWindowsBuild()
         {
-            string outputPath = ResolveOutputPath();
-            BuildReport report = BuildWindows(outputPath);
-            bool success = report != null && report.summary.result == BuildResult.Succeeded;
-            WriteBuildResult(ResolveArgument(BuildResultPathArg), success, report);
-
-            if (UnityEngine.Application.isBatchMode)
-            {
-                EditorApplication.Exit(success ? 0 : 1);
-            }
+            PerformBatchBuild(ReleaseBuildPlatform.Windows, BuildTarget.StandaloneWindows64);
         }
 
-        private static BuildReport BuildWindows(string outputPath)
+        public static void PerformMacOSBuild()
         {
-            string[] scenes = ValidatedReleaseScenePaths();
-            if (scenes.Length == 0)
-            {
-                Debug.LogError("Windows build aborted: 출시 Scene 구성이 유효하지 않다. " +
-                               "OpenSimCity/Setup/Configure Project로 Scene을 구성한 뒤 다시 실행한다.");
-                return null;
-            }
+            PerformBatchBuild(ReleaseBuildPlatform.MacOS, BuildTarget.StandaloneOSX);
+        }
 
-            string directory = Path.GetDirectoryName(outputPath);
-            if (!string.IsNullOrEmpty(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
+        private static void PerformBatchBuild(ReleaseBuildPlatform platform, BuildTarget target)
+        {
+            var profile = ReleaseBuildProfile.Create(platform);
+            var outputPath = ResolveOutputPath(profile);
+            var scenes = ValidatedReleaseScenePaths();
+            BuildReport report = null;
+            if (scenes.Length > 0)
+                report = BuildStandalone(platform, target, outputPath, scenes);
+
+            var success = report != null && report.summary.result == BuildResult.Succeeded;
+            WriteBuildResult(ResolveArgument(BuildResultPathArg), success, report);
+            WriteBuildEvidence(ResolveArgument(BuildEvidencePathArg), platform, success, report, profile, scenes);
+
+            if (UnityEngine.Application.isBatchMode)
+                EditorApplication.Exit(success ? 0 : 1);
+        }
+
+        private static BuildReport BuildStandalone(ReleaseBuildPlatform platform, BuildTarget target, string outputPath)
+        {
+            var scenes = ValidatedReleaseScenePaths();
+            if (scenes.Length == 0) return null;
+            return BuildStandalone(platform, target, outputPath, scenes);
+        }
+
+        private static BuildReport BuildStandalone(
+            ReleaseBuildPlatform platform,
+            BuildTarget target,
+            string outputPath,
+            string[] scenes)
+        {
+            var directory = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
 
             var options = new BuildPlayerOptions
             {
                 scenes = scenes,
                 locationPathName = outputPath,
-                target = BuildTarget.StandaloneWindows64,
+                target = target,
                 targetGroup = BuildTargetGroup.Standalone,
-                options = BuildOptions.None,
+                options = BuildOptions.None
             };
 
-            PlayerSettings.productName = ProductName;
+            var profile = ReleaseBuildProfile.Create(platform);
+            PlayerSettings.productName = profile.ProductName;
+            PlayerSettings.bundleVersion = profile.ApplicationVersion;
 
-            Debug.Log($"Windows build 시작: {outputPath}\nScenes:\n  {string.Join("\n  ", scenes)}");
-            BuildReport report = BuildPipeline.BuildPlayer(options);
-            BuildSummary summary = report.summary;
+            Debug.Log($"{platform} release build start: {outputPath}\nVersion: {profile.ApplicationVersion}\nContent: {profile.ContentCatalogVersion}\nScenes:\n  {string.Join("\n  ", scenes)}");
+            var report = BuildPipeline.BuildPlayer(options);
+            var summary = report.summary;
 
             if (summary.result == BuildResult.Succeeded)
-            {
-                Debug.Log($"Windows build 성공: {summary.outputPath} ({summary.totalSize} bytes, {summary.totalTime})");
-            }
+                Debug.Log($"{platform} build succeeded: {summary.outputPath} ({summary.totalSize} bytes, {summary.totalTime})");
             else
-            {
-                Debug.LogError($"Windows build 실패: result={summary.result}, errors={summary.totalErrors}");
-            }
+                Debug.LogError($"{platform} build failed: result={summary.result}, errors={summary.totalErrors}");
 
             return report;
         }
 
         public static IReadOnlyList<string> ReleaseScenePaths()
         {
-            return Array.AsReadOnly(ReleaseScenes);
+            return Array.AsReadOnly(ReleaseBuildProfile.ProductScenePaths());
         }
 
         private static string[] ValidatedReleaseScenePaths()
         {
-            string[] missingScenes = ReleaseScenes
+            var releaseScenes = ReleaseBuildProfile.ProductScenePaths();
+            var missingScenes = releaseScenes
                 .Where(path => AssetDatabase.LoadAssetAtPath<SceneAsset>(path) == null)
                 .ToArray();
 
             if (missingScenes.Length > 0)
             {
-                Debug.LogError(
-                    "출시 Scene 파일이 누락되었다:\n  " + string.Join("\n  ", missingScenes));
+                Debug.LogError("Release Scene files are missing:\n  " + string.Join("\n  ", missingScenes));
                 return Array.Empty<string>();
             }
 
-            return (string[])ReleaseScenes.Clone();
+            return releaseScenes;
         }
 
-        private static string ResolveOutputPath()
+        private static string ResolveOutputPath(ReleaseBuildProfileData profile)
         {
-            string configuredPath = ResolveArgument(BuildPathArg);
+            var configuredPath = ResolveArgument(BuildPathArg);
             return string.IsNullOrEmpty(configuredPath)
-                ? Path.Combine(ProjectRoot(), DefaultRelativePath)
+                ? Path.Combine(ProjectRoot(), profile.DefaultRelativeOutputPath)
                 : configuredPath;
         }
 
         private static string ResolveArgument(string argumentName)
         {
-            string[] args = Environment.GetCommandLineArgs();
-            for (int i = 0; i < args.Length - 1; i++)
-            {
-                if (string.Equals(args[i], argumentName, StringComparison.Ordinal))
-                {
-                    return args[i + 1];
-                }
-            }
-
+            var args = Environment.GetCommandLineArgs();
+            for (var index = 0; index < args.Length - 1; index++)
+                if (string.Equals(args[index], argumentName, StringComparison.Ordinal)) return args[index + 1];
             return null;
         }
 
         private static void WriteBuildResult(string resultPath, bool success, BuildReport report)
         {
-            if (string.IsNullOrEmpty(resultPath))
-            {
-                return;
-            }
-
-            string directory = Path.GetDirectoryName(resultPath);
-            if (!string.IsNullOrEmpty(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            string result = success ? "Succeeded" : "Failed";
-            string detail = report == null
+            if (string.IsNullOrEmpty(resultPath)) return;
+            EnsureParentDirectory(resultPath);
+            var result = success ? "Succeeded" : "Failed";
+            var detail = report == null
                 ? "No build report was produced."
                 : $"result={report.summary.result}; errors={report.summary.totalErrors}; output={report.summary.outputPath}";
             File.WriteAllText(resultPath, $"{result}{Environment.NewLine}{detail}{Environment.NewLine}");
         }
 
+        private static void WriteBuildEvidence(
+            string evidencePath,
+            ReleaseBuildPlatform platform,
+            bool success,
+            BuildReport report,
+            ReleaseBuildProfileData profile,
+            string[] scenes)
+        {
+            if (string.IsNullOrEmpty(evidencePath)) return;
+            EnsureParentDirectory(evidencePath);
+            var evidence = new ReleaseBuildExecutionEvidence
+            {
+                Platform = platform,
+                BuildSucceeded = success,
+                CleanCheckout = string.Equals(ResolveArgument(BuildCleanCheckoutArg), "1", StringComparison.Ordinal),
+                SourceCommit = ResolveArgument(BuildSourceCommitArg) ?? Environment.GetEnvironmentVariable("GITHUB_SHA") ?? string.Empty,
+                UnityVersion = UnityEngine.Application.unityVersion,
+                ProductName = profile.ProductName,
+                ApplicationVersion = profile.ApplicationVersion,
+                ContentCatalogVersion = profile.ContentCatalogVersion,
+                OutputPath = report == null ? string.Empty : report.summary.outputPath,
+                OutputBytes = report == null ? 0L : checked((long)report.summary.totalSize),
+                ProductScenes = scenes ?? Array.Empty<string>()
+            };
+            File.WriteAllText(evidencePath, JsonUtility.ToJson(evidence, true) + Environment.NewLine);
+        }
+
+        private static void EnsureParentDirectory(string path)
+        {
+            var directory = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
+        }
+
         private static string ProjectRoot()
         {
-            // Application.dataPath는 <project>/Assets를 가리킨다.
             return Directory.GetParent(UnityEngine.Application.dataPath).FullName;
         }
     }
