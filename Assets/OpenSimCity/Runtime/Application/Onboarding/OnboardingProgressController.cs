@@ -46,6 +46,8 @@ namespace OpenSimCity.Application.Onboarding
         private OnboardingProfileDto _profile;
         private CityRuntime _runtime;
         private OnboardingSnapshot _snapshot = new OnboardingSnapshot();
+        private int _lastObservedHudVersion = int.MinValue;
+        private int _lastObservedBuildingCount = -1;
 
         public OnboardingProgressController(CityRuntime runtime, IOnboardingProfileStore store)
         {
@@ -60,6 +62,8 @@ namespace OpenSimCity.Application.Onboarding
         public void BindRuntime(CityRuntime runtime)
         {
             _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
+            _lastObservedHudVersion = int.MinValue;
+            _lastObservedBuildingCount = -1;
             Refresh(true);
         }
 
@@ -104,8 +108,21 @@ namespace OpenSimCity.Application.Onboarding
         private void Refresh(bool forcePublish)
         {
             if (_runtime == null) return;
+
+            var hudVersion = _runtime.HudModel.Version;
+            var buildingCount = _runtime.Buildings.Count;
+            if (!forcePublish &&
+                hudVersion == _lastObservedHudVersion &&
+                buildingCount == _lastObservedBuildingCount)
+            {
+                return;
+            }
+
+            _lastObservedHudVersion = hudVersion;
+            _lastObservedBuildingCount = buildingCount;
+
             var changed = false;
-            if (!_profile.FirstGrowthObserved && _runtime.Buildings.Count > 0)
+            if (!_profile.FirstGrowthObserved && buildingCount > 0)
             {
                 _profile.FirstGrowthObserved = true;
                 changed = true;
