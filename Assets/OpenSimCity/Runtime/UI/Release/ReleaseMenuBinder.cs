@@ -138,7 +138,7 @@ namespace OpenSimCity.UI.Release
 
             _loadSection = new VisualElement { name = "osc-release-load-section" };
             _manualLoad = AddButton(_loadSection, "osc-release-load-manual", "수동 저장 불러오기", () => Load(CityPersistenceController.ManualSaveKey));
-            _autosaveLoad = AddButton(_loadSection, "osc-release-load-autosave", "자동 저장 불러오기", () => Load(CityPersistenceController.AutosaveSaveKey));
+            _autosaveLoad = AddButton(_loadSection, "osc-release-load-autosave", "자동 저장 불러오기", () => Load(CityPersistenceController.AutosaveKey));
             _loadSection.style.display = DisplayStyle.None;
             _menu.Add(_loadSection);
 
@@ -226,7 +226,7 @@ namespace OpenSimCity.UI.Release
             _lastRefreshKey = key;
 
             var manual = FindSlot(persistence, CityPersistenceController.ManualSaveKey);
-            var autosave = FindSlot(persistence, CityPersistenceController.AutosaveSaveKey);
+            var autosave = FindSlot(persistence, CityPersistenceController.AutosaveKey);
             var canContinue = (manual?.HasSave == true || autosave?.HasSave == true) && persistence?.IsBusy != true;
             _continue?.SetEnabled(canContinue);
             _manualLoad?.SetEnabled(manual?.HasSave == true && persistence?.IsBusy != true);
