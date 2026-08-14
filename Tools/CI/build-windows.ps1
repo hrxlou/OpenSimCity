@@ -31,12 +31,24 @@ if (-not $OutputPath) {
     $OutputPath = Join-Path $RepoRoot 'build\StandaloneWindows64\OpenSimCity.exe'
 }
 
-$SourceCommit = (& git -C $RepoRoot rev-parse HEAD).Trim()
-if ($LASTEXITCODE -ne 0 -or -not $SourceCommit) {
+# actions/checkout can prepare a repository under the self-hosted runner service account
+# while this build script is executed by the interactive Unity-license user. Keep the
+# ownership exception scoped to these Git invocations instead of mutating the machine's
+# global safe.directory configuration.
+$GitSafeDirectory = $RepoRoot -replace '\\', '/'
+$SourceCommitRows = @(& git -c "safe.directory=$GitSafeDirectory" -C $RepoRoot rev-parse HEAD)
+$GitExitCode = $LASTEXITCODE
+if ($GitExitCode -ne 0 -or $SourceCommitRows.Count -eq 0) {
     Write-Error 'release build source commit을 읽지 못했다.'
     exit 1
 }
-$StatusRows = @(& git -C $RepoRoot status --porcelain --untracked-files=all)
+$SourceCommit = ([string]$SourceCommitRows[0]).Trim()
+if (-not $SourceCommit) {
+    Write-Error 'release build source commit이 비어 있다.'
+    exit 1
+}
+
+$StatusRows = @(& git -c "safe.directory=$GitSafeDirectory" -C $RepoRoot status --porcelain --untracked-files=all)
 if ($LASTEXITCODE -ne 0) {
     Write-Error 'git clean-checkout 상태를 읽지 못했다.'
     exit 1
