@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.WaterDensity;
 using OpenSimCity.Application.World;
 using OpenSimCity.Core;
