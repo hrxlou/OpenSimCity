@@ -172,16 +172,19 @@ namespace OpenSimCity.Tests.PlayMode
                 yield return null;
                 yield return null;
                 Assert.That(bootstrap.GlobalHud.resolvedStyle.height, Is.GreaterThan(0f));
-                Assert.That(bootstrap.GlobalHud.resolvedStyle.height, Is.LessThanOrEqualTo(48f),
-                    "The Global HUD must remain a single-row status bar.");
-                Assert.That(bootstrap.BuildPalette.resolvedStyle.height, Is.LessThanOrEqualTo(64f),
-                    "The Build Palette must stay compact until it has real palette content.");
-                Assert.That(bootstrap.ToolRail.resolvedStyle.marginLeft, Is.EqualTo(8f).Within(0.5f),
-                    "The Tool Rail must retain a floating-panel gutter from the left edge.");
-                Assert.That(bootstrap.ContextInspector.resolvedStyle.marginTop, Is.EqualTo(8f).Within(0.5f),
-                    "The Context Inspector must retain a floating-panel gutter below the HUD.");
-                Assert.That(bootstrap.ContextInspector.resolvedStyle.marginRight, Is.EqualTo(8f).Within(0.5f),
-                    "The Context Inspector must retain a floating-panel gutter from the right edge.");
+                Assert.That(bootstrap.GlobalHud.resolvedStyle.height, Is.LessThanOrEqualTo(72f),
+                    "The Global HUD must retain its compact caption/value hierarchy.");
+                Assert.That(bootstrap.BuildPalette.resolvedStyle.height, Is.LessThanOrEqualTo(96f),
+                    "The floating Build Palette must stay compact while preserving a comfortable hit target.");
+                Assert.That(bootstrap.ToolRail.resolvedStyle.marginBottom, Is.GreaterThanOrEqualTo(4f),
+                    "The command dock must retain a scaled floating-panel gutter from the lower edge.");
+                bootstrap.ContextInspector.style.display = DisplayStyle.Flex;
+                yield return null;
+                Assert.That(bootstrap.ContextInspector.resolvedStyle.marginTop, Is.GreaterThanOrEqualTo(6f),
+                    "The Context Inspector must retain a scaled floating-panel gutter below the HUD.");
+                Assert.That(bootstrap.ContextInspector.resolvedStyle.marginRight, Is.GreaterThanOrEqualTo(6f),
+                    "The Context Inspector must retain a scaled floating-panel gutter from the right edge.");
+                bootstrap.ContextInspector.style.display = DisplayStyle.None;
                 Assert.That(bootstrap.SimulationControls.resolvedStyle.width, Is.GreaterThan(0f));
                 Assert.That(bootstrap.GlobalHud.Q<Label>("osc-hud-date"), Is.Not.Null);
                 Assert.That(bootstrap.GlobalHud.Q<Label>("osc-hud-development-status"), Is.Not.Null);
@@ -189,6 +192,15 @@ namespace OpenSimCity.Tests.PlayMode
                 Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-summary-left"), Is.Not.Null);
                 Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-summary-right"), Is.Not.Null);
                 Assert.That(bootstrap.GlobalHud.Q<VisualElement>("osc-hud-details"), Is.Null);
+                foreach (var name in new[] { "osc-hud-date", "osc-hud-balance", "osc-hud-population", "osc-hud-rci", "osc-hud-development-reasons" })
+                {
+                    var metric = bootstrap.GlobalHud.Q<Label>(name);
+                    Assert.That(metric.worldBound.xMin, Is.GreaterThanOrEqualTo(bootstrap.GlobalHud.worldBound.xMin), name);
+                    Assert.That(metric.worldBound.xMax, Is.LessThanOrEqualTo(bootstrap.GlobalHud.worldBound.xMax + 1f), name);
+                }
+                var toolLabel = bootstrap.ToolRail.Q<Label>(className: "osc-tool-button__label");
+                Assert.That(toolLabel.resolvedStyle.display, Is.EqualTo(DisplayStyle.Flex),
+                    "Construction tools need visible labels as well as icons.");
             }
         }
 

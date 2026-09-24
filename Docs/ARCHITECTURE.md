@@ -674,3 +674,11 @@ payload는 마지막 LF를 제외한 `5,664 bytes`, FNV-1a `6039FE7670E3C298`이
 각 Phase는 상태·결정성·성능을 검증하는 capability gate와, 플레이어가 공개 UI에서 문제를 이해하고 정상 command로 결과를 바꾸는 experience gate를 함께 가진다. UI는 Simulation/Application query의 reason과 factor를 표시하며 자체 규칙을 만들지 않는다.
 
 단계별 최소 경험과 증거 형식은 [플레이어 경험 게이트 계약](Specs/PLAYER_EXPERIENCE_CONTRACTS.md)을 따른다. Experience gate는 후속 시스템을 앞당겨 임시 구현하는 근거가 아니며, 해당 Phase에 존재하는 기능으로만 시나리오를 구성한다.
+
+## 2026-09-09 presentation polish boundary
+
+`DayNightPresentationReadModel` applies a +500 permille visual phase offset so new cities open in daylight. It never advances or mutates simulation time. `DayNightPresentationController` is reinstalled across scene transitions and owns only light/Trilight/reflection presentation.
+
+Seoul imported meshes with no UVs receive editor-time box UVs/tangents. Roughness conversion, HDR cubemap import, font atlas generation and color-profile setup are reproducible Editor operations. Runtime street props remain pooled, collider-free children of a central graph-version-driven coordinator; signal/lamp orientation follows street geometry.
+
+ReleaseMenuBinder는 첫 진입과 플레이 중 pause를 분리한다. 새 도시/계속/불러오기는 ReleaseSessionContext의 application action 성공 뒤에만 HUD를 노출한다. 타이틀 전경은 first-party static render이며 simulation entity를 나타내지 않는다. pause 속도 변경은 Runtime API를 통하고 이전 속도를 복원한다. UI 크기 변경은 PanelSettings의 presentation scaling이며 도시 상태와 무관하다.

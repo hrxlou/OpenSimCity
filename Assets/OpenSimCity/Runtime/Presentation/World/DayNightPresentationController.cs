@@ -2,6 +2,7 @@ using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.Settings;
 using OpenSimCity.Application.World;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace OpenSimCity.Presentation.World
 {
@@ -15,11 +16,24 @@ namespace OpenSimCity.Presentation.World
         private float _originalIntensity;
         private Color _originalColor;
         private Color _originalAmbient;
+        private Color _originalSky;
+        private Color _originalEquator;
+        private Color _originalGround;
+        private float _originalReflectionIntensity;
         private bool _captured;
         private int _observedVersion = -1;
         private bool _lastEnabled = true;
 
         public DayNightPresentationSnapshot Snapshot => _model?.Snapshot;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void Register()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => Install();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
@@ -69,6 +83,10 @@ namespace OpenSimCity.Presentation.World
         private void CaptureOriginal()
         {
             _originalAmbient = RenderSettings.ambientLight;
+            _originalSky = RenderSettings.ambientSkyColor;
+            _originalEquator = RenderSettings.ambientEquatorColor;
+            _originalGround = RenderSettings.ambientGroundColor;
+            _originalReflectionIntensity = RenderSettings.reflectionIntensity;
             if (_sun != null)
             {
                 _originalRotation = _sun.transform.rotation;
@@ -84,10 +102,17 @@ namespace OpenSimCity.Presentation.World
             var daylight = Mathf.Clamp01(Mathf.Sin((t - 0.25f) * Mathf.PI * 2f) * 0.72f + 0.45f);
             if (_sun != null)
             {
-                _sun.transform.rotation = Quaternion.Euler(Mathf.Lerp(-12f, 190f, t), -35f, 0f);
-                _sun.intensity = Mathf.Lerp(0.08f, Mathf.Max(0.8f, _originalIntensity), daylight);
+                // Keep a readable moon key at night and a grazing, dimensional sun by day.
+                var elevation = Mathf.Max(18f, Mathf.Sin((t - 0.25f) * Mathf.PI * 2f) * 42f);
+                _sun.transform.rotation = Quaternion.Euler(elevation, Mathf.Lerp(-125f, 55f, t), 0f);
+                _sun.intensity = Mathf.Lerp(0.18f, Mathf.Max(0.8f, _originalIntensity), daylight);
                 _sun.color = Color.Lerp(new Color(0.58f, 0.66f, 0.86f), new Color(1f, 0.94f, 0.82f), daylight);
             }
+            // City scenes use Trilight; ambientLight alone does not change that sky fill.
+            RenderSettings.ambientSkyColor = Color.Lerp(new Color(0.10f, 0.15f, 0.25f), _originalSky, daylight);
+            RenderSettings.ambientEquatorColor = Color.Lerp(new Color(0.055f, 0.075f, 0.12f), _originalEquator, daylight);
+            RenderSettings.ambientGroundColor = Color.Lerp(new Color(0.025f, 0.035f, 0.055f), _originalGround, daylight);
+            RenderSettings.reflectionIntensity = _originalReflectionIntensity * Mathf.Lerp(0.12f, 1f, daylight);
             RenderSettings.ambientLight = Color.Lerp(new Color(0.08f, 0.11f, 0.2f),
                 _originalAmbient.maxColorComponent > 0f ? _originalAmbient : new Color(0.55f, 0.58f, 0.62f), daylight);
         }
@@ -101,6 +126,10 @@ namespace OpenSimCity.Presentation.World
                 _sun.color = _originalColor;
             }
             RenderSettings.ambientLight = _originalAmbient;
+            RenderSettings.ambientSkyColor = _originalSky;
+            RenderSettings.ambientEquatorColor = _originalEquator;
+            RenderSettings.ambientGroundColor = _originalGround;
+            RenderSettings.reflectionIntensity = _originalReflectionIntensity;
         }
 
         private void RestoreOriginal() => ApplyDayDefaults();

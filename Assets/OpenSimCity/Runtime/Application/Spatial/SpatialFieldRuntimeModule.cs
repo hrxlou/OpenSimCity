@@ -163,6 +163,8 @@ namespace OpenSimCity.Application.Spatial
                 return SpatialSourceDefinitionIds.StreetRoadNoise;
             if (roadDefinitionId == RoadHierarchyDefaults.AvenueDefinitionId)
                 return SpatialSourceDefinitionIds.AvenueRoadNoise;
+            if (roadDefinitionId == RoadHierarchyDefaults.BoulevardDefinitionId)
+                return SpatialSourceDefinitionIds.AvenueRoadNoise;
             throw new InvalidOperationException(
                 $"Road definition {roadDefinitionId.Value} has no spatial-noise mapping.");
         }

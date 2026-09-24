@@ -1,5 +1,8 @@
 using System;
+using System.Collections;
+using System.IO;
 using OpenSimCity.Application.Input;
+using OpenSimCity.Application.Bootstrap;
 using OpenSimCity.Application.Onboarding;
 using OpenSimCity.Application.Overlays;
 using OpenSimCity.Application.Persistence;
@@ -32,6 +35,10 @@ namespace OpenSimCity.UI.Release
         private Button _autosaveLoad;
         private Toggle _hints;
         private Button _openButton;
+        private Button _quitButton;
+        private Label _menuTitle;
+        private bool _hasEnteredCity;
+        private SimulationSpeed _resumeSpeed = SimulationSpeed.One;
         private bool _menuOpen = true;
         private bool _pointerCaptured;
         private bool _hasRefreshKey;
@@ -44,6 +51,8 @@ namespace OpenSimCity.UI.Release
         private string _lastProblemCode = string.Empty;
         private bool _lastHintsEnabled;
         private bool _lastMenuOpen;
+        public bool IsTitleScreen => !_hasEnteredCity && _menuOpen;
+        public bool IsMenuOpen => _menuOpen;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void RegisterSceneInstaller()
@@ -58,6 +67,10 @@ namespace OpenSimCity.UI.Release
             var bootstrap = UnityEngine.Object.FindAnyObjectByType<UiFoundationBootstrap>();
             if (bootstrap != null && bootstrap.GetComponent<ReleaseMenuBinder>() == null)
                 bootstrap.gameObject.AddComponent<ReleaseMenuBinder>();
+            if (bootstrap != null && bootstrap.GetComponent<AccessibilitySettingsBinder>() == null)
+                bootstrap.gameObject.AddComponent<AccessibilitySettingsBinder>();
+            if (bootstrap != null && bootstrap.GetComponent<AudioDayNightSettingsBinder>() == null)
+                bootstrap.gameObject.AddComponent<AudioDayNightSettingsBinder>();
         }
 
         private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -68,6 +81,28 @@ namespace OpenSimCity.UI.Release
         private void OnEnable()
         {
             _bootstrap = GetComponent<UiFoundationBootstrap>();
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-osc-title-capture") >= 0)
+                UnityEngine.Application.runInBackground = true;
+            if (StandaloneSceneFlow.IsShowcaseRequested(Environment.GetCommandLineArgs()))
+            {
+                _menuOpen = false;
+                _hasEnteredCity = true;
+            }
+        }
+
+        private IEnumerator Start()
+        {
+            var arguments = Environment.GetCommandLineArgs();
+            var index = Array.IndexOf(arguments, "-osc-title-capture");
+            if (index < 0 || index + 1 >= arguments.Length) yield break;
+            for (var frame = 0; frame < 240 && _menuBackdrop == null; frame++) yield return null;
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            var path = Path.GetFullPath(arguments[index + 1]);
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            ScreenCapture.CaptureScreenshot(path);
+            yield return new WaitForSecondsRealtime(1f);
+            UnityEngine.Application.Quit();
         }
 
         private void OnDisable()
@@ -95,6 +130,7 @@ namespace OpenSimCity.UI.Release
             }
 
             EnsureOpenButton();
+            _menuBackdrop?.EnableInClassList("osc-title-compact", _boundRoot.contentRect.height < 560f || _boundRoot.contentRect.width < 1000f);
             UiSystemPanelDock.Sync(_boundRoot.parent, _bootstrap.SystemPanelDock, _menuOpen);
 
             var context = CityRuntimeContext.Current;
@@ -123,66 +159,101 @@ namespace OpenSimCity.UI.Release
             _menuBackdrop.style.right = 0f;
             _menuBackdrop.style.top = 0f;
             _menuBackdrop.style.bottom = 0f;
-            _menuBackdrop.style.alignItems = Align.Center;
-            _menuBackdrop.style.justifyContent = Justify.Center;
-            _menuBackdrop.style.backgroundColor = new Color(0.015f, 0.02f, 0.03f, 0.82f);
+            _menuBackdrop.AddToClassList("osc-release-backdrop");
             _menuBackdrop.pickingMode = PickingMode.Position;
             HookPointerBoundary(_menuBackdrop);
 
-            _menu = new VisualElement { name = "osc-release-menu" };
-            _menu.AddToClassList(UiFoundationNames.PanelClass);
-            _menu.style.position = Position.Relative;
-            _menu.style.width = 420f;
-            _menu.style.maxWidth = Length.Percent(92f);
-            _menu.style.paddingLeft = 16;
-            _menu.style.paddingRight = 16;
-            _menu.style.paddingTop = 16;
-            _menu.style.paddingBottom = 16;
+            var image = new VisualElement { name = "osc-title-city-image", pickingMode = PickingMode.Ignore };
+            image.AddToClassList("osc-title-city-image");
+            _menuBackdrop.Add(image);
+            var shade = new TitleScreenShade { name = "osc-title-shade", pickingMode = PickingMode.Ignore };
+            shade.AddToClassList("osc-title-shade");
+            _menuBackdrop.Add(shade);
 
-            var title = new Label("OpenSimCity") { name = "osc-release-title" };
-            title.AddToClassList(UiFoundationNames.PanelTitleClass);
-            _menu.Add(title);
-            var subtitle = new Label("도시를 계속하거나 새 도시를 시작하세요.");
+            _menu = new VisualElement { name = "osc-release-menu" };
+            _menu.AddToClassList("osc-release-card");
+
+            var eyebrow = new Label("길을 잇고, 일상을 채우다.");
+            eyebrow.AddToClassList("osc-release-eyebrow");
+            _menu.Add(eyebrow);
+            _menuTitle = new Label("OpenSimCity") { name = "osc-release-title" };
+            _menuTitle.AddToClassList(UiFoundationNames.PanelTitleClass);
+            _menuTitle.AddToClassList("osc-release-title");
+            _menu.Add(_menuTitle);
+            var subtitle = new Label("당신의 선택으로 자라나는 도시.");
             subtitle.AddToClassList(UiFoundationNames.PanelCaptionClass);
+            subtitle.AddToClassList("osc-release-subtitle");
             _menu.Add(subtitle);
 
-            _continue = AddButton(_menu, "osc-release-continue", "계속하기", ContinueCity);
-            AddButton(_menu, "osc-release-new", "새 도시", StartNewCity);
-            AddButton(_menu, "osc-release-load", "불러오기", ToggleLoad);
-            AddButton(_menu, "osc-release-settings", "설정", ToggleSettings);
-            AddButton(_menu, "osc-release-close", "도시로 돌아가기", ToggleMenu);
+            var primaryActions = new VisualElement();
+            primaryActions.AddToClassList("osc-release-primary-actions");
+            var newCity = AddButton(primaryActions, "osc-release-new", "새 도시 시작   →", RequestNewCity);
+            newCity.AddToClassList("osc-release-primary");
+            _continue = AddButton(primaryActions, "osc-release-continue", "계속하기", ContinueCity);
+            _menu.Add(primaryActions);
 
-            _loadSection = new VisualElement { name = "osc-release-load-section" };
+            var secondaryActions = new VisualElement();
+            secondaryActions.AddToClassList("osc-release-secondary-actions");
+            AddButton(secondaryActions, "osc-release-load", "불러오기", ToggleLoad);
+            AddButton(secondaryActions, "osc-release-settings", "환경 설정", ToggleSettings);
+            _quitButton = AddButton(secondaryActions, "osc-release-quit", "게임 종료", () => UnityEngine.Application.Quit());
+            _menu.Add(secondaryActions);
+
+            _loadSection = new ScrollView { name = "osc-release-load-section" };
+            _loadSection.AddToClassList(UiFoundationNames.PanelClass);
+            _loadSection.AddToClassList("osc-release-subsection");
+            AddButton(_loadSection, "osc-release-load-back", "← 돌아가기", CloseDetails);
+            _loadSection.Add(new Label("저장된 도시") { name = "osc-release-load-title" });
             _manualLoad = AddButton(_loadSection, "osc-release-load-manual", "수동 저장 불러오기", () => Load(CityPersistenceController.ManualSaveKey));
             _autosaveLoad = AddButton(_loadSection, "osc-release-load-autosave", "자동 저장 불러오기", () => Load(CityPersistenceController.AutosaveKey));
             _loadSection.style.display = DisplayStyle.None;
-            _menu.Add(_loadSection);
 
-            _settingsSection = new VisualElement { name = "osc-release-settings-section" };
+            _settingsSection = new ScrollView { name = "osc-release-settings-section" };
+            _settingsSection.AddToClassList(UiFoundationNames.PanelClass);
+            _settingsSection.AddToClassList("osc-release-subsection");
+            AddButton(_settingsSection, "osc-release-settings-back", "← 돌아가기", CloseDetails);
+            var settingsHeader = new Label("환경 설정");
+            settingsHeader.AddToClassList(UiFoundationNames.PanelTitleClass);
+            _settingsSection.Add(settingsHeader);
             _hints = new Toggle("튜토리얼 힌트 표시") { name = "osc-release-setting-hints" };
             _hints.RegisterValueChangedCallback(evt => _boundOnboarding?.SetHintsEnabled(evt.newValue));
             _settingsSection.Add(_hints);
             _settingsSection.style.display = DisplayStyle.None;
-            _menu.Add(_settingsSection);
 
             _menuBackdrop.Add(_menu);
+            _menuBackdrop.Add(_loadSection);
+            _menuBackdrop.Add(_settingsSection);
+            var footer = new Label($"도시 건설 시뮬레이션  /  v{UnityEngine.Application.version}");
+            footer.AddToClassList("osc-title-footer");
+            _menuBackdrop.Add(footer);
             _boundRoot.Add(_menuBackdrop);
+            _menuBackdrop.RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.keyCode != KeyCode.Escape) return;
+                if (_settingsSection.style.display == DisplayStyle.Flex || _loadSection.style.display == DisplayStyle.Flex) CloseDetails();
+                else if (_hasEnteredCity) ToggleMenu();
+                evt.StopPropagation();
+            });
+            _menuBackdrop.schedule.Execute(() => { if (_menuOpen) newCity.Focus(); });
 
             _tutorial = new VisualElement { name = "osc-onboarding-card" };
             _tutorial.AddToClassList(UiFoundationNames.PanelClass);
             _tutorial.style.position = Position.Absolute;
-            _tutorial.style.left = 24;
-            _tutorial.style.top = 72;
-            _tutorial.style.width = 360;
+            _tutorial.style.left = 12;
+            _tutorial.style.top = 88;
+            _tutorial.style.width = 320;
             _tutorial.style.paddingLeft = 12;
             _tutorial.style.paddingRight = 12;
             _tutorial.style.paddingTop = 10;
             _tutorial.style.paddingBottom = 10;
+            _tutorial.AddToClassList("osc-onboarding-card");
             HookPointerBoundary(_tutorial);
             _tutorialTitle = new Label { name = "osc-onboarding-title" };
             _tutorialTitle.AddToClassList(UiFoundationNames.PanelTitleClass);
             _tutorialHint = new Label { name = "osc-onboarding-hint" };
+            _tutorialHint.style.whiteSpace = WhiteSpace.Normal;
             _problemIndicator = new Label { name = "osc-problem-indicator" };
+            _problemIndicator.style.whiteSpace = WhiteSpace.Normal;
             _problemDetails = AddButton(_tutorial, "osc-onboarding-problem-details", "! 원인 보기", OpenProblemDetails);
             _tutorial.Add(_tutorialTitle);
             _tutorial.Add(_tutorialHint);
@@ -273,7 +344,7 @@ namespace OpenSimCity.UI.Release
             var manual = FindSlot(persistence, CityPersistenceController.ManualSaveKey);
             var autosave = FindSlot(persistence, CityPersistenceController.AutosaveKey);
             var canContinue = (manual?.HasSave == true || autosave?.HasSave == true) && persistence?.IsBusy != true;
-            _continue?.SetEnabled(canContinue);
+            _continue?.SetEnabled(_hasEnteredCity || canContinue);
             _manualLoad?.SetEnabled(manual?.HasSave == true && persistence?.IsBusy != true);
             _autosaveLoad?.SetEnabled(autosave?.HasSave == true && persistence?.IsBusy != true);
 
@@ -295,17 +366,28 @@ namespace OpenSimCity.UI.Release
 
         private void ContinueCity()
         {
-            if (ReleaseSessionContext.Current?.ContinueCity() == true) { _menuOpen = false; ApplyVisibility(); }
+            if (_hasEnteredCity) { ToggleMenu(); return; }
+            if (ReleaseSessionContext.Current?.ContinueCity() == true) EnterCity();
         }
 
-        private void StartNewCity()
+        public void RequestNewCity()
         {
-            if (ReleaseSessionContext.Current?.StartNewCity() == true) { _menuOpen = false; ApplyVisibility(); }
+            if (ReleaseSessionContext.Current?.StartNewCity() == true) EnterCity();
         }
 
         private void Load(string saveKey)
         {
-            if (ReleaseSessionContext.Current?.LoadCity(saveKey) == true) { _menuOpen = false; ApplyVisibility(); }
+            if (ReleaseSessionContext.Current?.LoadCity(saveKey) == true) EnterCity();
+        }
+
+        private void EnterCity()
+        {
+            _hasEnteredCity = true;
+            _menuOpen = false;
+            _loadSection.style.display = DisplayStyle.None;
+            _settingsSection.style.display = DisplayStyle.None;
+            ApplyVisibility();
+            InvalidateRefreshKey();
         }
 
         private void OpenProblemDetails()
@@ -319,17 +401,45 @@ namespace OpenSimCity.UI.Release
         {
             _loadSection.style.display = _loadSection.style.display == DisplayStyle.None ? DisplayStyle.Flex : DisplayStyle.None;
             _settingsSection.style.display = DisplayStyle.None;
+            SyncDetailVisibility();
         }
 
-        private void ToggleSettings()
+        public void ToggleSettings()
         {
             _settingsSection.style.display = _settingsSection.style.display == DisplayStyle.None ? DisplayStyle.Flex : DisplayStyle.None;
             _loadSection.style.display = DisplayStyle.None;
+            SyncDetailVisibility();
         }
 
-        private void ToggleMenu()
+        private void CloseDetails()
         {
+            _settingsSection.style.display = DisplayStyle.None;
+            _loadSection.style.display = DisplayStyle.None;
+            SyncDetailVisibility();
+            _menu.Q<Button>("osc-release-new")?.Focus();
+        }
+
+        private void SyncDetailVisibility()
+        {
+            _menuBackdrop.EnableInClassList("osc-release-detail-open",
+                _settingsSection.style.display == DisplayStyle.Flex || _loadSection.style.display == DisplayStyle.Flex);
+        }
+
+        public void ToggleMenu()
+        {
+            if (!_hasEnteredCity) return;
             _menuOpen = !_menuOpen;
+            CloseDetails();
+            var runtime = CityRuntimeContext.Current?.Runtime;
+            if (runtime != null)
+            {
+                if (_menuOpen)
+                {
+                    _resumeSpeed = runtime.Clock.Speed;
+                    runtime.SetSimulationSpeed(SimulationSpeed.Paused);
+                }
+                else runtime.SetSimulationSpeed(_resumeSpeed);
+            }
             ApplyVisibility();
             InvalidateRefreshKey();
         }
@@ -338,8 +448,20 @@ namespace OpenSimCity.UI.Release
         {
             if (_menuBackdrop != null)
             {
+                _menuBackdrop.EnableInClassList("osc-title-screen", !_hasEnteredCity);
+                _menuBackdrop.EnableInClassList("osc-pause-screen", _hasEnteredCity);
+                _menu.EnableInClassList(UiFoundationNames.PanelClass, _hasEnteredCity);
+                _menuTitle.text = _hasEnteredCity ? "도시 메뉴" : "OpenSimCity";
+                _quitButton.style.display = !_hasEnteredCity ? DisplayStyle.Flex : DisplayStyle.None;
                 _menuBackdrop.style.display = _menuOpen ? DisplayStyle.Flex : DisplayStyle.None;
                 if (_menuOpen) _menuBackdrop.BringToFront();
+            }
+
+            if (_boundRoot != null)
+            foreach (var child in _boundRoot.Children())
+            {
+                if (child == _menuBackdrop || child == _tutorial) continue;
+                child.style.visibility = IsTitleScreen ? Visibility.Hidden : Visibility.Visible;
             }
 
             if (_tutorial != null)
@@ -379,6 +501,7 @@ namespace OpenSimCity.UI.Release
         {
             var button = new Button(action) { name = name, text = text };
             button.AddToClassList(UiFoundationNames.ItemClass);
+            button.AddToClassList("osc-release-button");
             parent.Add(button);
             return button;
         }

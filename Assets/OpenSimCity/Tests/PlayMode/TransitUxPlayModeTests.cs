@@ -57,6 +57,11 @@ namespace OpenSimCity.Tests.PlayMode
             Assert.That(input, Is.Not.Null);
             Assert.That(ui, Is.Not.Null);
             Assert.That(coordinator, Is.Not.Null);
+            Assert.That(coordinator.BusPrefab, Is.Not.Null);
+            Assert.That(coordinator.BusPrefab.name, Is.EqualTo("TransitBus"));
+            Assert.That(
+                coordinator.BusPrefab.GetComponentsInChildren<Renderer>(true),
+                Has.Length.EqualTo(1));
             Assert.That(ui.Panel, Is.Not.Null);
             Assert.That(ui.Panel.Q<SliderInt>("osc-transit-budget"), Is.Not.Null);
             Assert.That(ui.Panel.Q<Label>("osc-transit-summary"), Is.Not.Null);

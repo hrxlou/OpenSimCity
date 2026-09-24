@@ -8,6 +8,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using UnityCamera = UnityEngine.Camera;
 
@@ -26,7 +27,10 @@ namespace OpenSimCity.Editor
         public const string SelectionRootName = "GridSelection";
         public const string DebugGridName = "DebugGrid";
         public const string HighlightName = "SelectionHighlight";
+        public const string WorldBackdropName = "WorldBackdrop";
         public const string SelectionMaterialPath = "Assets/OpenSimCity/Content/Materials/OpenSimCityDebugGrid.mat";
+        public const string GridLineMaterialPath = "Assets/OpenSimCity/Content/Materials/OpenSimCityGridLines.mat";
+        public const string GroundMaterialPath = "Assets/OpenSimCity/Content/Materials/OpenSimCityGround.mat";
 
         [MenuItem("OpenSimCity/Setup/Configure Camera Rig")]
         public static void ConfigureCameraRigMenu()
@@ -111,7 +115,9 @@ namespace OpenSimCity.Editor
             if (inputActions == null)
                 throw new ArgumentNullException(nameof(inputActions));
 
+            var previousScene = SceneManager.GetActiveScene();
             var scene = GetOrOpenScene(CityPrototypeScenePath, out var ownsScene);
+            SceneManager.SetActiveScene(scene);
             try
             {
                 var root = scene.GetRootGameObjects()
@@ -174,6 +180,7 @@ namespace OpenSimCity.Editor
                 serializedRig.FindProperty("controlledCamera").objectReferenceValue = camera;
                 serializedRig.FindProperty("worldBoundsSource").objectReferenceValue = boundsSource;
                 serializedRig.FindProperty("inputActions").objectReferenceValue = inputActions;
+                serializedRig.FindProperty("initialOrthographicSize").floatValue = 14f;
                 SetSerializedComponentName(serializedRig, RigName);
                 serializedRig.ApplyModifiedPropertiesWithoutUndo();
 
@@ -184,20 +191,106 @@ namespace OpenSimCity.Editor
                 camera.orthographic = true;
                 camera.nearClipPlane = Mathf.Max(0.05f, camera.nearClipPlane);
                 camera.farClipPlane = Mathf.Max(200f, camera.farClipPlane);
+                ConfigureWorldPresentation(root, scene, camera, boundsSource);
                 EditorUtility.SetDirty(rig);
                 EditorUtility.SetDirty(boundsSource);
                 EditorUtility.SetDirty(camera);
 
                 ConfigureGridSelection(root, rig, boundsSource, inputActions, ref sceneChanged);
 
-                if (sceneChanged || scene.isDirty)
-                    EditorSceneManager.SaveScene(scene);
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
             }
             finally
             {
+                if (previousScene.IsValid() && previousScene.isLoaded)
+                    SceneManager.SetActiveScene(previousScene);
                 if (ownsScene)
                     EditorSceneManager.CloseScene(scene, removeScene: true);
             }
+        }
+
+        private static void ConfigureWorldPresentation(
+            GameObject root,
+            Scene scene,
+            UnityCamera camera,
+            WorldBoundsReadModelSource boundsSource)
+        {
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(0.39f, 0.55f, 0.61f, 1f);
+            camera.allowHDR = true;
+            camera.allowMSAA = true;
+
+            UrbanEnvironmentSetup.ConfigureReflections();
+            UrbanEnvironmentSetup.ConfigureColorPipeline(camera, scene);
+            RenderSettings.ambientMode = AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = new Color(0.57f, 0.62f, 0.67f, 1f);
+            RenderSettings.ambientEquatorColor = new Color(0.38f, 0.41f, 0.44f, 1f);
+            RenderSettings.ambientGroundColor = new Color(0.17f, 0.19f, 0.18f, 1f);
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = FogMode.ExponentialSquared;
+            RenderSettings.fogColor = new Color(0.43f, 0.48f, 0.50f, 1f);
+            RenderSettings.fogDensity = 0.0020f;
+
+            var sun = scene.GetRootGameObjects()
+                .SelectMany(candidate => candidate.GetComponentsInChildren<Light>(includeInactive: true))
+                .FirstOrDefault(light => light.type == LightType.Directional);
+            if (sun != null)
+            {
+                sun.transform.rotation = Quaternion.Euler(42f, -38f, 0f);
+                sun.color = new Color(1f, 0.93f, 0.84f, 1f);
+                sun.intensity = 2.1f;
+                sun.shadows = LightShadows.Soft;
+                sun.shadowStrength = 0.92f;
+                sun.shadowBias = 0.025f;
+                sun.shadowNormalBias = 0.06f;
+                RenderSettings.sun = sun;
+                EditorUtility.SetDirty(sun);
+            }
+
+            var material = EnsureGroundMaterial();
+            var backdrop = root.transform.Find(WorldBackdropName)?.gameObject;
+            if (backdrop == null)
+            {
+                backdrop = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                backdrop.name = WorldBackdropName;
+                backdrop.transform.SetParent(root.transform, worldPositionStays: false);
+            }
+
+            var bounds = boundsSource.ReadWorldBounds();
+            var width = (bounds.Width + 2) * bounds.CellSize;
+            var depth = (bounds.Height + 2) * bounds.CellSize;
+            backdrop.transform.localPosition = new Vector3(
+                (bounds.MinX + bounds.MaxX) * 0.5f,
+                -0.12f,
+                (bounds.MinZ + bounds.MaxZ) * 0.5f);
+            backdrop.transform.localRotation = Quaternion.identity;
+            backdrop.transform.localScale = new Vector3(width, 0.20f, depth);
+            var collider = backdrop.GetComponent<Collider>();
+            if (collider != null)
+                UnityEngine.Object.DestroyImmediate(collider);
+            backdrop.GetComponent<Renderer>().sharedMaterial = material;
+            EditorUtility.SetDirty(backdrop);
+        }
+
+        private static Material EnsureGroundMaterial()
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(GroundMaterialPath);
+            if (material == null)
+            {
+                var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+                material = new Material(shader) { name = "OpenSimCity Ground" };
+                AssetDatabase.CreateAsset(material, GroundMaterialPath);
+            }
+
+            var color = new Color(0.27f, 0.31f, 0.285f, 1f);
+            material.color = color;
+            if (material.HasProperty("_BaseColor"))
+                material.SetColor("_BaseColor", color);
+            if (material.HasProperty("_Smoothness"))
+                material.SetFloat("_Smoothness", 0.05f);
+            EditorUtility.SetDirty(material);
+            return material;
         }
 
         private static void ConfigureGridSelection(
@@ -207,7 +300,8 @@ namespace OpenSimCity.Editor
             InputActionAsset inputActions,
             ref bool sceneChanged)
         {
-            var material = EnsureSelectionMaterial();
+            var selectionMaterial = EnsureSelectionMaterial();
+            var gridMaterial = EnsureGridLineMaterial();
             var selectionRoot = root.transform.Find(SelectionRootName)?.gameObject;
             if (selectionRoot == null)
             {
@@ -230,7 +324,7 @@ namespace OpenSimCity.Editor
                 debugGrid = debugGridObject.AddComponent<GridDebugGridRenderer>();
                 sceneChanged = true;
             }
-            debugGrid.Configure(boundsSource, material);
+            debugGrid.Configure(boundsSource, gridMaterial);
 
             var highlightObject = selectionRoot.transform.Find(HighlightName)?.gameObject;
             if (highlightObject == null)
@@ -246,7 +340,7 @@ namespace OpenSimCity.Editor
                 highlight = highlightObject.AddComponent<GridSelectionHighlightView>();
                 sceneChanged = true;
             }
-            highlight.Configure(material);
+            highlight.Configure(selectionMaterial);
 
             var tool = selectionRoot.GetComponent<GridSelectionTool>();
             if (tool == null)
@@ -256,7 +350,15 @@ namespace OpenSimCity.Editor
             }
             tool.ConfigureReferences(rig, highlight, inputActions);
 
-            ApplySelectionSerializedReferences(debugGrid, highlight, tool, boundsSource, rig, material, inputActions);
+            ApplySelectionSerializedReferences(
+                debugGrid,
+                highlight,
+                tool,
+                boundsSource,
+                rig,
+                gridMaterial,
+                selectionMaterial,
+                inputActions);
             EditorUtility.SetDirty(debugGrid);
             EditorUtility.SetDirty(highlight);
             EditorUtility.SetDirty(tool);
@@ -264,11 +366,36 @@ namespace OpenSimCity.Editor
 
         private static Material EnsureSelectionMaterial()
         {
-            var material = AssetDatabase.LoadAssetAtPath<Material>(SelectionMaterialPath);
-            if (material != null)
-                return material;
+            return EnsureUnlitMaterial(
+                SelectionMaterialPath,
+                "OpenSimCity Selection Highlight",
+                new Color(0.39f, 0.84f, 0.77f, 1f));
+        }
 
-            var folder = Path.GetDirectoryName(SelectionMaterialPath)?.Replace('\\', '/');
+        private static Material EnsureGridLineMaterial()
+        {
+            return EnsureUnlitMaterial(
+                GridLineMaterialPath,
+                "OpenSimCity Grid Lines",
+                new Color(0.20f, 0.275f, 0.255f, 1f));
+        }
+
+        private static Material EnsureUnlitMaterial(string path, string name, Color color)
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material != null)
+            {
+                material.name = name;
+                material.color = color;
+                if (material.HasProperty("_BaseColor"))
+                    material.SetColor("_BaseColor", color);
+                if (material.HasProperty("_Color"))
+                    material.SetColor("_Color", color);
+                EditorUtility.SetDirty(material);
+                return material;
+            }
+
+            var folder = Path.GetDirectoryName(path)?.Replace('\\', '/');
             if (!string.IsNullOrEmpty(folder))
                 EnsureAssetFolder(folder);
 
@@ -276,12 +403,12 @@ namespace OpenSimCity.Editor
             if (shader == null)
                 throw new InvalidOperationException("Could not find an unlit shader for the P1 debug grid material.");
 
-            material = new Material(shader) { name = "OpenSimCity Debug Grid" };
+            material = new Material(shader) { name = name };
             if (material.HasProperty("_BaseColor"))
-                material.SetColor("_BaseColor", new Color(0.15f, 0.9f, 1f, 0.9f));
+                material.SetColor("_BaseColor", color);
             if (material.HasProperty("_Color"))
-                material.SetColor("_Color", new Color(0.15f, 0.9f, 1f, 0.9f));
-            AssetDatabase.CreateAsset(material, SelectionMaterialPath);
+                material.SetColor("_Color", color);
+            AssetDatabase.CreateAsset(material, path);
             return material;
         }
 
@@ -291,17 +418,18 @@ namespace OpenSimCity.Editor
             GridSelectionTool tool,
             WorldBoundsReadModelSource boundsSource,
             IsometricCameraRig rig,
-            Material material,
+            Material gridMaterial,
+            Material selectionMaterial,
             InputActionAsset inputActions)
         {
             var serializedGrid = new SerializedObject(debugGrid);
             serializedGrid.FindProperty("worldBoundsSource").objectReferenceValue = boundsSource;
-            serializedGrid.FindProperty("lineMaterial").objectReferenceValue = material;
+            serializedGrid.FindProperty("lineMaterial").objectReferenceValue = gridMaterial;
             SetSerializedComponentName(serializedGrid, DebugGridName);
             serializedGrid.ApplyModifiedPropertiesWithoutUndo();
 
             var serializedHighlight = new SerializedObject(highlight);
-            serializedHighlight.FindProperty("lineMaterial").objectReferenceValue = material;
+            serializedHighlight.FindProperty("lineMaterial").objectReferenceValue = selectionMaterial;
             SetSerializedComponentName(serializedHighlight, HighlightName);
             serializedHighlight.ApplyModifiedPropertiesWithoutUndo();
 
@@ -356,6 +484,11 @@ namespace OpenSimCity.Editor
                     issues.Add("CityPrototype IsometricCameraRig has no controlled camera reference.");
                 else if (!rig.ControlledCamera.orthographic)
                     issues.Add("CityPrototype camera rig must use an orthographic camera.");
+
+                if (root.transform.Find(WorldBackdropName) == null)
+                    issues.Add($"CityPrototype is missing '{WorldBackdropName}'. Run Configure Project.");
+                if (AssetDatabase.LoadAssetAtPath<Material>(GroundMaterialPath) == null)
+                    issues.Add($"CityPrototype ground material is missing at '{GroundMaterialPath}'.");
 
                 if (boundsSource == null)
                     issues.Add("CityPrototype IsometricCameraRig has no world-bounds read-model source.");

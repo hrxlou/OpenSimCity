@@ -102,20 +102,20 @@ namespace OpenSimCity.UI.HUD
 
             hud.Clear();
 
-            // Keep all P3 readouts in a single status row. On the 1280px minimum
-            // desktop target the left economy group and the right development /
-            // tax group fit together, so a separate diagnostics row would only
-            // consume World View space without improving scanability.
+            // Separate quiet metric captions from the figures players scan first.
+            // Development and its cause share a compact diagnostic column.
             var summary = new VisualElement { name = "osc-hud-summary" };
             summary.AddToClassList("osc-hud-summary-row");
             var summaryLeft = CreateSection("osc-hud-summary-left", "osc-hud-left");
             var summaryRight = CreateSection("osc-hud-summary-right", "osc-hud-right");
-            _date = AddMetric(summaryLeft, "날짜", "osc-hud-date");
+            summaryLeft.AddToClassList(UiFoundationNames.PanelClass);
+            summaryRight.AddToClassList(UiFoundationNames.PanelClass);
+            _date = AddMetric(summaryLeft, "도시 운영", "osc-hud-date");
             _balance = AddMetric(summaryLeft, "잔액", "osc-hud-balance");
             _income = AddMetric(summaryLeft, "수입", "osc-hud-income");
             _expense = AddMetric(summaryLeft, "지출", "osc-hud-expense");
             _population = AddMetric(summaryLeft, "인구", "osc-hud-population");
-            _rci = AddMetric(summaryLeft, "RCI", "osc-hud-rci");
+            _rci = AddMetric(summaryLeft, "수요 · 주거 / 상업 / 공업", "osc-hud-rci");
             _development = AddMetric(summaryRight, "개발", "osc-hud-development-status");
             _period = AddMetric(summaryRight, "적용", "osc-hud-period");
             _reasons = AddMetric(summaryRight, "원인", "osc-hud-development-reasons");
@@ -387,10 +387,11 @@ namespace OpenSimCity.UI.HUD
 
         private static Label AddMetric(VisualElement parent, string title, string valueName)
         {
-            var group = new VisualElement();
+            var group = new VisualElement { name = valueName + "-metric" };
             group.AddToClassList("osc-hud-metric");
             var caption = new Label(title);
             caption.AddToClassList(UiFoundationNames.PanelCaptionClass);
+            caption.AddToClassList("osc-hud-caption");
             group.Add(caption);
             var value = new Label { name = valueName };
             value.AddToClassList("osc-hud-value");

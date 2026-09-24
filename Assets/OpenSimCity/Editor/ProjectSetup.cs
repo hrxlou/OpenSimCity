@@ -47,9 +47,18 @@ namespace OpenSimCity.Editor
 
             ConfigureEditorSettings();
             ConfigureUrp();
+            UrbanRenderQualitySetup.Configure();
             CreateScenes();
+            UiIconSetup.Configure();
+            UiTypographySetup.Configure();
+            VehicleArtSetup.Configure();
+            SeoulAssetImportSetup.Configure();
+            BlenderUrbanImportSetup.Configure();
+            RoadSurfaceSetup.Configure();
             var cameraInputActions = IsometricCameraRigSetup.EnsureInputActionsAsset();
             IsometricCameraRigSetup.ConfigureCityPrototype(cameraInputActions);
+            GroundSurfaceSetup.Configure();
+            UrbanParcelSurfaceSetup.Configure();
 
             // Runs after the camera rig because the UI boundary relay binds to the
             // GridSelectionTool the rig setup creates.
@@ -58,6 +67,7 @@ namespace OpenSimCity.Editor
             // Runs last: the placement fixture binds to the camera rig, the world
             // bounds source and the UI foundation the previous steps created.
             PlacementSetup.ConfigureCityPrototype();
+            ProductArtSetup.ConfigureProductCatalog();
             BuildingDefinitionSetup.ConfigureDefinitions();
             UtilityDefinitionSetup.ConfigureDefinitions();
 
@@ -94,12 +104,32 @@ namespace OpenSimCity.Editor
             ValidateEditorSettings(issues);
             ValidateUrp(issues);
             ValidateInputSystem(issues);
+            foreach (var issue in UiIconSetup.Validate())
+                issues.Add(issue);
+            foreach (var issue in UiTypographySetup.Validate())
+                issues.Add(issue);
+            foreach (var issue in VehicleArtSetup.Validate())
+                issues.Add(issue);
+            foreach (var issue in SeoulAssetImportSetup.Validate())
+                issues.Add(issue);
+            foreach (var issue in BlenderUrbanImportSetup.Validate())
+                issues.Add(issue);
+            foreach (var issue in RoadSurfaceSetup.Validate())
+                issues.Add(issue);
+            foreach (var issue in GroundSurfaceSetup.Validate())
+                issues.Add(issue);
+            foreach (var issue in UrbanParcelSurfaceSetup.Validate())
+                issues.Add(issue);
+            foreach (var issue in UrbanRenderQualitySetup.Validate())
+                issues.Add(issue);
             IsometricCameraRigSetup.Validate(issues);
             UiFoundationSetup.Validate(issues);
             PlacementSetup.Validate(issues);
             foreach (var issue in BuildingDefinitionSetup.Validate())
                 issues.Add(issue);
             foreach (var issue in UtilityDefinitionSetup.Validate())
+                issues.Add(issue);
+            foreach (var issue in ProductArtSetup.Validate())
                 issues.Add(issue);
             ValidateScenesAndBuildSettings(issues);
             ValidateLightingAndQualityStructure(issues);

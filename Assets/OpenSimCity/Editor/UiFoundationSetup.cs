@@ -25,11 +25,11 @@ namespace OpenSimCity.Editor
         public const string BoundaryRelayName = "UiInputBoundaryRelay";
 
         /// <summary>
-        /// Reference resolution for the panel scale. 1920x1080 with
+        /// Reference resolution for the panel scale. 1280x720 with
         /// <see cref="PanelScaleMode.ScaleWithScreenSize"/> is what makes 100/125/150%
         /// OS scaling and window resize land on the same type and spacing.
         /// </summary>
-        private static readonly Vector2Int ReferenceResolution = new Vector2Int(1920, 1080);
+        private static readonly Vector2Int ReferenceResolution = new Vector2Int(1280, 720);
 
         [MenuItem("OpenSimCity/Setup/Configure UI Foundation")]
         public static void ConfigureUiFoundationMenu()

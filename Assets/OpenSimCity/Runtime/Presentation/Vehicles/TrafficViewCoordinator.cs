@@ -23,9 +23,9 @@ namespace OpenSimCity.Presentation.Vehicles
             new ProfilerMarker(UpdateProfilerMarkerName);
 
         [SerializeField, Range(0, TrafficVisualizationReadModel.MaximumAllowedVehicleSamples)]
-        private int visibleVehicleLimit = TrafficVisualizationReadModel.DefaultMaximumVehicleSamples;
+        private int visibleVehicleLimit = 48;
         [SerializeField, Min(0.1f)] private float routeLoopSeconds = 12f;
-        [SerializeField] private bool congestionMapVisible = true;
+        [SerializeField] private bool congestionMapVisible;
         [SerializeField] private GameObject vehiclePrefab;
         [SerializeField] private Material vehicleMaterial;
         [SerializeField] private Material congestionMaterial;
@@ -45,6 +45,7 @@ namespace OpenSimCity.Presentation.Vehicles
         public int RenderedUnroutedMarkerCount => _congestionRenderer?.RenderedUnroutedCount ?? 0;
         public bool CongestionMapVisible => congestionMapVisible;
         public TrafficVisualizationReadModel Model => _model;
+        public GameObject VehiclePrefab => vehiclePrefab;
 
         public void SetVisibleVehicleLimit(int value)
         {
@@ -274,11 +275,19 @@ namespace OpenSimCity.Presentation.Vehicles
 
                     var direction = to - from;
                     if (direction.sqrMagnitude > 0.0001f)
+                    {
                         transform.localRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+                        // Two deterministic visual lanes stop samples that share a
+                        // route phase from occupying the exact same road centre.
+                        // This changes presentation only, never route state.
+                        var perpendicular = new Vector3(-direction.z, 0f, direction.x).normalized;
+                        var laneSign = (sample.SampleId.Value & 1UL) == 0UL ? -1f : 1f;
+                        transform.localPosition += perpendicular * (bounds.CellSize * 0.12f * laneSign);
+                    }
                     transform.localScale = new Vector3(
-                        bounds.CellSize * 0.22f,
-                        bounds.CellSize * 0.14f,
-                        bounds.CellSize * 0.40f);
+                        bounds.CellSize * 0.20f,
+                        bounds.CellSize * 0.13f,
+                        bounds.CellSize * 0.32f);
                 }
             }
         }

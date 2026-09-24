@@ -19,9 +19,22 @@ Parent: #44
 
 `Tools/CI/build-windows.ps1` and `Tools/CI/build-macos.sh` pass the current Git commit and clean-checkout observation into `BuildScript`; the Editor writes the release evidence JSON only when the build command is actually executed. Source presence alone is not build evidence.
 
-## Deferred runtime verification
+## 2026-09-05 standalone boot repair
 
-The implementation pass intentionally does not invoke Unity or either build script. The following therefore remain `unverified`:
+- `Bootstrap`은 프로젝트/빌드 계약의 index 0 진입점으로 유지한다.
+- 실제 standalone 플레이어에서는 `StandaloneSceneFlow`가 `CityPrototype`으로 즉시 전환한다.
+- `CityPrototype`의 release menu가 시작 화면을 담당하며, Editor PlayMode scene smoke는 자동 전환하지 않는다.
+- `-osc-showcase -osc-capture <png>`는 application command로 seeded 도시를 만든 뒤 실제 player frame을
+  저장하고 종료한다. 잠금 화면이나 원격 runner에서도 수동 캡처 없이 visual regression 증거를 남기는 QA 전용 경로다.
+
+## Local visual integration evidence
+
+Unity CLI dirty-worktree macOS 개발 빌드와 일반/쇼케이스 launch는 2026-09-05에 검증했다. 이는 UI·asset 통합
+smoke이며 아래 clean release candidate 검증을 대신하지 않는다.
+
+## Deferred release verification
+
+The following remain `unverified`:
 
 - Windows clean release build and launch
 - macOS clean release build and launch

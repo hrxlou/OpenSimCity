@@ -76,6 +76,9 @@ run_tests() {
   local test_result
   local passed
   local total
+  local failed
+  local inconclusive
+  local skipped
   local fatal_error
 
   # Never let a previous run satisfy the result check.
@@ -133,25 +136,32 @@ run_tests() {
     return 1
   fi
 
-  if [[ "${test_result}" != "Passed" ]]; then
-    printf '%s tests failed (result=%s, Unity exit code=%s). Log: %s, Results: %s\n' \
-      "${platform}" "${test_result}" "${unity_exit_code}" "${log_path}" "${results_path}" >&2
-    return 1
-  fi
-
   passed="$(xmllint --xpath 'string(/*[local-name()="test-run"]/@passed)' "${results_path}" 2>/dev/null || true)"
   total="$(xmllint --xpath 'string(/*[local-name()="test-run"]/@total)' "${results_path}" 2>/dev/null || true)"
-  if [[ ! "${total}" =~ ^[1-9][0-9]*$ ]]; then
-    printf '%s tests failed: discovered test count is zero or invalid (total=%s). Log: %s, Results: %s\n' \
-      "${platform}" "${total:-<empty>}" "${log_path}" "${results_path}" >&2
+  failed="$(xmllint --xpath 'string(/*[local-name()="test-run"]/@failed)' "${results_path}" 2>/dev/null || true)"
+  inconclusive="$(xmllint --xpath 'string(/*[local-name()="test-run"]/@inconclusive)' "${results_path}" 2>/dev/null || true)"
+  skipped="$(xmllint --xpath 'string(/*[local-name()="test-run"]/@skipped)' "${results_path}" 2>/dev/null || true)"
+  if [[ ! "${total}" =~ ^[1-9][0-9]*$ || ! "${passed}" =~ ^[1-9][0-9]*$ ||
+        ! "${failed}" =~ ^[0-9]+$ || ! "${inconclusive}" =~ ^[0-9]+$ ||
+        ! "${skipped}" =~ ^[0-9]+$ ]]; then
+    printf '%s tests failed: result counts are missing or invalid. Log: %s, Results: %s\n' \
+      "${platform}" "${log_path}" "${results_path}" >&2
     return 1
   fi
 
-  printf '%s tests passed (%s/%s). Results: %s, Log: %s\n' \
-    "${platform}" "${passed:-?}" "${total:-?}" "${results_path}" "${log_path}"
+  if [[ "${failed}" -ne 0 || "${inconclusive}" -ne 0 ||
+        $((passed + skipped)) -ne "${total}" ||
+        ( "${test_result}" != "Passed" && "${test_result}" != "Skipped:Ignored" ) ]]; then
+    printf '%s tests failed (result=%s, passed=%s, failed=%s, inconclusive=%s, skipped=%s, Unity exit code=%s). Log: %s, Results: %s\n' \
+      "${platform}" "${test_result}" "${passed}" "${failed}" "${inconclusive}" "${skipped}" "${unity_exit_code}" "${log_path}" "${results_path}" >&2
+    return 1
+  fi
+
+  printf '%s tests passed (%s passed, %s ignored, %s total). Results: %s, Log: %s\n' \
+    "${platform}" "${passed}" "${skipped}" "${total}" "${results_path}" "${log_path}"
 
   if [[ "${unity_exit_code}" -ne 0 ]]; then
-    printf 'Unity launcher exit code was %s, but the NUnit result was Passed; continuing.\n' \
+    printf 'Unity launcher exit code was %s, but the NUnit result has no failures; continuing.\n' \
       "${unity_exit_code}" >&2
   fi
 }

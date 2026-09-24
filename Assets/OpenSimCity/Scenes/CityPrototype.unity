@@ -14,17 +14,17 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
-  m_Fog: 0
-  m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  m_Fog: 1
+  m_FogColor: {r: 0.43, g: 0.48, b: 0.5, a: 1}
   m_FogMode: 3
-  m_FogDensity: 0.01
+  m_FogDensity: 0.002
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
-  m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
-  m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
+  m_AmbientSkyColor: {r: 0.57, g: 0.62, b: 0.67, a: 1}
+  m_AmbientEquatorColor: {r: 0.38, g: 0.41, b: 0.44, a: 1}
+  m_AmbientGroundColor: {r: 0.17, g: 0.19, b: 0.18, a: 1}
   m_AmbientIntensity: 1
-  m_AmbientMode: 0
+  m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
   m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
   m_HaloStrength: 0.5
@@ -32,12 +32,12 @@ RenderSettings:
   m_FlareFadeSpeed: 3
   m_HaloTexture: {fileID: 0}
   m_SpotCookie: {fileID: 10001, guid: 0000000000000000e000000000000000, type: 0}
-  m_DefaultReflectionMode: 0
+  m_DefaultReflectionMode: 1
   m_DefaultReflectionResolution: 128
   m_ReflectionBounces: 1
-  m_ReflectionIntensity: 1
-  m_CustomReflection: {fileID: 0}
-  m_Sun: {fileID: 0}
+  m_ReflectionIntensity: 0.65
+  m_CustomReflection: {fileID: 8900000, guid: 7974daee581b746fbb99ee6f20c3d76e, type: 3}
+  m_Sun: {fileID: 1183201136}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -161,7 +161,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 59064141083e5fa4bab155289c6d7176, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: OpenSimCity.Gameplay::OpenSimCity.Gameplay.Selection.UiInputBoundaryRelay
   selectionTool: {fileID: 839554730}
 --- !u!1 &154218317
@@ -210,7 +210,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 127e6b365e42f3b4caa3d0ca75975498, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: OpenSimCity.UI::OpenSimCity.UI.Foundation.UiFoundationBootstrap
   tokensStyleSheet: {fileID: 7433441132597879392, guid: 545c18fa9e6d0404cb722bc83456f2aa, type: 3}
   componentsStyleSheet: {fileID: 7433441132597879392, guid: 49a32f439cc3a9d4f83c5f67c0af0f5b, type: 3}
@@ -225,7 +225,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
   m_PanelSettings: {fileID: 11400000, guid: 8d2e95db2d91ca2429cc8631b203dafd, type: 2}
   m_ParentUI: {fileID: 0}
@@ -248,7 +248,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 995401c6609d6ae418fe73845cef5138, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: OpenSimCity.UI::OpenSimCity.UI.Placement.PlacementUiBinder
   bootstrap: {fileID: 154218319}
 --- !u!114 &154218322
@@ -261,7 +261,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e6b264e830d4599a2a209fcf5ec570d, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: OpenSimCity.UI::OpenSimCity.UI.HUD.MunicipalHudBinder
   bootstrap: {fileID: 154218319}
 --- !u!114 &154218323
@@ -274,7 +274,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a14d85aff8dedb74ab1132983c9a22b3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: OpenSimCity.UI::OpenSimCity.UI.Persistence.SaveUiBinder
   bootstrap: {fileID: 154218319}
 --- !u!1 &157361170
@@ -331,7 +331,7 @@ MonoBehaviour:
   cameraDistance: 100
   minOrthographicSize: 6
   maxOrthographicSize: 32
-  initialOrthographicSize: 18
+  initialOrthographicSize: 14
   initialQuarterTurn: 0
   movementSpeed: 20
   zoomSensitivity: 4
@@ -398,7 +398,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8acf55c12812a43479ac78c1d42d7ff1, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: OpenSimCity.Gameplay::OpenSimCity.Gameplay.Construction.ConstructionInputDriver
   cameraRig: {fileID: 157361172}
   enableInput: 1
@@ -412,7 +412,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3657f37ec9579ff47b8d802be65eb8bc, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: OpenSimCity.Gameplay::OpenSimCity.Gameplay.Construction.CityRuntimeHost
   worldBoundsSource: {fileID: 157361173}
   cameraRig: {fileID: 157361172}
@@ -427,7 +427,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c40d3879a924eae42809606fc747019b, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: OpenSimCity.Platform::OpenSimCity.Platform.Persistence.CityPersistenceHost
   runtimeHost: {fileID: 294122727}
   inputDriver: {fileID: 294122726}
@@ -473,9 +473,99 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5881478a2448482ab7b4fbedb6082e0a, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: OpenSimCity.Presentation::OpenSimCity.Presentation.Utilities.PowerProducerViewRenderer
-  catalog: {fileID: 11400000, guid: 7761049431034154c92332b982d3e658, type: 2}
+  catalog: {fileID: 11400000, guid: 68212f23c02c948149e79e1b3528f193, type: 2}
+--- !u!1 &657429951
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 657429952}
+  - component: {fileID: 657429954}
+  - component: {fileID: 657429953}
+  m_Layer: 0
+  m_Name: WorldBackdrop
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &657429952
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 657429951}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 32, y: -0.12, z: 32}
+  m_LocalScale: {x: 66, y: 0.2, z: 66}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1384901247}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!23 &657429953
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 657429951}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a575e099429054988a643b72198e5b99, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &657429954
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 657429951}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &839554728
 GameObject:
   m_ObjectHideFlags: 0
@@ -712,8 +802,8 @@ Light:
   m_Enabled: 1
   serializedVersion: 13
   m_Type: 1
-  m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
-  m_Intensity: 1
+  m_Color: {r: 1, g: 0.93, b: 0.84, a: 1}
+  m_Intensity: 2.1
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.802082
@@ -722,9 +812,9 @@ Light:
     m_Type: 2
     m_Resolution: -1
     m_CustomResolution: -1
-    m_Strength: 1
-    m_Bias: 0.05
-    m_NormalBias: 0.4
+    m_Strength: 0.92
+    m_Bias: 0.025
+    m_NormalBias: 0.06
     m_NearPlane: 0.2
     m_CullingMatrixOverride:
       e00: 1
@@ -775,13 +865,62 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1183201135}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
+  m_LocalRotation: {x: 0.33884358, y: -0.30394405, z: 0.116673194, w: 0.88271767}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!1 &1349699770
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1349699772}
+  - component: {fileID: 1349699771}
+  m_Layer: 0
+  m_Name: Urban Color Pipeline
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1349699771
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1349699770}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
+  m_IsGlobal: 1
+  priority: 10
+  blendDistance: 0
+  weight: 1
+  sharedProfile: {fileID: 11400000, guid: fa07c30075d42497c8d33b86497741e9, type: 2}
+--- !u!4 &1349699772
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1349699770}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1384901246
 GameObject:
   m_ObjectHideFlags: 0
@@ -819,6 +958,7 @@ Transform:
   - {fileID: 409229852}
   - {fileID: 1870607967}
   - {fileID: 1794754561}
+  - {fileID: 657429952}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1673108138
@@ -868,8 +1008,9 @@ MonoBehaviour:
   m_Name: DebugGrid
   m_EditorClassIdentifier: OpenSimCity.Gameplay::OpenSimCity.Gameplay.Selection.GridDebugGridRenderer
   worldBoundsSource: {fileID: 157361173}
-  lineMaterial: {fileID: 2100000, guid: 9ff9a99ec7ed69b41abb42b990d1db14, type: 2}
+  lineMaterial: {fileID: 2100000, guid: 31f76eba407bf4a63ad82e647914a755, type: 2}
   elevation: 0.01
+  showGrid: 0
 --- !u!23 &1673108141
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -877,7 +1018,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1673108138}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -895,7 +1036,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9ff9a99ec7ed69b41abb42b990d1db14, type: 2}
+  - {fileID: 2100000, guid: 31f76eba407bf4a63ad82e647914a755, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1002,9 +1143,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 58af52467f0b4f2ca62b2f89093da958, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: OpenSimCity.Presentation::OpenSimCity.Presentation.Roads.RoadViewRenderer
-  catalog: {fileID: 11400000, guid: 7761049431034154c92332b982d3e658, type: 2}
+  catalog: {fileID: 11400000, guid: 68212f23c02c948149e79e1b3528f193, type: 2}
 --- !u!1 &1870607966
 GameObject:
   m_ObjectHideFlags: 0
@@ -1047,9 +1188,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a0c36b2f01f046a0a06ba9dc48bfabfb, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: OpenSimCity.Presentation::OpenSimCity.Presentation.Buildings.BuildingViewRenderer
-  catalog: {fileID: 11400000, guid: 7761049431034154c92332b982d3e658, type: 2}
+  catalog: {fileID: 11400000, guid: 68212f23c02c948149e79e1b3528f193, type: 2}
 --- !u!1 &1935429082
 GameObject:
   m_ObjectHideFlags: 0
@@ -1061,6 +1202,7 @@ GameObject:
   - component: {fileID: 1935429085}
   - component: {fileID: 1935429084}
   - component: {fileID: 1935429083}
+  - component: {fileID: 1935429086}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1085,8 +1227,8 @@ Camera:
   m_GameObject: {fileID: 1935429082}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.39, g: 0.55, b: 0.61, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -1111,7 +1253,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 18
+  orthographic size: 14
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1142,6 +1284,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 157361171}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1935429086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1935429082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 1
+  m_Antialiasing: 2
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
 --- !u!1 &2123667863
 GameObject:
   m_ObjectHideFlags: 0
@@ -1184,7 +1370,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d7d2a883a68f36140be36cd467382a4f, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: OpenSimCity.Presentation::OpenSimCity.Presentation.Overlays.PlacementOverlayRenderer
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
@@ -1192,3 +1378,4 @@ SceneRoots:
   m_Roots:
   - {fileID: 1183201137}
   - {fileID: 1384901247}
+  - {fileID: 1349699772}

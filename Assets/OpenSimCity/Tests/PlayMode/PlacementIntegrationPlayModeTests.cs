@@ -1,10 +1,10 @@
 using System.Collections;
 using System.Linq;
-using System.Reflection;
 using NUnit.Framework;
 using OpenSimCity.Application.Construction;
 using OpenSimCity.Application.Input;
 using OpenSimCity.Application.Overlays;
+using OpenSimCity.Application.Persistence;
 using OpenSimCity.Application.World;
 using OpenSimCity.Core.Mathematics;
 using OpenSimCity.Gameplay.Camera;
@@ -120,11 +120,14 @@ namespace OpenSimCity.Tests.PlayMode
 
             var menu = Object.FindAnyObjectByType<ReleaseMenuBinder>();
             Assert.That(menu, Is.Not.Null, "CityPrototype has no ReleaseMenuBinder.");
-            var toggleMenu = typeof(ReleaseMenuBinder).GetMethod(
-                "ToggleMenu",
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(toggleMenu, Is.Not.Null);
-            toggleMenu.Invoke(menu, null);
+            var previous = ReleaseSessionContext.Current;
+            try
+            {
+                ReleaseSessionContext.SetCurrent(new ReleaseSessionActions(
+                    () => true, () => false, _ => false, () => null));
+                menu.RequestNewCity();
+            }
+            finally { ReleaseSessionContext.SetCurrent(previous); }
             yield return null;
         }
 

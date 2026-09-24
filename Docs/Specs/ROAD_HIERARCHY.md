@@ -9,8 +9,9 @@ This document is the P5-04A contract for authoritative road state. UI and Presen
 | Small road | `0x0100000000000002` | 6 | 0 | 500 | 20 | 15 |
 | Street | `0x0100000000000001` | 10 | 1 | 1,000 | 30 | 30 |
 | Avenue | `0x0100000000000003` | 25 | 5 | 2,400 | 45 | 70 |
+| Boulevard | `0x0100000000000004` | 38 | 8 | 3,800 | 50 | 95 |
 
-The pre-P5 street keeps stable ID `0x0100000000000001` and its existing cost, maintenance, capacity, speed, noise, and presentation key. New tiers use new IDs. A definition ID must not silently acquire different historical semantics.
+The pre-P5 street keeps stable ID `0x0100000000000001` and its existing cost, maintenance, capacity, speed, noise, and presentation key. New tiers use new IDs. The boulevard is a higher-capacity six-lane arterial above the four-lane avenue. A definition ID must not silently acquire different historical semantics.
 
 Road tiers affect simulation only through the listed inputs. They do not grant direct residential, commercial, industrial, land-value, or demand bonuses.
 

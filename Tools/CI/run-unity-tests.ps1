@@ -177,19 +177,28 @@ function Invoke-UnityTests {
         exit 1
     }
 
-    if ($testResult -ne 'Passed') {
-        Write-Error "$Platform 테스트 실패 (result=$testResult). 로그: $logPath, 결과: $resultsPath"
-        exit 1
-    }
-
     $total = 0
+    $passed = 0
+    $failed = 0
+    $inconclusive = 0
+    $skipped = 0
     $totalText = [string]$results.'test-run'.total
-    if (-not [int]::TryParse($totalText, [ref]$total) -or $total -le 0) {
-        Write-Error "$Platform 테스트 실패: 발견된 테스트 수가 0이거나 유효하지 않다 (total='$totalText'). 로그: $logPath, 결과: $resultsPath"
+    if (-not [int]::TryParse($totalText, [ref]$total) -or $total -le 0 -or
+        -not [int]::TryParse([string]$results.'test-run'.passed, [ref]$passed) -or $passed -le 0 -or
+        -not [int]::TryParse([string]$results.'test-run'.failed, [ref]$failed) -or
+        -not [int]::TryParse([string]$results.'test-run'.inconclusive, [ref]$inconclusive) -or
+        -not [int]::TryParse([string]$results.'test-run'.skipped, [ref]$skipped)) {
+        Write-Error "$Platform 테스트 실패: 결과 수치가 없거나 유효하지 않다. 로그: $logPath, 결과: $resultsPath"
         exit 1
     }
 
-    Write-Host "$Platform tests passed ($($results.'test-run'.passed)/$total)."
+    if ($failed -ne 0 -or $inconclusive -ne 0 -or ($passed + $skipped) -ne $total -or
+        $testResult -notin @('Passed', 'Skipped:Ignored')) {
+        Write-Error "$Platform 테스트 실패 (result=$testResult, passed=$passed, failed=$failed, inconclusive=$inconclusive, skipped=$skipped). 로그: $logPath, 결과: $resultsPath"
+        exit 1
+    }
+
+    Write-Host "$Platform tests passed ($passed passed, $skipped ignored, $total total)."
 }
 
 switch ($Mode) {

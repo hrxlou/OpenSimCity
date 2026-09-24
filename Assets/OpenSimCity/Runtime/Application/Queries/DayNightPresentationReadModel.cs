@@ -39,7 +39,8 @@ namespace OpenSimCity.Application.Queries
             if (progressed >= scheduler.TicksPerMonth) progressed = scheduler.TicksPerMonth - 1L;
             var scaled = progressed * DaysPerMonth;
             var day = (int)(scaled / scheduler.TicksPerMonth) + 1;
-            var phase = (int)((scaled % scheduler.TicksPerMonth) * 1000L / scheduler.TicksPerMonth);
+            // Begin a new city in daylight; this is a presentation offset only.
+            var phase = ((int)((scaled % scheduler.TicksPerMonth) * 1000L / scheduler.TicksPerMonth) + 500) % 1000;
             Snapshot = new DayNightPresentationSnapshot
             {
                 Month = _runtime.CurrentSimulationMonth,

@@ -9,29 +9,29 @@
 
 :root {
     /* Surfaces */
-    --osc-color-canvas: #08131D;
-    --osc-color-panel: #0D1D2A;
-    --osc-color-elevated: #132838;
-    --osc-color-border: #244253;
+    --osc-color-canvas: #0D1115;
+    --osc-color-panel: rgba(29, 32, 35, 0.97);
+    --osc-color-elevated: rgba(43, 47, 50, 0.98);
+    --osc-color-border: #50575B;
 
     /* Text */
-    --osc-color-text-primary: #F2F5F3;
-    --osc-color-text-secondary: #AAB8C2;
+    --osc-color-text-primary: #F2F4F5;
+    --osc-color-text-secondary: #AAB2B9;
 
     /* Status and emphasis */
-    --osc-color-accent: #31C7D5;
-    --osc-color-info: #66B3FF;
-    --osc-color-success: #83CD52;
-    --osc-color-warning: #F2C14E;
-    --osc-color-danger: #F07171;
-    --osc-color-special: #B095F5;
+    --osc-color-accent: #83C7C2;
+    --osc-color-info: #86B9D8;
+    --osc-color-success: #7DBB83;
+    --osc-color-warning: #D7AD63;
+    --osc-color-danger: #D97872;
+    --osc-color-special: #A995C4;
 
     /*
      * State layers composited over the surface tokens. Kept separate from the
      * status colors so hover/selected feedback never reads as a warning.
      */
-    --osc-state-hover: rgba(49, 199, 213, 0.12);
-    --osc-state-selected: rgba(49, 199, 213, 0.22);
+    --osc-state-hover: rgba(98, 168, 209, 0.12);
+    --osc-state-selected: rgba(98, 168, 209, 0.22);
     --osc-state-disabled-opacity: 0.38;
     --osc-state-focus-ring: var(--osc-color-accent);
     --osc-state-focus-ring-width: 2px;
@@ -47,23 +47,23 @@
 
     /* Border and radius */
     --osc-border-width: 1px;
-    --osc-radius-sm: 2px;
-    --osc-radius-md: 4px;
-    --osc-radius-lg: 8px;
+    --osc-radius-sm: 0;
+    --osc-radius-md: 0;
+    --osc-radius-lg: 0;
 
     /*
      * Type scale. Values are the 100% UI scale baseline; PanelSettings scales
      * them for 125% and 150%. P3-06 records the default Korean fallback without
      * bundling a font asset, so only the scale and fallback behaviour are fixed here.
      */
-    --osc-font-size-caption: 11px;
-    --osc-font-size-body: 13px;
-    --osc-font-size-body-strong: 14px;
-    --osc-font-size-title: 18px;
-    --osc-font-size-display: 24px;
+    --osc-font-size-caption: 13px;
+    --osc-font-size-body: 15px;
+    --osc-font-size-body-strong: 16px;
+    --osc-font-size-title: 20px;
+    --osc-font-size-display: 28px;
 
     /* Layout slots from Docs/DESIGN.md section 3.3 */
-    --osc-tool-rail-width: 56px;
-    --osc-build-palette-height: 56px;
-    --osc-context-inspector-width: 280px;
+    --osc-tool-rail-width: 132px;
+    --osc-build-palette-height: 58px;
+    --osc-context-inspector-width: 320px;
 }

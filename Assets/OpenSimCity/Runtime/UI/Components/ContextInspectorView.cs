@@ -12,8 +12,8 @@ namespace OpenSimCity.UI.Components
             : base(
                 UiFoundationNames.ContextInspectorName,
                 UiFoundationNames.ContextInspectorClass,
-                "Inspector",
-                "선택 대상 상세는 P2-01에서 연결됩니다.")
+                "선택 정보",
+                "도시의 셀이나 시설을 선택하세요.")
         {
         }
     }

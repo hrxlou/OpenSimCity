@@ -9,7 +9,19 @@
 
 ## Goal
 
-소형 도로·일반 도로·대로가 비용·용량·속도·유지비·소음에서 서로 다른 선택을 제공하고, 기존 도시를 철거하지 않고 도로 등급과 방향을 바꿔 병목을 회복하게 한다.
+소형 도로·일반 도로·왕복 4차선 대로·왕복 6차선 광로가 비용·용량·속도·유지비·소음에서 서로 다른 선택을 제공하고, 기존 도시를 철거하지 않고 도로 등급과 방향을 바꿔 병목을 회복하게 한다.
+
+## 2026-09 visual/system extension
+
+- The stable hierarchy now includes `road.boulevard` (`0x0100...0004`) above
+  `road.avenue`: the avenue is presented as a Korean 4-lane module and the
+  boulevard as a Korean 6-lane module, with monotonic cost, upkeep, capacity,
+  speed, and noise trade-offs.
+- Both tiers remain selected through the existing application-owned road-upgrade
+  command and preview path; no presentation object mutates the road grid.
+- Straight cells use the user's `KR_RD_4Lane_Straight40m` and
+  `KR_RD_6Lane_Straight40m` Blender modules. Intersections retain topology-owned
+  crosswalk activation, now using full-carriageway Korean stripe/stop-line sets.
 
 ## Delivery split
 

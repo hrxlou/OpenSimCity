@@ -5,7 +5,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
-$ExpectedQualityValues = @('0', '0', '0', '0', '2', '2')
+$ExpectedQualityValues = @('0', '0', '0', '0', '2', '4')
 
 function Get-IndexedFile {
     param(
@@ -41,8 +41,8 @@ $graphicsValues = @(Get-IndexedPropertyValues -Content $graphicsSettings -Proper
 if ($graphicsValues.Count -ne 1) {
     throw "Expected exactly one m_LightsUseColorTemperature entry in the Git index, found $($graphicsValues.Count)."
 }
-if ($graphicsValues[0] -ne '0') {
-    throw "GraphicsSettings.asset in the Git index has m_LightsUseColorTemperature=$($graphicsValues[0]); expected 0."
+if ($graphicsValues[0] -ne '1') {
+    throw "GraphicsSettings.asset in the Git index has m_LightsUseColorTemperature=$($graphicsValues[0]); expected 1."
 }
 
 $qualityValues = @(Get-IndexedPropertyValues -Content $qualitySettings -Property 'antiAliasing')

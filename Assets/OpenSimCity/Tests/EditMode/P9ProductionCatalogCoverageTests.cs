@@ -11,7 +11,7 @@ namespace OpenSimCity.Tests.EditMode
             var inventory = P9GameplayPresentationInventory.Create();
             var catalog = P9ProductionCatalog.Create();
             var result = P9ProductionCatalog.Validate(catalog);
-            Assert.That(inventory.Count, Is.EqualTo(18));
+            Assert.That(inventory.Count, Is.EqualTo(19));
             Assert.That(catalog.Count, Is.EqualTo(inventory.Count));
             Assert.That(result.Passed, Is.True, result.Message);
         }

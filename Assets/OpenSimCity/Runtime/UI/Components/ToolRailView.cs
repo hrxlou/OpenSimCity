@@ -12,8 +12,8 @@ namespace OpenSimCity.UI.Components
             : base(
                 UiFoundationNames.ToolRailName,
                 UiFoundationNames.ToolRailClass,
-                "Tools",
-                "도구는 P2-01에서 연결됩니다.")
+                "도시 도구",
+                "건설과 데이터 보기를 선택하세요.")
         {
         }
     }

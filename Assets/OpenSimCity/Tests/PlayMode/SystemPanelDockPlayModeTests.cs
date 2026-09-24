@@ -2,6 +2,7 @@ using System.Collections;
 using System.Reflection;
 using NUnit.Framework;
 using OpenSimCity.Application.Input;
+using OpenSimCity.Application.Persistence;
 using OpenSimCity.UI.Foundation;
 using OpenSimCity.UI.Release;
 using UnityEngine;
@@ -50,15 +51,37 @@ namespace OpenSimCity.Tests.PlayMode
 
             var binder = Object.FindAnyObjectByType<ReleaseMenuBinder>();
             Assert.That(binder, Is.Not.Null, "The release menu binder was not installed.");
-            var toggleMenu = typeof(ReleaseMenuBinder).GetMethod(
-                "ToggleMenu",
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(toggleMenu, Is.Not.Null);
-            toggleMenu.Invoke(binder, null);
+            var previous = ReleaseSessionContext.Current;
+            try
+            {
+                ReleaseSessionContext.SetCurrent(new ReleaseSessionActions(
+                    () => true, () => false, _ => false, () => null));
+                binder.RequestNewCity();
+            }
+            finally { ReleaseSessionContext.SetCurrent(previous); }
             yield return null;
 
             Assert.That(backdrop.resolvedStyle.display, Is.EqualTo(DisplayStyle.None));
+            Assert.That(bootstrap.SystemPanelDock.resolvedStyle.display, Is.EqualTo(DisplayStyle.None),
+                "City-management panels must stay closed until the player requests them.");
+
+            var dockType = typeof(UiFoundationBootstrap).Assembly.GetType(
+                "OpenSimCity.UI.Foundation.UiSystemPanelDock");
+            var toggleDock = dockType?.GetMethod("Toggle", BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(toggleDock, Is.Not.Null);
+            toggleDock.Invoke(null, new object[] { bootstrap.SystemPanelDock });
+            yield return null;
             Assert.That(bootstrap.SystemPanelDock.resolvedStyle.display, Is.EqualTo(DisplayStyle.Flex));
+            Assert.That(
+                bootstrap.SystemPanelDock.contentContainer.Q<VisualElement>(ExpectedPanels[0]).resolvedStyle.display,
+                Is.EqualTo(DisplayStyle.Flex));
+            for (var index = 1; index < ExpectedPanels.Length; index++)
+            {
+                Assert.That(
+                    bootstrap.SystemPanelDock.contentContainer.Q<VisualElement>(ExpectedPanels[index]).resolvedStyle.display,
+                    Is.EqualTo(DisplayStyle.None),
+                    "Only one city-management panel may occupy the drawer at a time.");
+            }
         }
 
         [UnityTest]

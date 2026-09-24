@@ -47,8 +47,8 @@ namespace OpenSimCity.Presentation.Utilities
                 var bounds = _context.WorldBounds;
                 var size = bounds.CellSize;
                 view.transform.localPosition = new Vector3(bounds.MinX + (producer.Cell.X + 0.5f) * size,
-                    size * 0.35f, bounds.MinZ + (producer.Cell.Y + 0.5f) * size);
-                view.transform.localScale = new Vector3(size * 0.75f, size * 0.7f, size * 0.75f);
+                    0f, bounds.MinZ + (producer.Cell.Y + 0.5f) * size);
+                view.transform.localScale = Vector3.one * size;
                 var renderers = view.GetComponentsInChildren<Renderer>();
                 for (var rendererIndex = 0; rendererIndex < renderers.Length; rendererIndex++)
                     renderers[rendererIndex].enabled = true;

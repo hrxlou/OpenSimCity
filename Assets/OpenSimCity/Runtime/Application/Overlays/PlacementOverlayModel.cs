@@ -246,7 +246,8 @@ namespace OpenSimCity.Application.Overlays
         {
             if (definitionId == RoadHierarchyDefaults.SmallRoadDefinitionId)
                 return PlacementOverlayCategory.RoadSmall;
-            if (definitionId == RoadHierarchyDefaults.AvenueDefinitionId)
+            if (definitionId == RoadHierarchyDefaults.AvenueDefinitionId ||
+                definitionId == RoadHierarchyDefaults.BoulevardDefinitionId)
                 return PlacementOverlayCategory.RoadAvenue;
             return PlacementOverlayCategory.RoadStreet;
         }

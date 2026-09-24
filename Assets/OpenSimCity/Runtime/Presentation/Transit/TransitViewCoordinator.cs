@@ -52,6 +52,16 @@ namespace OpenSimCity.Presentation.Transit
         public int RenderedIssueCount => _overlayRenderer?.ActiveIssueCount ?? 0;
         public TransitOverlayReadModel OverlayModel => _overlay;
         public TransitVehicleSamplingReadModel SamplingModel => _sampling;
+        public GameObject BusPrefab => busPrefab;
+
+        public void Configure(GameObject sampleBusPrefab)
+        {
+            busPrefab = sampleBusPrefab;
+            DisposeObjects();
+            if (isActiveAndEnabled)
+                EnsureObjects();
+            _observedSamplingVersion = -1;
+        }
 
         public void SetVisibleBusLimit(int value)
         {

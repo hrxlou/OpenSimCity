@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bea1ad0f2f2a47d6b2ed7de2437ec4ac, type: 3}
+  m_Name: ProductArtCatalog
+  m_EditorClassIdentifier: OpenSimCity.Presentation::OpenSimCity.Presentation.PlaceholderArtCatalog
+  bindings:
+  - presentationKey: building.residential.low.a
+    prefab: {fileID: 7861934940813771308, guid: badb5f355e0f34b57976f571255a741c, type: 3}
+  - presentationKey: building.commercial.low.a
+    prefab: {fileID: 3576144648701713811, guid: f380b79f5d19046a48930fc4f33fbac4, type: 3}
+  - presentationKey: building.industrial.low.a
+    prefab: {fileID: 8057175860933701550, guid: f8d6a3fa75dc342e5b5c340a0211288a, type: 3}
+  - presentationKey: building.residential.low.b
+    prefab: {fileID: 4852220851483123968, guid: e3c344fbc6436498ebad1d3f93f948d9, type: 3}
+  - presentationKey: building.commercial.low.b
+    prefab: {fileID: 4596086132432866169, guid: c0ad19299008c4e4391cbe773a17c2cb, type: 3}
+  - presentationKey: building.industrial.low.b
+    prefab: {fileID: 2665354771204394689, guid: 1a40f92840e4b4bd5b3ee007070f0375, type: 3}
+  - presentationKey: building.residential.low.c
+    prefab: {fileID: 4405389942974011365, guid: 4d43fdfcbec374c7cbb526aaea88cea9, type: 3}
+  - presentationKey: building.commercial.low.c
+    prefab: {fileID: 2965480197370756904, guid: 0a287a61b11584f3daaacc0a3de079f4, type: 3}
+  - presentationKey: building.industrial.low.c
+    prefab: {fileID: 4802762987918770434, guid: c0148666d090d47d786452ce40380504, type: 3}
+  - presentationKey: building.construction.placeholder
+    prefab: {fileID: 1531876694800242643, guid: 105bf8270fb40244d960a1baf42c4db1, type: 3}
+  - presentationKey: utility.power.plant.placeholder
+    prefab: {fileID: 384501831998082171, guid: dfb4dcd1e2f40413c8e49761ecb8cab8, type: 3}
+  - presentationKey: road.street.placeholder
+    prefab: {fileID: 3159128355709051955, guid: 2aa13e0ec5ce0f44e8095f1955d5e48c, type: 3}

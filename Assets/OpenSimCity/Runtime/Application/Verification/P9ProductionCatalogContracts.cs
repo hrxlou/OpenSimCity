@@ -81,6 +81,9 @@ namespace OpenSimCity.Application.Verification
             Add(entries, "road.small", "OSC_REP_ROAD_2LANE", "road.small", "narrow", "narrow-marked");
             Add(entries, "road.street", "OSC_REP_ROAD_2LANE", "road.street", "standard", "standard-marked");
             Add(entries, "road.avenue", "OSC_REP_ROAD_2LANE", "road.avenue", "avenue", "avenue-transit-ready");
+            // The static P9 benchmark budget still uses the shared road proxy;
+            // runtime art resolves to the first-party Seoul six-lane wrapper.
+            Add(entries, "road.boulevard", "OSC_REP_ROAD_2LANE", "road.boulevard", "six-lane-seoul", "six-lane-transit-ready");
             Add(entries, "utility.power.plant.placeholder", "OSC_REP_PROP_AC_UNIT", "utility.power", "utility-default");
             AddService(entries, PublicServicePresentationKeys.Police, "police");
             AddService(entries, PublicServicePresentationKeys.Fire, "fire");

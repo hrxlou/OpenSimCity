@@ -10,6 +10,8 @@ namespace OpenSimCity.Presentation.Vehicles
     /// </summary>
     public static class TrafficPresentationBootstrap
     {
+        public const string VehicleResourcePath = "OpenSimCity/Vehicles/TrafficCar";
+
         private static bool _subscribed;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -42,7 +44,10 @@ namespace OpenSimCity.Presentation.Vehicles
 
             var root = new GameObject(TrafficViewCoordinator.RuntimeObjectName);
             SceneManager.MoveGameObjectToScene(root, scene);
-            root.AddComponent<TrafficViewCoordinator>();
+            var coordinator = root.AddComponent<TrafficViewCoordinator>();
+            coordinator.Configure(Resources.Load<GameObject>(VehicleResourcePath), null, null);
+            coordinator.SetVisibleVehicleLimit(48);
+            coordinator.SetCongestionMapVisible(false);
         }
     }
 }

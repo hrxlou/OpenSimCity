@@ -21,6 +21,8 @@ namespace OpenSimCity.UI.Release
         private DropdownField _key;
         private Label _feedback;
         private StyleSheet _style;
+        private PanelSettings _panelSettings;
+        private float _originalPanelScale;
         private readonly List<PresentationInputAction> _actions = new List<PresentationInputAction>();
         private readonly Dictionary<string, string> _paths = new Dictionary<string, string>(StringComparer.Ordinal);
 
@@ -36,6 +38,8 @@ namespace OpenSimCity.UI.Release
 
         private void OnDisable()
         {
+            if (_panelSettings != null) _panelSettings.scale = _originalPanelScale;
+            _panelSettings = null;
             BindController(null);
             _section?.RemoveFromHierarchy();
         }
@@ -161,8 +165,14 @@ namespace OpenSimCity.UI.Release
             if (_style == null) _style = Resources.Load<StyleSheet>("UI/Accessibility");
             if (_style != null && !_bootstrap.Root.styleSheets.Contains(_style)) _bootstrap.Root.styleSheets.Add(_style);
             var scale = (float)(int)_controller.UiScale / 100f;
-            _bootstrap.Root.style.scale = new Scale(new Vector2(scale, scale));
-            _bootstrap.Root.style.transformOrigin = new TransformOrigin(0, 0);
+            if (_panelSettings == null)
+            {
+                _panelSettings = _bootstrap.GetComponent<UIDocument>().panelSettings;
+                _originalPanelScale = _panelSettings.scale;
+            }
+            // Panel scaling recomputes usable layout bounds; a root transform
+            // only magnifies already-laid-out content beyond the viewport.
+            _panelSettings.scale = _originalPanelScale * scale;
             _bootstrap.Root.EnableInClassList("osc-accessibility--color-independent", _controller.VisualMode != AccessibilityVisualMode.Standard);
             _bootstrap.Root.EnableInClassList("osc-accessibility--high-contrast", _controller.VisualMode == AccessibilityVisualMode.HighContrast);
             _bootstrap.Root.EnableInClassList("osc-accessibility--focus-strong", _controller.StrongFocusVisible);

@@ -57,3 +57,5 @@ UI scale, 색상 대체, focus, key remap과 입력 설정을 저장 가능한 p
 - 현지화 전체 언어
 - onboarding 내용 제작
 - audio/day-night 설정
+
+2026-09-09: Pretendard Regular/SemiBold TextCore, 1280×720 기준 크기 적용. UI 확대는 root transform에서 PanelSettings scale로 교체해 화면 경계를 다시 계산한다. 접근성/오디오 설정은 scene transition 이후 다시 설치된다. 전용 타이틀 설정 스크롤과 100/125/150% 경계 검사를 `ReleaseTitlePlayModeTests`에 추가했다.

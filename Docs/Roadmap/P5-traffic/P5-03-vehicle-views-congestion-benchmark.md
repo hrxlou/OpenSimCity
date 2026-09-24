@@ -37,6 +37,7 @@
 - 차량마다 `Update()`를 두지 않는다.
 - vehicle view는 save snapshot에 포함하지 않는다.
 - 표시 샘플이 실제 edge volume을 다시 수정하지 않는다.
+- 기본 차량 아트는 `VehicleArtSetup`이 생성하는 behaviour-free 단일 renderer prefab이며 paint·glass·wheel·lamp를 submesh로 분리한다.
 
 ## Verification
 

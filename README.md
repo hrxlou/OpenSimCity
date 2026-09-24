@@ -1,55 +1,30 @@
 # OpenSimCity
 
-SimCity 계열의 피드백 루프를 작은 규모부터 검증하는 Unity 기반 2.5D 도시 시뮬레이션 프로젝트다.
+Unity로 개발 중인 2.5D 도시 시뮬레이션 게임입니다. 도로와 주거·상업·공업 구역을 배치하고, 전력·교통·서비스와 예산을 조정하며 도시가 성장하는 과정을 확인할 수 있습니다.
 
-> 현재 프로젝트 기준 Editor는 Unity `6000.5.3f1`, 렌더 파이프라인은 URP `17.5.0`이다. 구현 완료 상태와 다음 작업 순서는 이 문서에 중복하지 않고 Roadmap과 GitHub 이슈/PR을 원본으로 사용한다.
+> **개발 중인 프로젝트입니다.** 현재 저장소는 출시 버전이나 완성된 게임을 제공하지 않습니다. 기능별 구현과 출시 검증 상태는 [개발 진행사항](Docs/STATUS.md)에 기록합니다.
 
-## 제품 방향
+## 현재 구현 범위
 
-- 엔진: Unity 6 계열 + URP
-- 화면: 로우폴리 3D 월드 + 제한형 아이소메트릭 카메라
-- 시뮬레이션: 개별 시민이 아닌 건물·가구 집단·통행량 중심
-- 표현: 실제 시뮬레이션과 화면상의 GameObject/차량을 분리
-- 초기 맵: 64 x 64 셀
-- 첫 목표: 도로, RCI 구역, 전력, 자동 성장, 인구·일자리, 월간 재정, 저장/불러오기
-- 제품 검증: 같은 seed에서도 도로·교통·지구 선택에 따라 외형과 운영이 다른 두 도시가 모두 생존 가능해야 함
-- 범위 원칙: 대형 도시 게임의 기능 수를 복제하지 않고 버스 한 종류와 정책 두 종류 같은 작은 수직 슬라이스로 공간적 선택을 검증
+- 도로·구역·건물 성장, 인구·일자리·RCI 수요, 전력과 월간 재정
+- 저장·불러오기, 도로 계층과 교통·버스, 공공 서비스·수도·밀도·지구 정책
+- 아이소메트릭 도시 화면, 건설 도구, 정보 패널과 출시 메뉴
 
-핵심 플레이 루프는 다음과 같다.
+시뮬레이션 상태는 화면의 Unity 오브젝트와 분리되어 있으며, 같은 seed와 명령 순서에서 같은 결과를 얻는 것을 설계 원칙으로 합니다. 기능이 코드에 있어도 플랫폼별 플레이와 출시 검증이 끝났다는 뜻은 아닙니다.
 
-```text
-도로·구역·인프라 배치
-  -> 입지 조건과 RCI 수요 계산
-  -> 건물 성장 및 입주
-  -> 인구·일자리·세수 변화
-  -> 교통·서비스·유지비 압력
-  -> 플레이어의 추가 투자 또는 정책 변경
-```
+## 실행 방법
 
-## 설계 문서
+1. [Git LFS](https://git-lfs.com/)를 설치하고 저장소를 clone한 뒤 `git lfs pull`을 실행합니다.
+2. Unity Hub에서 저장소 폴더를 엽니다. 필요한 Editor 버전은 `ProjectSettings/ProjectVersion.txt`의 **6000.5.3f1**입니다.
+3. Unity 메뉴 **OpenSimCity → Setup → Validate Project**로 프로젝트 설정을 확인합니다.
+4. `Assets/OpenSimCity/Scenes/CityPrototype.unity`를 열고 Play를 누릅니다.
 
-- [아키텍처와 디렉터리 구조](Docs/ARCHITECTURE.md)
-- [디자인·UI·아트 기준](Docs/DESIGN.md)
-- [이슈 단위 개발 로드맵](Docs/Roadmap/README.md)
-- [시뮬레이션 핵심 계약](Docs/Specs/SIMULATION_CONTRACTS.md)
-- [플레이어 경험 게이트 계약](Docs/Specs/PLAYER_EXPERIENCE_CONTRACTS.md)
-- [Post-MVP 후보와 진입 조건](Docs/Roadmap/POST_MVP.md)
-- [PC·Mac 최초 환경 설정](Docs/SETUP.md)
-- [Git·두 기기·에셋 작업 방식](Docs/WORKFLOW.md)
+자동 테스트는 macOS에서 `./Tools/CI/run-unity-tests.sh all`, Windows에서 `Tools/CI/run-unity-tests.ps1 all`로 실행합니다. 테스트 스크립트 사용법과 빌드 절차는 [개발 환경 설정](Docs/SETUP.md)과 [작업 방식](Docs/WORKFLOW.md)을 참고하세요.
 
-외부 기획안, AI 시안과 에셋 가이드는 아이디어 입력으로 사용한다. 저장소에서 구현할 디자인 계약과 Phase별 적용 범위는 `Docs/DESIGN.md`를 기준으로 하며, 외부 초안이 이 문서나 로드맵과 충돌하면 저장소 문서를 우선한다.
+## 문서
 
-## 프로젝트 열기와 기준선 확인
+- [개발 진행사항](Docs/STATUS.md) · [상세 로드맵](Docs/Roadmap/README.md)
+- [아키텍처](Docs/ARCHITECTURE.md) · [디자인·아트 기준](Docs/DESIGN.md)
+- [시뮬레이션 계약](Docs/Specs/SIMULATION_CONTRACTS.md) · [출시 후보 검증 항목](Docs/Release/P9-RC-EVIDENCE-CHECKLIST.md)
 
-1. Unity Hub에서 이 저장소를 Add/Open한다.
-2. `ProjectSettings/ProjectVersion.txt`와 같은 `6000.5.3f1` Editor를 사용한다.
-3. `OpenSimCity/Setup/Validate Project`로 커밋된 설정과 필수 Scene 루트를 확인한다. drift가 있을 때만 `Configure Project`로 재현한다.
-4. `./Tools/CI/run-unity-tests.sh all`로 현재 EditMode/PlayMode 기준선을 확인한다.
-
-현재 작업 순서와 완료 상태는 README에 중복해서 적지 않고 [실행 로드맵](Docs/Roadmap/README.md)과 GitHub Workflow Kanban에서 관리한다.
-
-Unity Hub가 비어 있지 않은 저장소에 새 프로젝트 생성을 허용하지 않는 경우, 같은 Unity 버전의 임시 URP 프로젝트를 만든 뒤 Unity를 종료하고 그 프로젝트의 `Assets`, `Packages`, `ProjectSettings`만 이 저장소 루트로 옮긴 후 다시 연다.
-
-## 완료의 기준
-
-기능은 코드 작성만으로 완료되지 않는다. 관련 자동 테스트, Unity 콘솔 오류 없음, 문서화된 성능 예산, 재현 가능한 데모 씬까지 갖춰야 해당 단계가 끝난 것으로 본다.
+외부 에셋은 `Assets/ThirdParty`에 분리하고 각 출처·라이선스 자료를 해당 디렉터리에 보관합니다. 저장소 전체에 적용할 오픈소스 라이선스는 아직 지정하지 않았습니다.

@@ -90,6 +90,11 @@ namespace OpenSimCity.Tests.PlayMode
 
             var coordinator = Object.FindFirstObjectByType<TrafficViewCoordinator>();
             Assert.That(coordinator, Is.Not.Null);
+            Assert.That(coordinator.VehiclePrefab, Is.Not.Null);
+            Assert.That(coordinator.VehiclePrefab.name, Is.EqualTo("TrafficCar"));
+            Assert.That(
+                coordinator.VehiclePrefab.GetComponentsInChildren<Renderer>(true),
+                Has.Length.EqualTo(1));
             var sourceChecksum = runtime.TrafficRoutingSystem.State.ComputeChecksum();
 
             coordinator.SetVisibleVehicleLimit(0);

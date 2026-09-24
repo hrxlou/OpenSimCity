@@ -15,6 +15,7 @@ namespace OpenSimCity.Gameplay.Selection
         [SerializeField] private WorldBoundsReadModelSource worldBoundsSource;
         [SerializeField] private Material lineMaterial;
         [SerializeField, Min(0.001f)] private float elevation = 0.01f;
+        [SerializeField] private bool showGrid;
 
         private Mesh _mesh;
         private MeshFilter _meshFilter;
@@ -25,6 +26,15 @@ namespace OpenSimCity.Gameplay.Selection
             worldBoundsSource = boundsSource;
             lineMaterial = material;
             Rebuild();
+        }
+
+        public bool IsVisible => showGrid;
+
+        public void SetVisible(bool value)
+        {
+            showGrid = value;
+            EnsureComponents();
+            _meshRenderer.enabled = value;
         }
 
         public void Rebuild()
@@ -65,6 +75,7 @@ namespace OpenSimCity.Gameplay.Selection
             _meshFilter.sharedMesh = _mesh;
             if (lineMaterial != null)
                 _meshRenderer.sharedMaterial = lineMaterial;
+            _meshRenderer.enabled = showGrid;
         }
 
         private void Awake() => EnsureComponents();

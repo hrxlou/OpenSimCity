@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using OpenSimCity.UI.Release;
 
 namespace OpenSimCity.Tests.PlayMode
 {
@@ -21,6 +22,26 @@ namespace OpenSimCity.Tests.PlayMode
             ("CityPrototype", "OpenSimCity.Prototype"),
             ("Benchmark", "OpenSimCity.Benchmark")
         };
+
+        [Test]
+        public void StandaloneBootstrapEntersPlayableCity()
+        {
+            Assert.That(
+                StandaloneSceneFlow.ShouldEnterPlayableScene("Bootstrap", isEditor: false),
+                Is.True);
+            Assert.That(
+                StandaloneSceneFlow.ShouldEnterPlayableScene("Bootstrap", isEditor: true),
+                Is.False);
+            Assert.That(
+                StandaloneSceneFlow.ShouldEnterPlayableScene("MainMenu", isEditor: false),
+                Is.False);
+            Assert.That(
+                StandaloneSceneFlow.RequestedReviewScene(new[] { "OpenSimCity", "-osc-benchmark" }),
+                Is.EqualTo("Benchmark"));
+            Assert.That(
+                StandaloneSceneFlow.IsShowcaseRequested(new[] { "OpenSimCity", "-osc-showcase" }),
+                Is.True);
+        }
 
         [UnityTest]
         public IEnumerator AllScenesLoadWithRequiredRootAndCamera()

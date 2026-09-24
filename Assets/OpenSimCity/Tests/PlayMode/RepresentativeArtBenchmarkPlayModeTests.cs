@@ -50,6 +50,9 @@ namespace OpenSimCity.Tests.PlayMode
             var placeholder = RepresentativeArtMetrics.Capture(
                 fixture.InstancesRoot.gameObject);
 
+            TestContext.WriteLine($"P3-08 measured production-like: {production}");
+            TestContext.WriteLine($"P3-08 measured authored fallback: {placeholder}");
+
             Assert.That(production.RendererCount, Is.EqualTo(24));
             Assert.That(production.MaterialSlotCount, Is.EqualTo(172));
             Assert.That(production.UniqueMaterialCount, Is.EqualTo(17));
@@ -58,11 +61,15 @@ namespace OpenSimCity.Tests.PlayMode
             Assert.That(production.UniqueTextureCount, Is.EqualTo(17));
             Assert.That(production.TextureMemoryBytes, Is.GreaterThan(0));
 
-            Assert.That(placeholder.RendererCount, Is.EqualTo(56));
-            Assert.That(placeholder.MaterialSlotCount, Is.EqualTo(56));
-            Assert.That(placeholder.TriangleCount, Is.EqualTo(672));
-            Assert.That(placeholder.UniqueMeshCount, Is.EqualTo(1));
-            Assert.That(placeholder.UniqueTextureCount, Is.Zero);
+            // Authored fallback includes the inactive Korean crosswalk approach
+            // modules so intersection topology can enable them without allocation.
+            Assert.That(placeholder.RendererCount, Is.EqualTo(188));
+            Assert.That(placeholder.MaterialSlotCount, Is.EqualTo(204));
+            Assert.That(placeholder.UniqueMaterialCount, Is.EqualTo(13));
+            Assert.That(placeholder.TriangleCount, Is.EqualTo(14912));
+            Assert.That(placeholder.UniqueMeshCount, Is.EqualTo(3));
+            // Source roughness maps now contribute three linear smoothness textures.
+            Assert.That(placeholder.UniqueTextureCount, Is.EqualTo(6));
             Assert.That(production.TriangleCount, Is.GreaterThan(placeholder.TriangleCount));
             if (!UnityEngine.Application.isEditor &&
                 SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null)

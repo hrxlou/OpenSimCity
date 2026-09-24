@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using OpenSimCity.Application.Queries;
 using OpenSimCity.Application.World;
+using OpenSimCity.Simulation.Roads;
 using UnityEngine;
 
 namespace OpenSimCity.Presentation.Roads
@@ -14,6 +15,8 @@ namespace OpenSimCity.Presentation.Roads
     public sealed class RoadViewRenderer : MonoBehaviour
     {
         public const string RoadPresentationKey = "road.street.placeholder";
+        private const string AvenueResourcePath = "OpenSimCity/Environment/RoadAvenue4Lane";
+        private const string BoulevardResourcePath = "OpenSimCity/Environment/RoadBoulevard6Lane";
 
         [SerializeField] private PlaceholderArtCatalog catalog;
 
@@ -121,6 +124,106 @@ namespace OpenSimCity.Presentation.Roads
                 bounds.MinZ + (row.Cell.Y + 0.5f) * size);
             view.transform.localRotation = Quaternion.identity;
             view.transform.localScale = new Vector3(size, size, size);
+            _context.Runtime.RoadHierarchyModel.TryGet(row.Cell, out var hierarchy);
+            var avenue = hierarchy.DefinitionId == RoadHierarchyDefaults.AvenueDefinitionId;
+            var boulevard = hierarchy.DefinitionId == RoadHierarchyDefaults.BoulevardDefinitionId;
+            ConfigureTopology(view.transform, row.ConnectionMask, avenue, boulevard);
+        }
+
+        private void ConfigureTopology(
+            Transform view,
+            RoadConnectionReadMask mask,
+            bool avenue,
+            bool boulevard)
+        {
+            var connectionCount =
+                (Has(mask, RoadConnectionReadMask.North) ? 1 : 0) +
+                (Has(mask, RoadConnectionReadMask.East) ? 1 : 0) +
+                (Has(mask, RoadConnectionReadMask.South) ? 1 : 0) +
+                (Has(mask, RoadConnectionReadMask.West) ? 1 : 0);
+            var northSouth = Has(mask, RoadConnectionReadMask.North) &&
+                             Has(mask, RoadConnectionReadMask.South);
+            var eastWest = Has(mask, RoadConnectionReadMask.East) &&
+                           Has(mask, RoadConnectionReadMask.West);
+            var wide = avenue || boulevard;
+            var straightNorthSouth = wide && northSouth && !eastWest;
+            var straightEastWest = wide && eastWest && !northSouth;
+
+            if (avenue && straightNorthSouth)
+                EnsureWideRoadModule(view, "Avenue4LaneNS", AvenueResourcePath, 0f);
+            if (avenue && straightEastWest)
+                EnsureWideRoadModule(view, "Avenue4LaneEW", AvenueResourcePath, 90f);
+            if (boulevard && straightNorthSouth)
+                EnsureWideRoadModule(view, "Boulevard6LaneNS", BoulevardResourcePath, 0f);
+            if (boulevard && straightEastWest)
+                EnsureWideRoadModule(view, "Boulevard6LaneEW", BoulevardResourcePath, 90f);
+
+            SetActive(view, "KerbNorth", !Has(mask, RoadConnectionReadMask.North) && !straightEastWest);
+            SetActive(view, "KerbEast", !Has(mask, RoadConnectionReadMask.East) && !straightNorthSouth);
+            SetActive(view, "KerbSouth", !Has(mask, RoadConnectionReadMask.South) && !straightEastWest);
+            SetActive(view, "KerbWest", !Has(mask, RoadConnectionReadMask.West) && !straightNorthSouth);
+            SetActive(view, "SidewalkNorth", !Has(mask, RoadConnectionReadMask.North) && !straightEastWest);
+            SetActive(view, "SidewalkEast", !Has(mask, RoadConnectionReadMask.East) && !straightNorthSouth);
+            SetActive(view, "SidewalkSouth", !Has(mask, RoadConnectionReadMask.South) && !straightEastWest);
+            SetActive(view, "SidewalkWest", !Has(mask, RoadConnectionReadMask.West) && !straightNorthSouth);
+            SetActive(view, "LaneNorth", !wide && Has(mask, RoadConnectionReadMask.North));
+            SetActive(view, "LaneEast", !wide && Has(mask, RoadConnectionReadMask.East));
+            SetActive(view, "LaneSouth", !wide && Has(mask, RoadConnectionReadMask.South));
+            SetActive(view, "LaneWest", !wide && Has(mask, RoadConnectionReadMask.West));
+
+            SetActive(view, "Crosswalk", connectionCount >= 3);
+            SetActive(view, "Crosswalk/North", connectionCount >= 3 && Has(mask, RoadConnectionReadMask.North));
+            SetActive(view, "Crosswalk/East", connectionCount >= 3 && Has(mask, RoadConnectionReadMask.East));
+            SetActive(view, "Crosswalk/South", connectionCount >= 3 && Has(mask, RoadConnectionReadMask.South));
+            SetActive(view, "Crosswalk/West", connectionCount >= 3 && Has(mask, RoadConnectionReadMask.West));
+            SetActive(view, "Avenue4LaneNS", avenue && straightNorthSouth);
+            SetActive(view, "Avenue4LaneEW", avenue && straightEastWest);
+            SetActive(view, "Boulevard6LaneNS", boulevard && straightNorthSouth);
+            SetActive(view, "Boulevard6LaneEW", boulevard && straightEastWest);
+
+            // Legacy procedural marks stay as a safe fallback only at straight
+            // avenue cells when imported Seoul modules are unavailable.
+            var hasAvenueModule = straightNorthSouth
+                ? view.Find("Avenue4LaneNS") != null
+                : straightEastWest && view.Find("Avenue4LaneEW") != null;
+            SetActive(view, "AvenueMedianNS", avenue && straightNorthSouth && !hasAvenueModule);
+            SetActive(view, "AvenueMedianEW", avenue && straightEastWest && !hasAvenueModule);
+            SetActive(view, "AvenueLaneNSLeft", avenue && straightNorthSouth && !hasAvenueModule);
+            SetActive(view, "AvenueLaneNSRight", avenue && straightNorthSouth && !hasAvenueModule);
+            SetActive(view, "AvenueLaneEWNorth", avenue && straightEastWest && !hasAvenueModule);
+            SetActive(view, "AvenueLaneEWSouth", avenue && straightEastWest && !hasAvenueModule);
+        }
+
+        private void EnsureWideRoadModule(
+            Transform view,
+            string childName,
+            string resourcePath,
+            float yaw)
+        {
+            if (view.Find(childName) != null)
+                return;
+            var prefab = Resources.Load<GameObject>(resourcePath);
+            if (prefab == null)
+                return;
+            var root = new GameObject(childName);
+            root.transform.SetParent(view, false);
+            root.transform.localPosition = new Vector3(0f, 0.058f, 0f);
+            root.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            var model = Instantiate(prefab, root.transform);
+            model.name = "Model";
+            root.SetActive(false);
+        }
+
+        private static bool Has(RoadConnectionReadMask mask, RoadConnectionReadMask direction)
+        {
+            return (mask & direction) != 0;
+        }
+
+        private static void SetActive(Transform view, string childName, bool active)
+        {
+            var child = view.Find(childName);
+            if (child != null && child.gameObject.activeSelf != active)
+                child.gameObject.SetActive(active);
         }
 
         private void Recycle(int key)

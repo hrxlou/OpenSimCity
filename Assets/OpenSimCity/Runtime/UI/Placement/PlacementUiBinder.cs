@@ -50,6 +50,8 @@ namespace OpenSimCity.UI.Placement
         private Label _upgradeRisk;
         private VisualElement _legendList;
         private Label _legendTitle;
+        private VisualElement _overlayTray;
+        private VisualElement _overlayToggleButton;
 
         public bool IsBound => _boundContext != null && _boundRoot != null;
 
@@ -103,32 +105,94 @@ namespace OpenSimCity.UI.Placement
                 return;
 
             var content = ReplaceContent(rail, "osc-placement-tools");
+            content.style.flexDirection = FlexDirection.Row;
+            content.style.alignItems = Align.Center;
 
-            AddToolButton(content, ConstructionToolMode.Road, "도로", "1");
-            AddToolButton(content, ConstructionToolMode.RoadUpgrade, "도로 업그레이드", "9");
-            AddToolButton(content, ConstructionToolMode.ZoneResidential, "주거 R", "2");
-            AddToolButton(content, ConstructionToolMode.ZoneCommercial, "상업 C", "3");
-            AddToolButton(content, ConstructionToolMode.ZoneIndustrial, "공업 I", "4");
-            AddToolButton(content, ConstructionToolMode.ZoneClear, "구역 해제", "5");
-            AddToolButton(content, ConstructionToolMode.Demolish, "철거", "6");
-            AddToolButton(content, ConstructionToolMode.PowerPlant, "발전소", "7");
-            AddToolButton(content, ConstructionToolMode.RemovePowerPlant, "발전소 철거", "8");
+            var toolGrid = new VisualElement { name = "osc-tool-grid" };
+            toolGrid.AddToClassList("osc-tool-grid");
+            content.Add(toolGrid);
+            AddToolButton(toolGrid, ConstructionToolMode.Road, "road", "도로", "1");
+            AddToolButton(toolGrid, ConstructionToolMode.RoadUpgrade, "road-upgrade", "도로 업그레이드", "9");
+            AddToolButton(toolGrid, ConstructionToolMode.ZoneResidential, "residential", "주거 구역", "2");
+            AddToolButton(toolGrid, ConstructionToolMode.ZoneCommercial, "commercial", "상업 구역", "3");
+            AddToolButton(toolGrid, ConstructionToolMode.ZoneIndustrial, "industrial", "공업 구역", "4");
+            AddToolButton(toolGrid, ConstructionToolMode.ZoneClear, "zone-clear", "구역 해제", "5");
+            AddToolButton(toolGrid, ConstructionToolMode.Demolish, "demolish", "철거", "6");
+            AddToolButton(toolGrid, ConstructionToolMode.PowerPlant, "power", "발전소", "7");
+            AddToolButton(toolGrid, ConstructionToolMode.RemovePowerPlant, "power-remove", "발전소 철거", "8");
 
-            var overlayHeader = new Label("오버레이");
+            _overlayTray = new VisualElement { name = "osc-data-overlay-tray" };
+            _overlayTray.AddToClassList("osc-data-overlay-tray");
+            _overlayTray.style.display = DisplayStyle.None;
+            var overlayHeader = new Label("도시 데이터");
             overlayHeader.AddToClassList(UiFoundationNames.PanelCaptionClass);
-            content.Add(overlayHeader);
+            _overlayTray.Add(overlayHeader);
 
-            AddOverlayButton(content, PlacementOverlayKind.RoadConnectivity, "연결");
-            AddOverlayButton(content, PlacementOverlayKind.RoadHierarchy, "등급·방향");
-            AddOverlayButton(content, PlacementOverlayKind.Accessibility, "접근성");
-            AddOverlayButton(content, PlacementOverlayKind.Zone, "구역맵");
-            AddOverlayButton(content, PlacementOverlayKind.Parcel, "필지");
-            AddOverlayButton(content, PlacementOverlayKind.Power, "전력");
+            var overlayGrid = new VisualElement { name = "osc-placement-overlay-grid" };
+            overlayGrid.AddToClassList("osc-overlay-grid");
+            _overlayTray.Add(overlayGrid);
+            AddOverlayButton(overlayGrid, PlacementOverlayKind.RoadConnectivity, "연결");
+            AddOverlayButton(overlayGrid, PlacementOverlayKind.RoadHierarchy, "도로 등급");
+            AddOverlayButton(overlayGrid, PlacementOverlayKind.Accessibility, "접근성");
+            AddOverlayButton(overlayGrid, PlacementOverlayKind.Zone, "구역");
+            AddOverlayButton(overlayGrid, PlacementOverlayKind.Parcel, "필지");
+            AddOverlayButton(overlayGrid, PlacementOverlayKind.Power, "전력");
+            content.Add(_overlayTray);
+
+            _overlayToggleButton = MakeItemButton("데이터", ToggleOverlayTray);
+            _overlayToggleButton.name = "osc-data-overlay-toggle";
+            _overlayToggleButton.tooltip = "연결·도로 등급·접근성·구역·필지·전력 데이터";
+            _overlayToggleButton.AddToClassList("osc-data-overlay-toggle");
+            content.Add(_overlayToggleButton);
+
+            var manageButton = MakeItemButton(
+                string.Empty,
+                () => UiSystemPanelDock.Toggle(bootstrap.SystemPanelDock));
+            manageButton.name = "osc-city-management-toggle";
+            manageButton.tooltip = "대중교통·공공서비스·도시 데이터 관리";
+            manageButton.AddToClassList("osc-city-management-button");
+            var manageIcon = new VisualElement { name = "osc-city-management-icon" };
+            manageIcon.AddToClassList("osc-tool-button__icon");
+            manageIcon.AddToClassList("osc-icon--management");
+            var manageLabel = new Label("도시 관리");
+            manageLabel.AddToClassList("osc-tool-button__label");
+            manageButton.Add(manageIcon);
+            manageButton.Add(manageLabel);
+            content.Add(manageButton);
         }
 
-        private void AddToolButton(VisualElement parent, ConstructionToolMode mode, string label, string shortcut)
+        private void ToggleOverlayTray()
         {
-            var button = MakeItemButton($"{label}  ·  {shortcut}", () => CityRuntimeContext.Current?.SelectTool(mode));
+            if (_overlayTray == null)
+                return;
+
+            var open = _overlayTray.resolvedStyle.display == DisplayStyle.None;
+            _overlayTray.style.display = open ? DisplayStyle.Flex : DisplayStyle.None;
+            _overlayToggleButton?.EnableInClassList(UiFoundationNames.ItemSelectedClass, open);
+        }
+
+        private void AddToolButton(
+            VisualElement parent,
+            ConstructionToolMode mode,
+            string iconName,
+            string label,
+            string shortcut)
+        {
+            var button = MakeItemButton(string.Empty, () => CityRuntimeContext.Current?.SelectTool(mode));
+            button.tooltip = $"{label} ({shortcut})";
+            button.AddToClassList("osc-tool-button");
+
+            var iconElement = new VisualElement { name = $"osc-tool-{iconName}-icon" };
+            iconElement.AddToClassList("osc-tool-button__icon");
+            iconElement.AddToClassList($"osc-icon--{iconName}");
+            var nameLabel = new Label(label.Replace(" 구역", string.Empty)
+                .Replace("도로 업그레이드", "도로 확장").Replace("발전소 철거", "전력 철거"));
+            nameLabel.AddToClassList("osc-tool-button__label");
+            var shortcutLabel = new Label(shortcut);
+            shortcutLabel.AddToClassList("osc-tool-button__shortcut");
+            button.Add(iconElement);
+            button.Add(nameLabel);
+            button.Add(shortcutLabel);
             parent.Add(button);
             _toolButtons[mode] = button;
         }
@@ -136,6 +200,7 @@ namespace OpenSimCity.UI.Placement
         private void AddOverlayButton(VisualElement parent, PlacementOverlayKind kind, string label)
         {
             var button = MakeItemButton(label, () => CityRuntimeContext.Current?.ToggleOverlay(kind));
+            button.AddToClassList("osc-overlay-button");
             parent.Add(button);
             _overlayButtons[kind] = button;
         }
@@ -169,11 +234,15 @@ namespace OpenSimCity.UI.Placement
 
             var content = ReplaceContent(inspector, "osc-placement-inspector");
             _inspectorOperation = AddValueLabel(content, UiFoundationNames.PanelCaptionClass);
+            _inspectorOperation.AddToClassList("osc-inspector-primary");
             _inspectorCost = AddValueLabel(content, UiFoundationNames.PanelCaptionClass);
+            _inspectorCost.AddToClassList("osc-inspector-secondary");
             _inspectorBalance = AddValueLabel(content, UiFoundationNames.PanelCaptionClass);
+            _inspectorBalance.AddToClassList("osc-inspector-secondary");
 
             var statusRow = new VisualElement { name = "osc-placement-status" };
             statusRow.style.flexDirection = FlexDirection.Row;
+            statusRow.AddToClassList("osc-inspector-status");
             _inspectorStatusMarker = new Label(string.Empty);
             _inspectorStatusMarker.AddToClassList(UiFoundationNames.ItemMarkerClass);
             _inspectorStatusMarker.style.display = DisplayStyle.Flex;
@@ -194,7 +263,8 @@ namespace OpenSimCity.UI.Placement
             tierRow.style.flexDirection = FlexDirection.Row;
             AddUpgradeTierButton(tierRow, RoadUpgradeDefinitionIds.Small, "소형");
             AddUpgradeTierButton(tierRow, RoadUpgradeDefinitionIds.Street, "일반");
-            AddUpgradeTierButton(tierRow, RoadUpgradeDefinitionIds.Avenue, "대로");
+            AddUpgradeTierButton(tierRow, RoadUpgradeDefinitionIds.Avenue, "4차선");
+            AddUpgradeTierButton(tierRow, RoadUpgradeDefinitionIds.Boulevard, "6차선");
             _roadUpgradePanel.Add(tierRow);
 
             var directionRow = new VisualElement { name = "osc-road-upgrade-direction-row" };
@@ -289,6 +359,8 @@ namespace OpenSimCity.UI.Placement
             RefreshToolSelection();
             RefreshPalette();
             RefreshRoadUpgradePanel();
+            if (mode == ConstructionToolMode.None)
+                RefreshInspector(preview: null, committed: null);
         }
 
         private void HandlePreviewChanged(ConstructionPreview preview)
@@ -345,6 +417,10 @@ namespace OpenSimCity.UI.Placement
                 return;
 
             var mode = _boundContext?.Tool.Mode ?? ConstructionToolMode.None;
+            if (bootstrap?.BuildPalette != null)
+                bootstrap.BuildPalette.style.display = mode == ConstructionToolMode.None
+                    ? DisplayStyle.None
+                    : DisplayStyle.Flex;
             _paletteTool.text = ToolDisplayName(mode);
             _paletteShortcut.text = mode == ConstructionToolMode.None ? string.Empty : $"단축키 {ToolShortcut(mode)}";
 
@@ -365,6 +441,10 @@ namespace OpenSimCity.UI.Placement
         {
             if (_inspectorOperation == null)
                 return;
+
+            var visible = committed != null && committed.HadPreview || preview != null && preview.HasPreview;
+            if (bootstrap?.ContextInspector != null)
+                bootstrap.ContextInspector.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
 
             if (committed != null && committed.HadPreview)
             {
@@ -567,7 +647,9 @@ namespace OpenSimCity.UI.Placement
             if (definitionId == RoadUpgradeDefinitionIds.Small)
                 return "소형";
             if (definitionId == RoadUpgradeDefinitionIds.Avenue)
-                return "대로";
+                return "왕복 4차선";
+            if (definitionId == RoadUpgradeDefinitionIds.Boulevard)
+                return "왕복 6차선";
             return "일반";
         }
 

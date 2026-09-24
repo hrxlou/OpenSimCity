@@ -62,6 +62,17 @@ namespace OpenSimCity.Tests.EditMode
             Assert.That(model.Snapshot.DayPhasePermille, Is.EqualTo(beforePhase));
         }
 
+        [Test]
+        public void NewCityStartsInDaylightWithoutChangingSimulationState()
+        {
+            var runtime = new CityRuntime(CityRuntimeOptions.Default);
+            var before = MvpStateChecksum.Compute(runtime);
+            var model = new DayNightPresentationReadModel(runtime);
+            Assert.That(model.Snapshot.DayPhasePermille, Is.EqualTo(500));
+            Assert.That(model.Snapshot.IsNight, Is.False);
+            Assert.That(MvpStateChecksum.Compute(runtime), Is.EqualTo(before));
+        }
+
         private sealed class MemoryStore : IPresentationSettingsStore
         {
             public PresentationSettingsDto Value = new PresentationSettingsDto();

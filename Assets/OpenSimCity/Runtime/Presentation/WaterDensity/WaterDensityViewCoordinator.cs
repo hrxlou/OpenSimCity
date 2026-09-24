@@ -21,9 +21,10 @@ namespace OpenSimCity.Presentation.WaterDensity
         private readonly SortedDictionary<StableId, GameObject> _pumpViews =
             new SortedDictionary<StableId, GameObject>();
         private readonly Stack<GameObject> _pumpPool = new Stack<GameObject>();
-        private readonly SortedDictionary<StableId, GameObject> _densityViews =
-            new SortedDictionary<StableId, GameObject>();
-        private readonly Stack<GameObject> _densityPool = new Stack<GameObject>();
+        private readonly SortedDictionary<StableId, DensityVisual> _densityViews =
+            new SortedDictionary<StableId, DensityVisual>();
+        private readonly Dictionary<DensityVisualKind, Stack<GameObject>> _densityPools =
+            new Dictionary<DensityVisualKind, Stack<GameObject>>();
         private CityRuntimeContext _context;
         private WaterDensityRuntimeModule _module;
         private int _readVersion = -1;
@@ -36,10 +37,22 @@ namespace OpenSimCity.Presentation.WaterDensity
         private Material _densityMaterial;
         private Material _overlayMaterial;
         private MaterialPropertyBlock _properties;
+        private GameObject _densityMediumOfficePrefab;
+        private GameObject _densityMediumApartmentPrefab;
+        private GameObject _densityHighOfficePrefab;
+        private GameObject _densityHighApartmentPrefab;
 
         public int ActivePumpViewCount => _pumpViews.Count;
         public int ActiveDensityViewCount => _densityViews.Count;
-        public int PooledViewCount => _pumpPool.Count + _densityPool.Count;
+        public int PooledViewCount
+        {
+            get
+            {
+                var count = _pumpPool.Count;
+                foreach (var pair in _densityPools) count += pair.Value.Count;
+                return count;
+            }
+        }
         public int OverlayCellCount { get; private set; }
         public bool IsOverlayVisible => _meshRenderer != null && _meshRenderer.enabled;
 
@@ -140,39 +153,52 @@ namespace OpenSimCity.Presentation.WaterDensity
                 var building = buildings[index];
                 if (building.Stage == DensityStageView.Low && building.UpgradeMonthsRemaining <= 0) continue;
                 desired.Add(building.BuildingId);
-                if (!_densityViews.TryGetValue(building.BuildingId, out var view))
+                var kind = ResolveDensityVisualKind(building);
+                if (!_densityViews.TryGetValue(building.BuildingId, out var visual) || visual.Kind != kind)
                 {
-                    view = Acquire(_densityPool, PrimitiveType.Cube, "DensityStageView");
-                    _densityViews.Add(building.BuildingId, view);
+                    if (visual.GameObject != null)
+                        RecycleDensity(visual);
+                    visual = new DensityVisual(kind, AcquireDensity(kind));
+                    _densityViews[building.BuildingId] = visual;
                 }
+                var view = visual.GameObject;
                 view.SetActive(true);
                 view.name = $"Density-{building.Stage}-{building.BuildingId.Value}";
-                view.transform.localPosition = new Vector3(
+                var centre = new Vector3(
                     bounds.MinX + (building.Cell.X + 0.5f) * bounds.CellSize,
-                    bounds.CellSize * (0.62f + (int)building.Stage * 0.18f),
+                    0f,
                     bounds.MinZ + (building.Cell.Y + 0.5f) * bounds.CellSize);
-                var width = building.UpgradeMonthsRemaining > 0 ? 0.20f : 0.30f;
-                var height = building.Stage == DensityStageView.High ? 0.72f : 0.46f;
-                view.transform.localScale = new Vector3(
-                    bounds.CellSize * width,
-                    bounds.CellSize * height,
-                    bounds.CellSize * width);
-                view.transform.localRotation = building.UpgradeMonthsRemaining > 0
-                    ? Quaternion.Euler(0f, 45f, 0f)
-                    : Quaternion.identity;
-                var renderer = view.GetComponent<Renderer>();
-                renderer.sharedMaterial = _densityMaterial;
-                _properties.Clear();
-                var color = building.UpgradeMonthsRemaining > 0
-                    ? new Color(0.95f, 0.68f, 0.18f, 1f)
-                    : building.Stage == DensityStageView.High
-                        ? new Color(0.66f, 0.34f, 0.92f, 1f)
-                        : new Color(0.30f, 0.58f, 0.94f, 1f);
-                _properties.SetColor("_Color", color);
-                _properties.SetColor("_BaseColor", color);
-                renderer.SetPropertyBlock(_properties);
+                if (kind == DensityVisualKind.UpgradeMarker)
+                {
+                    view.transform.localPosition = centre + Vector3.up * bounds.CellSize * 0.72f;
+                    view.transform.localScale = Vector3.one * bounds.CellSize * 0.26f;
+                    view.transform.localRotation = Quaternion.Euler(0f, 45f, 0f);
+                    var renderer = view.GetComponent<Renderer>();
+                    renderer.sharedMaterial = _densityMaterial;
+                    _properties.Clear();
+                    var color = new Color(0.95f, 0.68f, 0.18f, 1f);
+                    _properties.SetColor("_Color", color);
+                    _properties.SetColor("_BaseColor", color);
+                    renderer.SetPropertyBlock(_properties);
+                }
+                else
+                {
+                    view.transform.localPosition = centre;
+                    view.transform.localScale = Vector3.one * bounds.CellSize;
+                    view.transform.localRotation = Quaternion.Euler(
+                        0f, (building.BuildingId.Value & 1UL) == 0UL ? 0f : 90f, 0f);
+                }
             }
-            ReleaseMissing(_densityViews, _densityPool, desired);
+            ReleaseMissingDensity(desired);
+        }
+
+        private static DensityVisualKind ResolveDensityVisualKind(DensityBuildingReadModel building)
+        {
+            if (building.UpgradeMonthsRemaining > 0) return DensityVisualKind.UpgradeMarker;
+            var housing = building.EffectiveHousingCapacity > 0;
+            if (building.Stage == DensityStageView.High)
+                return housing ? DensityVisualKind.HighApartment : DensityVisualKind.HighOffice;
+            return housing ? DensityVisualKind.MediumApartment : DensityVisualKind.MediumOffice;
         }
 
         private void RebuildOverlay(
@@ -288,6 +314,61 @@ namespace OpenSimCity.Presentation.WaterDensity
             return view;
         }
 
+        private GameObject AcquireDensity(DensityVisualKind kind)
+        {
+            var pool = DensityPool(kind);
+            if (pool.Count > 0) return pool.Pop();
+            var prefab = DensityPrefab(kind);
+            if (prefab != null)
+            {
+                var instance = Instantiate(prefab, transform);
+                instance.hideFlags = HideFlags.DontSave;
+                return instance;
+            }
+            return Acquire(pool, PrimitiveType.Cube, "DensityStageView");
+        }
+
+        private Stack<GameObject> DensityPool(DensityVisualKind kind)
+        {
+            if (!_densityPools.TryGetValue(kind, out var pool))
+            {
+                pool = new Stack<GameObject>();
+                _densityPools.Add(kind, pool);
+            }
+            return pool;
+        }
+
+        private GameObject DensityPrefab(DensityVisualKind kind)
+        {
+            switch (kind)
+            {
+                case DensityVisualKind.MediumOffice: return _densityMediumOfficePrefab;
+                case DensityVisualKind.MediumApartment: return _densityMediumApartmentPrefab;
+                case DensityVisualKind.HighOffice: return _densityHighOfficePrefab;
+                case DensityVisualKind.HighApartment: return _densityHighApartmentPrefab;
+                default: return null;
+            }
+        }
+
+        private void RecycleDensity(DensityVisual visual)
+        {
+            visual.GameObject.SetActive(false);
+            DensityPool(visual.Kind).Push(visual.GameObject);
+        }
+
+        private void ReleaseMissingDensity(ISet<StableId> desired)
+        {
+            var release = new List<StableId>();
+            foreach (var pair in _densityViews)
+                if (!desired.Contains(pair.Key)) release.Add(pair.Key);
+            for (var index = 0; index < release.Count; index++)
+            {
+                var visual = _densityViews[release[index]];
+                _densityViews.Remove(release[index]);
+                RecycleDensity(visual);
+            }
+        }
+
         private static void ReleaseMissing(
             SortedDictionary<StableId, GameObject> active,
             Stack<GameObject> pool,
@@ -310,7 +391,7 @@ namespace OpenSimCity.Presentation.WaterDensity
         private void ReleaseAll()
         {
             foreach (var pair in _pumpViews) { pair.Value.SetActive(false); _pumpPool.Push(pair.Value); }
-            foreach (var pair in _densityViews) { pair.Value.SetActive(false); _densityPool.Push(pair.Value); }
+            foreach (var pair in _densityViews) RecycleDensity(pair.Value);
             _pumpViews.Clear();
             _densityViews.Clear();
         }
@@ -334,6 +415,14 @@ namespace OpenSimCity.Presentation.WaterDensity
             _pumpMaterial = CreateMaterial("WaterPumpMaterial", Color.white);
             _densityMaterial = CreateMaterial("DensityStageMaterial", Color.white);
             _overlayMaterial = CreateMaterial("WaterDensityOverlayMaterial", Color.white);
+            _densityMediumOfficePrefab = Resources.Load<GameObject>(
+                "OpenSimCity/Environment/DensityMediumOffice");
+            _densityMediumApartmentPrefab = Resources.Load<GameObject>(
+                "OpenSimCity/Environment/DensityMediumApartment");
+            _densityHighOfficePrefab = Resources.Load<GameObject>(
+                "OpenSimCity/Environment/DensityHighOffice");
+            _densityHighApartmentPrefab = Resources.Load<GameObject>(
+                "OpenSimCity/Environment/DensityHighApartment");
             _properties = new MaterialPropertyBlock();
             _meshRenderer.sharedMaterial = _overlayMaterial;
             _meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
@@ -354,13 +443,35 @@ namespace OpenSimCity.Presentation.WaterDensity
         private void OnDestroy()
         {
             foreach (var pair in _pumpViews) Destroy(pair.Value);
-            foreach (var pair in _densityViews) Destroy(pair.Value);
+            foreach (var pair in _densityViews) Destroy(pair.Value.GameObject);
             while (_pumpPool.Count > 0) Destroy(_pumpPool.Pop());
-            while (_densityPool.Count > 0) Destroy(_densityPool.Pop());
+            foreach (var pair in _densityPools)
+                while (pair.Value.Count > 0) Destroy(pair.Value.Pop());
             if (_mesh != null) Destroy(_mesh);
             if (_pumpMaterial != null) Destroy(_pumpMaterial);
             if (_densityMaterial != null) Destroy(_densityMaterial);
             if (_overlayMaterial != null) Destroy(_overlayMaterial);
+        }
+
+        private enum DensityVisualKind : byte
+        {
+            UpgradeMarker,
+            MediumOffice,
+            MediumApartment,
+            HighOffice,
+            HighApartment
+        }
+
+        private readonly struct DensityVisual
+        {
+            public DensityVisual(DensityVisualKind kind, GameObject gameObject)
+            {
+                Kind = kind;
+                GameObject = gameObject;
+            }
+
+            public DensityVisualKind Kind { get; }
+            public GameObject GameObject { get; }
         }
     }
 

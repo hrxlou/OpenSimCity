@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-EXPECTED_QUALITY_VALUES="0 0 0 0 2 2"
+EXPECTED_QUALITY_VALUES="0 0 0 0 2 4"
 
 fail() {
   printf 'ProjectSettings baseline guard failed: %s\n' "$1" >&2
@@ -31,8 +31,8 @@ if [[ "${graphics_value_count}" -ne 1 ]]; then
 fi
 
 graphics_value="$(printf '%s\n' "${graphics_settings}" | awk '$1 == "m_LightsUseColorTemperature:" { print $2 }')"
-if [[ "${graphics_value}" != "0" ]]; then
-  fail "GraphicsSettings.asset in the Git index has m_LightsUseColorTemperature=${graphics_value}; expected 0."
+if [[ "${graphics_value}" != "1" ]]; then
+  fail "GraphicsSettings.asset in the Git index has m_LightsUseColorTemperature=${graphics_value}; expected 1."
 fi
 
 quality_value_count="$(printf '%s\n' "${quality_settings}" | awk '$1 == "antiAliasing:" { count++ } END { print count + 0 }')"

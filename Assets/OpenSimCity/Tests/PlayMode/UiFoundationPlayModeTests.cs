@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Linq;
-using System.Reflection;
+using OpenSimCity.Application.Persistence;
 using NUnit.Framework;
 using OpenSimCity.Application.Input;
 using OpenSimCity.Core.Mathematics;
@@ -31,11 +31,14 @@ namespace OpenSimCity.Tests.PlayMode
 
             var menu = Object.FindAnyObjectByType<ReleaseMenuBinder>();
             Assert.That(menu, Is.Not.Null, "CityPrototype has no ReleaseMenuBinder.");
-            var toggleMenu = typeof(ReleaseMenuBinder).GetMethod(
-                "ToggleMenu",
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(toggleMenu, Is.Not.Null);
-            toggleMenu.Invoke(menu, null);
+            var previous = ReleaseSessionContext.Current;
+            try
+            {
+                ReleaseSessionContext.SetCurrent(new ReleaseSessionActions(
+                    () => true, () => false, _ => false, () => null));
+                menu.RequestNewCity();
+            }
+            finally { ReleaseSessionContext.SetCurrent(previous); }
             yield return null;
         }
 
@@ -298,7 +301,13 @@ namespace OpenSimCity.Tests.PlayMode
                 yield return null;
 
                 var railWidth = bootstrap.ToolRail.resolvedStyle.width;
+                // The commercial-style inspector is contextual and therefore
+                // hidden until an operation has a preview. Measure its tokenized
+                // width while temporarily revealing the shell.
+                bootstrap.ContextInspector.style.display = DisplayStyle.Flex;
+                yield return null;
                 var inspectorWidth = bootstrap.ContextInspector.resolvedStyle.width;
+                bootstrap.ContextInspector.style.display = DisplayStyle.None;
 
                 Assert.That(
                     railWidth,

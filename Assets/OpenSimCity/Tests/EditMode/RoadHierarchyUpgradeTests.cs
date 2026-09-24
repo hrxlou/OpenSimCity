@@ -19,19 +19,25 @@ namespace OpenSimCity.Tests.EditMode
             var small = catalog.Get(RoadHierarchyDefaults.SmallRoadDefinitionId);
             var street = catalog.Get(RoadHierarchyDefaults.StreetDefinitionId);
             var avenue = catalog.Get(RoadHierarchyDefaults.AvenueDefinitionId);
+            var boulevard = catalog.Get(RoadHierarchyDefaults.BoulevardDefinitionId);
 
-            Assert.That(catalog.Count, Is.EqualTo(3));
+            Assert.That(catalog.Count, Is.EqualTo(4));
             Assert.That(catalog.Definitions.Select(row => row.Id), Is.Ordered);
             Assert.That(small.BuildCost, Is.LessThan(street.BuildCost));
             Assert.That(street.BuildCost, Is.LessThan(avenue.BuildCost));
+            Assert.That(avenue.BuildCost, Is.LessThan(boulevard.BuildCost));
             Assert.That(small.MonthlyMaintenanceCost, Is.LessThan(street.MonthlyMaintenanceCost));
             Assert.That(street.MonthlyMaintenanceCost, Is.LessThan(avenue.MonthlyMaintenanceCost));
+            Assert.That(avenue.MonthlyMaintenanceCost, Is.LessThan(boulevard.MonthlyMaintenanceCost));
             Assert.That(small.CapacityPerMonth, Is.LessThan(street.CapacityPerMonth));
             Assert.That(street.CapacityPerMonth, Is.LessThan(avenue.CapacityPerMonth));
+            Assert.That(avenue.CapacityPerMonth, Is.LessThan(boulevard.CapacityPerMonth));
             Assert.That(small.FreeFlowSpeedCellsPerHour, Is.LessThan(street.FreeFlowSpeedCellsPerHour));
             Assert.That(street.FreeFlowSpeedCellsPerHour, Is.LessThan(avenue.FreeFlowSpeedCellsPerHour));
+            Assert.That(avenue.FreeFlowSpeedCellsPerHour, Is.LessThan(boulevard.FreeFlowSpeedCellsPerHour));
             Assert.That(small.NoiseEmission, Is.LessThan(street.NoiseEmission));
             Assert.That(street.NoiseEmission, Is.LessThan(avenue.NoiseEmission));
+            Assert.That(avenue.NoiseEmission, Is.LessThan(boulevard.NoiseEmission));
         }
 
         [Test]

@@ -1,3 +1,4 @@
+using System;
 using OpenSimCity.Application.Input;
 using OpenSimCity.UI.Components;
 using OpenSimCity.UI.HUD;
@@ -133,6 +134,12 @@ namespace OpenSimCity.UI.Foundation
             centre.pickingMode = PickingMode.Ignore;
             centre.style.flexGrow = 1f;
 
+            var bottomDock = new VisualElement { name = "osc-bottom-command-dock" };
+            bottomDock.AddToClassList("osc-bottom-command-dock");
+            bottomDock.pickingMode = PickingMode.Ignore;
+            bottomDock.style.flexDirection = FlexDirection.Column;
+            bottomDock.style.alignItems = Align.Center;
+
             // Inspector and Legend share the right edge: Inspector at the top, the
             // overlay Legend anchored at the bottom. The legend is not a fixed slot
             // (Docs/DESIGN.md 3.3), so this keeps it hugging the screen edge instead
@@ -150,14 +157,19 @@ namespace OpenSimCity.UI.Foundation
             rightColumn.Add(ContextInspector);
             rightColumn.Add(rightBottom);
 
-            middle.Add(ToolRail);
             middle.Add(centre);
             middle.Add(SystemPanelDock);
             middle.Add(rightColumn);
 
+            // City builders reserve the lower edge for construction commands so
+            // the city remains the dominant visual surface. The contextual
+            // palette appears directly above the persistent icon dock.
+            bottomDock.Add(BuildPalette);
+            bottomDock.Add(ToolRail);
+
             Root.Add(GlobalHud);
             Root.Add(middle);
-            Root.Add(BuildPalette);
+            Root.Add(bottomDock);
             documentRoot.Add(Root);
 
             _bridge = new UiInputBoundaryBridge(Root, UiInputBoundary.Current);
@@ -194,6 +206,7 @@ namespace OpenSimCity.UI.Foundation
     internal static class UiSystemPanelDock
     {
         internal const string Name = "osc-system-panel-dock";
+        private const string TabsName = "osc-system-panel-tabs";
 
         private static readonly string[] PanelNames =
         {
@@ -207,9 +220,23 @@ namespace OpenSimCity.UI.Foundation
             "osc-district-policy-panel"
         };
 
+        private static readonly string[] PanelLabels =
+        {
+            "대중교통", "공공서비스", "도시환경", "물·밀도",
+            "건물상태", "특화", "지구", "정책"
+        };
+
+        private sealed class DockState
+        {
+            public bool IsOpen;
+            public string ActivePanelName = PanelNames[0];
+            public VisualElement Tabs;
+        }
+
         internal static ScrollView Create()
         {
             var dock = new ScrollView { name = Name };
+            dock.AddToClassList("osc-system-panel-dock");
             dock.pickingMode = PickingMode.Position;
             dock.style.width = 380f;
             dock.style.minWidth = 320f;
@@ -221,7 +248,19 @@ namespace OpenSimCity.UI.Foundation
             dock.style.marginBottom = 8f;
             dock.style.display = DisplayStyle.None;
             dock.contentContainer.style.flexDirection = FlexDirection.Column;
+            dock.userData = new DockState();
             return dock;
+        }
+
+        internal static void Toggle(ScrollView dock)
+        {
+            if (dock == null)
+                return;
+
+            var state = State(dock);
+            state.IsOpen = !state.IsOpen;
+            ApplyPanelVisibility(dock, state);
+            dock.style.display = state.IsOpen ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         internal static void Dock(VisualElement documentRoot, VisualElement panel)
@@ -246,7 +285,9 @@ namespace OpenSimCity.UI.Foundation
                 return;
 
             var content = dock.contentContainer;
-            var nextIndex = 0;
+            var state = State(dock);
+            EnsureTabs(dock, state);
+            var nextIndex = 1;
             for (var index = 0; index < PanelNames.Length; index++)
             {
                 var panel = documentRoot.Q<VisualElement>(PanelNames[index]);
@@ -262,9 +303,68 @@ namespace OpenSimCity.UI.Foundation
                 nextIndex++;
             }
 
-            dock.style.display = !suppressed && nextIndex > 0
+            ApplyPanelVisibility(dock, state);
+            dock.style.display = !suppressed && state.IsOpen && nextIndex > 1
                 ? DisplayStyle.Flex
                 : DisplayStyle.None;
+        }
+
+        private static DockState State(ScrollView dock)
+        {
+            if (dock.userData is DockState state)
+                return state;
+
+            state = new DockState();
+            dock.userData = state;
+            return state;
+        }
+
+        private static void EnsureTabs(ScrollView dock, DockState state)
+        {
+            if (state.Tabs != null && ReferenceEquals(state.Tabs.parent, dock.contentContainer))
+                return;
+
+            state.Tabs = new VisualElement { name = TabsName };
+            state.Tabs.AddToClassList("osc-system-panel-tabs");
+            for (var index = 0; index < PanelNames.Length; index++)
+            {
+                var panelName = PanelNames[index];
+                var tab = new Button(() => Select(dock, panelName))
+                {
+                    name = panelName + "-tab",
+                    text = PanelLabels[index]
+                };
+                tab.AddToClassList(UiFoundationNames.ItemClass);
+                tab.AddToClassList("osc-system-panel-tab");
+                state.Tabs.Add(tab);
+            }
+            dock.contentContainer.Insert(0, state.Tabs);
+        }
+
+        private static void Select(ScrollView dock, string panelName)
+        {
+            var state = State(dock);
+            state.ActivePanelName = panelName;
+            state.IsOpen = true;
+            ApplyPanelVisibility(dock, state);
+            dock.style.display = DisplayStyle.Flex;
+        }
+
+        private static void ApplyPanelVisibility(ScrollView dock, DockState state)
+        {
+            for (var index = 0; index < PanelNames.Length; index++)
+            {
+                var panel = dock.contentContainer.Q<VisualElement>(PanelNames[index]);
+                if (panel != null)
+                    panel.style.display = string.Equals(panel.name, state.ActivePanelName, StringComparison.Ordinal)
+                        ? DisplayStyle.Flex
+                        : DisplayStyle.None;
+
+                var tab = state.Tabs?.Q<Button>(PanelNames[index] + "-tab");
+                tab?.EnableInClassList(
+                    UiFoundationNames.ItemSelectedClass,
+                    string.Equals(PanelNames[index], state.ActivePanelName, StringComparison.Ordinal));
+            }
         }
 
         private static void Normalize(VisualElement panel)
@@ -277,7 +377,16 @@ namespace OpenSimCity.UI.Foundation
             panel.style.width = StyleKeyword.Auto;
             panel.style.alignSelf = Align.Stretch;
             panel.style.flexShrink = 0f;
-            panel.style.marginBottom = 8f;
+            panel.style.marginBottom = 0f;
+            panel.style.paddingLeft = 16f;
+            panel.style.paddingRight = 16f;
+            panel.style.paddingTop = 14f;
+            panel.style.paddingBottom = 14f;
+            panel.style.backgroundColor = new Color(0.035f, 0.085f, 0.105f, 0.97f);
+            panel.style.borderTopLeftRadius = 12f;
+            panel.style.borderTopRightRadius = 12f;
+            panel.style.borderBottomLeftRadius = 12f;
+            panel.style.borderBottomRightRadius = 12f;
         }
     }
 }

@@ -28,6 +28,7 @@ Building stable IDs and footprints remain unchanged in both strategies. Low-ride
 - UI consumes Application read models and commands; it does not reference Simulation types.
 - Presentation samples aggregate trips and never writes mode share or route volume.
 - Every displayed bus is controlled by one coordinator; sampled views contain no per-vehicle `MonoBehaviour`.
+- The default bus is a generated, behaviour-free single-renderer prefab loaded from a stable `Resources` path.
 - Overlay and pool objects are derived and omitted from persistence.
 
 ## Committed verification fixtures

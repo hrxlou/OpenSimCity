@@ -37,6 +37,9 @@ Artifacts/
 .DS_Store
 Thumbs.db
 
+# Blender's automatic backup of the previous save
+*.blend1
+
 # Local environment
 .env
 .env.*

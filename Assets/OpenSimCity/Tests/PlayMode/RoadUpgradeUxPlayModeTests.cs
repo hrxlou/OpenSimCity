@@ -50,8 +50,8 @@ namespace OpenSimCity.Tests.PlayMode
 
             yield return null;
             var buttons = bootstrap.Root.Query<Button>().ToList();
-            Assert.That(buttons.Any(button => button.text.Contains("도로 업그레이드")), Is.True);
-            Assert.That(buttons.Any(button => button.text.Contains("등급·방향")), Is.True);
+            Assert.That(buttons.Any(button => button.tooltip?.Contains("도로 업그레이드") == true), Is.True);
+            Assert.That(buttons.Any(button => button.text.Contains("도로 등급")), Is.True);
 
             var start = new CellCoord(0, context.Runtime.Height / 2);
             var end = new CellCoord(3, context.Runtime.Height / 2);
@@ -106,6 +106,13 @@ namespace OpenSimCity.Tests.PlayMode
             Assert.That(overlayRenderer.OverlayCellCount, Is.EqualTo(4));
             Assert.That(panel.Query<Label>().ToList().Any(label =>
                 label.text.Contains("건설값") && label.text.Contains("차액")), Is.True);
+            var middleX = context.WorldBounds.MinX + 1.5f * context.WorldBounds.CellSize;
+            var middleView = roadRenderer.transform.Cast<Transform>().FirstOrDefault(candidate =>
+                candidate.gameObject.activeSelf &&
+                Mathf.Approximately(candidate.localPosition.x, middleX));
+            Assert.That(middleView, Is.Not.Null);
+            Assert.That(middleView.Find("Avenue4LaneEW"), Is.Not.Null);
+            Assert.That(middleView.Find("Avenue4LaneEW").gameObject.activeSelf, Is.True);
 
             var checksumAfterCommit = context.Runtime.Roads.ComputeChecksum();
             context.ToggleOverlay(PlacementOverlayKind.RoadHierarchy);

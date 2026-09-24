@@ -18,11 +18,13 @@ namespace OpenSimCity.Tests.EditMode
                 Is.EqualTo(0x0100_0000_0000_0002UL));
             Assert.That(RoadHierarchyDefaults.AvenueDefinitionId.Value,
                 Is.EqualTo(0x0100_0000_0000_0003UL));
+            Assert.That(RoadHierarchyDefaults.BoulevardDefinitionId.Value,
+                Is.EqualTo(0x0100_0000_0000_0004UL));
 
             var runtime = new CityRuntime();
             Assert.That(runtime.DefaultRoadDefinitionId,
                 Is.EqualTo(RoadHierarchyDefaults.StreetDefinitionId));
-            Assert.That(runtime.RoadDefinitions.Count, Is.EqualTo(3));
+            Assert.That(runtime.RoadDefinitions.Count, Is.EqualTo(4));
 
             AssertDefinition(runtime, RoadHierarchyDefaults.SmallRoadDefinitionId,
                 6, 0, 500, 20, 15, "road.small");
@@ -30,6 +32,8 @@ namespace OpenSimCity.Tests.EditMode
                 10, 1, 1000, 30, 30, "road.street");
             AssertDefinition(runtime, RoadHierarchyDefaults.AvenueDefinitionId,
                 25, 5, 2400, 45, 70, "road.avenue");
+            AssertDefinition(runtime, RoadHierarchyDefaults.BoulevardDefinitionId,
+                38, 8, 3800, 50, 95, "road.boulevard");
         }
 
         [Test]

@@ -8,7 +8,8 @@ namespace OpenSimCity.Simulation.Roads
     {
         Small = 0,
         Street = 1,
-        Avenue = 2
+        Avenue = 2,
+        Boulevard = 3
     }
 
     /// <summary>
@@ -26,6 +27,8 @@ namespace OpenSimCity.Simulation.Roads
             new StableId(RoadDefinitionNamespace | 0x02UL);
         public static readonly StableId AvenueDefinitionId =
             new StableId(RoadDefinitionNamespace | 0x03UL);
+        public static readonly StableId BoulevardDefinitionId =
+            new StableId(RoadDefinitionNamespace | 0x04UL);
 
         public static IReadOnlyList<RoadDefinition> CreateDefinitions()
         {
@@ -54,7 +57,15 @@ namespace OpenSimCity.Simulation.Roads
                     monthlyMaintenanceCost: 5,
                     capacityPerMonth: 2400,
                     freeFlowSpeedCellsPerHour: 45,
-                    noiseEmission: 70)
+                    noiseEmission: 70),
+                new RoadDefinition(
+                    BoulevardDefinitionId,
+                    buildCost: 38,
+                    presentationKey: "road.boulevard",
+                    monthlyMaintenanceCost: 8,
+                    capacityPerMonth: 3800,
+                    freeFlowSpeedCellsPerHour: 50,
+                    noiseEmission: 95)
             });
         }
 
@@ -71,6 +82,8 @@ namespace OpenSimCity.Simulation.Roads
                 return RoadHierarchyTier.Street;
             if (definitionId == AvenueDefinitionId)
                 return RoadHierarchyTier.Avenue;
+            if (definitionId == BoulevardDefinitionId)
+                return RoadHierarchyTier.Boulevard;
             throw new ArgumentOutOfRangeException(nameof(definitionId), definitionId, "Unknown road hierarchy definition.");
         }
     }

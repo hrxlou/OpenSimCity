@@ -76,7 +76,42 @@ acquisition과 importer proof는 P3-08에서 먼저 완료한다. P9-01은 대�
 - Windows/macOS build smoke
 - 같은 seed에서 서로 다른 운영 도시의 전체 화면·데이터맵·핵심 지표 비교
 
+## 2026-09-05 visual-foundation pass
+
+- gameplay definition과 stable presentation key를 바꾸지 않는 범위에서 기존 primitive prefab의 실루엣과
+  재질군을 보강했다. 주거·상업·공업·발전소·도로에 창호, 1층 입면, 옥상 설비, curb와 차선 layer를 추가했다.
+- CityPrototype Editor setup에 matte ground, camera background, warm sun, soft shadow와 fog baseline을 추가했다.
+- 이번 pass는 first-party production catalog 확장 전의 화면 품질 기준선이며, P9-01의 provenance·LOD·catalog
+  완료 조건을 닫지 않는다.
+
+## 2026-09-05 hybrid product-art promotion
+
+- 검증된 Quaternius full-building 3종을 주거 저밀도 A/B/C presentation key에 승격한다.
+- 상업 A/B/C는 first-party 구조에 검증된 brick facade detail을, 공업 A/B/C와 발전소는 검증된 mechanical prop detail을 결합한다.
+- 총 10개 gameplay presentation key가 근거리 vendor-derived detail과 원거리 first-party lightweight geometry를 `LODGroup`으로 전환한다. 건설 중 상태와 cell 단위 도로는 기존 경량 prefab을 유지한다.
+- 제품 프리팹 root는 footprint 단위로 정규화하고 `Detail`/`Distance` 계층 및 두 단계 LOD를 validator가 강제한다.
+- `ProductArtPreviewCapture`는 제품 wrapper 10종의 LOD0을 1440×810 off-screen contact sheet로 렌더해
+  데스크톱 캡처가 불가능한 batch/원격 환경에서도 material·silhouette·detail 결합을 검수한다.
+
+## 2026-09-06 user Seoul-library integration
+
+- 별도 Blender 작업 공간의 사용자 제작 `Seoul_Assets.blend`와
+  `Seoul_Detail_Asset_Library.blend`를 원본 저장 없이 headless Blender로 선별 export한다.
+- 저층 혼합상가 6종을 주거/상업 A–C key에 연결하고, 한국형 taxi·bus, 가로수·가로등과 교차로 횡단보도를
+  behaviour/collider 없는 단일-renderer prefab으로 정규화한다.
+- `ArtSource/Blender/export_seoul_library.py`와 `SEOUL_LIBRARY.md`가 선택 목록과 재현 절차를 고정한다.
+- `road.boulevard`의 실제 runtime wrapper는 사용자 제작
+  `KR_RD_6Lane_Straight40m`을 사용한다. 기존 P9 정적 geometry benchmark manifest는
+  gameplay proxy인 `OSC_REP_ROAD_2LANE` 예산을 공유하며, 사용자 원본을 CC0 vendor
+  provenance로 잘못 분류하지 않는다.
+- 차량 pool은 최대 48개와 결정적 2차선 오프셋을 사용하고, 배경 수목·가로등은 중앙 coordinator 하나가 생성한다.
+  이는 simulation state나 command stream을 변경하지 않는 presentation 작업이다.
+
 ## Done when
+
+현재 진행: Blender MCP 제작 건물군, Poly Haven PBR 표면, 사용자 제작 서울 에셋 선별 세트를 Unity catalog에
+연결했다. 전역 렌더 설정의 HDR·4x MSAA·soft shadow·cascade를 구성했고 macOS player에서 축척·재질·그림자를
+검수한다. 전체 R/C/I catalog 확장과 Windows 검수, 고품질 설정의 GPU 비용 측정은 남아 있다.
 
 - [ ] 일관된 production set이 gameplay 계약을 바꾸지 않고 교체된다.
 - [ ] MegaKit Standard와 모든 외부 source의 hash, license, provenance와 선별 내역이 재현 가능하게 기록된다.
@@ -93,3 +128,15 @@ acquisition과 importer proof는 P3-08에서 먼저 완료한다. P9-01은 대�
 - gameplay 규칙 변경
 - 런타임 procedural art
 - 여러 시그니처 건물과 테마 팩
+
+## 2026-09-09 UI·광원·표면 수정
+
+shadow cutoff, 활성 scene RenderSettings 저장, scene transition 낮밤 설치, Trilight·reflection 변화, 미연결 roughness 및 FBX 누락 UV를 수정했다. v08 수목 2종·벤치·휴지통과 Poly Haven HDR reflection을 연결했다.
+
+세부 재현 계약은 `Docs/DESIGN.md`의 2026-09-09 절, 출처는 `Docs/Art/VISUAL_REFERENCES_2026-09-09.md`를 따른다. 최종 실행 검증 기록은 후속 검증 절에 추가한다.
+
+검증 중 roughness 연결에 따라 fallback benchmark의 고유 texture가 3→6으로 변경됨을 확인했다. renderer 188/material slot 204/triangle 14,912/unique mesh 3은 유지됐으며, texture memory 50,337,936 bytes를 기록했다. 이는 geometry나 FPS 개선 주장이 아니다.
+
+### macOS 검증 결과
+
+Unity 6000.5.3f1: EditMode 380 통과/실패 0/Windows 전용 1 제외, PlayMode 56 통과/실패 0. macOS Standalone build 및 native 1920×1080 실제 리뷰 렌더 확인. v08 export는 Blender Cycles에서도 검수했다. 상세 파일은 ignored `Artifacts/VisualPolish/2026-09-09/VERIFICATION.md` 및 XML·PNG·app. Windows 실행 증거는 이번 Mac 작업에 포함되지 않으며, P9 전체의 양 플랫폼 출시 승인을 의미하지 않는다.

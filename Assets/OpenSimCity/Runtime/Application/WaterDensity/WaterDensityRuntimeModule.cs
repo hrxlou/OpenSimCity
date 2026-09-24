@@ -898,6 +898,7 @@ namespace OpenSimCity.Application.WaterDensity
                 {
                     var road = runtime.Roads.Get(frontages[index].RoadCell);
                     if (!road.IsOccupied) continue;
+                    if (road.DefinitionId == RoadHierarchyDefaults.BoulevardDefinitionId) return 3;
                     if (road.DefinitionId == RoadHierarchyDefaults.AvenueDefinitionId) return 2;
                     if (road.DefinitionId == RoadHierarchyDefaults.StreetDefinitionId) return 1;
                     return 0;

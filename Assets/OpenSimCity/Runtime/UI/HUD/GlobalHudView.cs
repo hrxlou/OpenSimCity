@@ -9,7 +9,7 @@ namespace OpenSimCity.UI.HUD
         public GlobalHudView()
         {
             name = UiFoundationNames.GlobalHudName;
-            AddToClassList(UiFoundationNames.PanelClass);
+            pickingMode = PickingMode.Ignore;
             AddToClassList(UiFoundationNames.GlobalHudClass);
         }
     }

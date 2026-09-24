@@ -78,7 +78,7 @@ git lfs version
 gh auth login
 gh auth status
 git config --global user.name "hrxlou"
-git config --global user.email "kimhyun4103@gmail.com"
+git config --global user.email "YOUR_GITHUB_NOREPLY_ADDRESS"
 ```
 
 프로젝트의 `Packages/manifest.json`에 고정된 패키지는 양쪽에서 따로 설치하지 않는다. Git으로 받은 뒤 Unity가 자동으로 해석한다.
@@ -182,12 +182,12 @@ git lfs pull
 | Homebrew | 설치됨 |
 | Xcode | 설치됨 |
 | GitHub CLI | 설치 및 로그인됨 |
-| Git 작성자 이름/이메일 | 설정됨 (`hrxlou`, `kimhyun4103@gmail.com`) |
+| Git 작성자 이름/이메일 | 설정됨 (공개 저장소에서는 GitHub 비공개 이메일 주소 사용 권장) |
 | Git LFS | 설치 및 초기화됨 |
 | Unity Hub | 설치됨 (`3.19.5`) |
 | Unity Editor | 설치됨 (`6000.5.3f1`, arm64) |
 | Unity 모듈 | Mac Standalone, WebGL 설치됨 |
-| Unity 프로젝트 | 생성됨 (`/Users/hyunkim/Documents/OpenSimCity`) |
+| Unity 프로젝트 | 저장소 루트에서 열림 |
 | URP | 활성화됨 (`17.5.0`) |
 | Test Framework | 활성화됨 (`1.7.0`) |
 | Input System | 활성화됨 (`1.19.0`, 새 Input System) |

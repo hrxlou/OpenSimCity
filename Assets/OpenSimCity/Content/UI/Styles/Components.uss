@@ -7,6 +7,7 @@
 
 .osc-root {
     flex-grow: 1;
+    -unity-font-definition: url("/Assets/ThirdParty/Fonts/Pretendard/Pretendard-Regular-SDF.asset");
     font-size: var(--osc-font-size-body);
     color: var(--osc-color-text-primary);
 }
@@ -21,6 +22,11 @@
 
 .osc-panel {
     background-color: var(--osc-color-panel);
+    background-image: url("../Textures/hud-graphite-v2.png");
+    background-size: 640px 640px;
+    background-repeat: repeat;
+    -unity-background-image-tint-color: #D1D4D4;
+    -unity-background-scale-mode: scale-and-crop;
     /* Nothing inside a panel may spill past its edge and off the screen. */
     overflow: hidden;
     border-left-color: var(--osc-color-border);
@@ -31,12 +37,12 @@
     border-right-width: var(--osc-border-width);
     border-top-width: var(--osc-border-width);
     border-bottom-width: var(--osc-border-width);
-    border-top-left-radius: var(--osc-radius-md);
-    border-top-right-radius: var(--osc-radius-md);
-    border-bottom-left-radius: var(--osc-radius-md);
-    border-bottom-right-radius: var(--osc-radius-md);
-    padding-left: var(--osc-space-2);
-    padding-right: var(--osc-space-2);
+    border-top-left-radius: var(--osc-radius-lg);
+    border-top-right-radius: var(--osc-radius-lg);
+    border-bottom-left-radius: var(--osc-radius-lg);
+    border-bottom-right-radius: var(--osc-radius-lg);
+    padding-left: var(--osc-space-3);
+    padding-right: var(--osc-space-3);
     padding-top: var(--osc-space-2);
     padding-bottom: var(--osc-space-2);
 }
@@ -46,10 +52,11 @@
 }
 
 .osc-panel__title {
-    font-size: var(--osc-font-size-body-strong);
+    font-size: var(--osc-font-size-title);
     color: var(--osc-color-text-primary);
     margin-bottom: var(--osc-space-2);
-    -unity-font-style: bold;
+    -unity-font-definition: url("/Assets/ThirdParty/Fonts/Pretendard/Pretendard-SemiBold-SDF.asset");
+    -unity-font-style: normal;
 }
 
 .osc-panel__caption {
@@ -69,24 +76,30 @@
     border-right-color: rgba(0, 0, 0, 0);
     border-top-color: rgba(0, 0, 0, 0);
     border-bottom-color: rgba(0, 0, 0, 0);
-    border-left-width: var(--osc-state-focus-ring-width);
-    border-right-width: var(--osc-state-focus-ring-width);
-    border-top-width: var(--osc-state-focus-ring-width);
-    border-bottom-width: var(--osc-state-focus-ring-width);
+    border-left-width: var(--osc-border-width);
+    border-right-width: var(--osc-border-width);
+    border-top-width: var(--osc-border-width);
+    border-bottom-width: var(--osc-border-width);
     border-top-left-radius: var(--osc-radius-md);
     border-top-right-radius: var(--osc-radius-md);
     border-bottom-left-radius: var(--osc-radius-md);
     border-bottom-right-radius: var(--osc-radius-md);
     padding-left: var(--osc-space-2);
     padding-right: var(--osc-space-2);
-    padding-top: var(--osc-space-1);
-    padding-bottom: var(--osc-space-1);
+    padding-top: var(--osc-space-2);
+    padding-bottom: var(--osc-space-2);
+    min-height: var(--osc-space-6);
     color: var(--osc-color-text-primary);
     font-size: var(--osc-font-size-body);
+    -unity-text-align: middle-center;
 }
 
 .osc-item:hover {
     background-color: var(--osc-state-hover);
+    border-left-color: var(--osc-color-border);
+    border-right-color: var(--osc-color-border);
+    border-top-color: var(--osc-color-border);
+    border-bottom-color: var(--osc-color-border);
 }
 
 /*
@@ -103,6 +116,10 @@
 .osc-item--selected {
     background-color: var(--osc-state-selected);
     color: var(--osc-color-accent);
+    border-left-color: var(--osc-color-accent);
+    border-right-color: var(--osc-color-accent);
+    border-top-color: var(--osc-color-accent);
+    border-bottom-color: var(--osc-color-accent);
 }
 
 .osc-item--disabled {
@@ -126,7 +143,8 @@
     display: none;
     font-size: var(--osc-font-size-caption);
     margin-right: var(--osc-space-1);
-    -unity-font-style: bold;
+    -unity-font-definition: url("/Assets/ThirdParty/Fonts/Pretendard/Pretendard-SemiBold-SDF.asset");
+    -unity-font-style: normal;
 }
 
 .osc-item--warning .osc-item__marker,
@@ -143,7 +161,8 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Slot shells
+ * Slot shells. Construction follows the bottom-dock convention used by city
+ * builders: persistent primary tools, contextual detail immediately above.
  * ------------------------------------------------------------------------ */
 
 /*
@@ -152,29 +171,78 @@
  * lets it grow just enough to show them without clipping off-screen.
  */
 .osc-tool-rail {
-    min-width: var(--osc-tool-rail-width);
-    align-self: flex-start;
+    width: 760px;
+    max-width: 92%;
+    align-self: center;
     flex-shrink: 0;
-    margin: var(--osc-space-2);
+    margin-left: var(--osc-space-2);
+    margin-right: var(--osc-space-2);
+    margin-top: var(--osc-space-1);
+    margin-bottom: var(--osc-space-2);
+    padding-left: var(--osc-space-1);
+    padding-right: var(--osc-space-1);
+    padding-top: var(--osc-space-1);
+    padding-bottom: var(--osc-space-1);
+    overflow: visible;
+}
+
+.osc-tool-rail > .osc-panel__title,
+.osc-tool-rail > .osc-empty-note {
+    display: none;
 }
 
 .osc-build-palette {
+    display: none;
     min-height: var(--osc-build-palette-height);
+    width: 520px;
+    max-width: 72%;
+    align-self: center;
+    margin-left: var(--osc-space-2);
+    margin-right: var(--osc-space-2);
+    margin-bottom: var(--osc-space-2);
+    padding-top: var(--osc-space-1);
+    padding-bottom: var(--osc-space-1);
+}
+
+.osc-bottom-command-dock {
     align-self: stretch;
-    border-top-left-radius: var(--osc-space-0);
-    border-top-right-radius: var(--osc-space-0);
-    border-bottom-left-radius: var(--osc-space-0);
-    border-bottom-right-radius: var(--osc-space-0);
-    border-left-width: var(--osc-space-0);
-    border-right-width: var(--osc-space-0);
-    border-bottom-width: var(--osc-space-0);
+    align-items: center;
+    flex-shrink: 0;
 }
 
 .osc-context-inspector {
     width: var(--osc-context-inspector-width);
     align-self: flex-start;
     flex-shrink: 0;
-    margin: var(--osc-space-2);
+    margin-left: var(--osc-space-2);
+    margin-right: var(--osc-space-2);
+    margin-top: var(--osc-space-2);
+    margin-bottom: var(--osc-space-2);
+}
+
+.osc-placement-inspector {
+    align-items: stretch;
+}
+
+.osc-inspector-primary,
+.osc-inspector-secondary,
+.osc-inspector-status {
+    min-height: 28px;
+    padding-left: var(--osc-space-1);
+    padding-right: var(--osc-space-1);
+    align-items: center;
+}
+
+.osc-inspector-primary {
+    color: var(--osc-color-text-primary);
+    -unity-font-definition: url("/Assets/ThirdParty/Fonts/Pretendard/Pretendard-SemiBold-SDF.asset");
+    -unity-font-style: normal;
+}
+
+.osc-inspector-secondary {
+    color: var(--osc-color-text-secondary);
+    border-bottom-color: rgba(72, 84, 94, 0.45);
+    border-bottom-width: 1px;
 }
 
 /*
@@ -192,24 +260,36 @@
 
 /* P3 Global HUD and lower-right simulation controls reuse the P2 token panel. */
 .osc-global-hud {
+    height: 68px;
+    max-height: 68px;
     align-self: stretch;
     flex-direction: column;
+    margin-left: var(--osc-space-2);
+    margin-right: var(--osc-space-2);
+    margin-top: var(--osc-space-2);
     margin-bottom: var(--osc-space-0);
-    padding-top: var(--osc-space-0);
-    padding-bottom: var(--osc-space-0);
-    border-top-left-radius: var(--osc-space-0);
-    border-top-right-radius: var(--osc-space-0);
-    border-bottom-left-radius: var(--osc-space-0);
-    border-bottom-right-radius: var(--osc-space-0);
-    border-top-width: var(--osc-space-0);
-    border-left-width: var(--osc-space-0);
-    border-right-width: var(--osc-space-0);
+    padding-left: var(--osc-space-3);
+    padding-right: var(--osc-space-3);
+    padding-top: 2px;
+    padding-bottom: 2px;
 }
 
 .osc-simulation-controls {
     align-self: flex-end;
     flex-direction: row;
     margin: var(--osc-space-2);
+    padding: var(--osc-space-1);
+}
+
+.osc-simulation-controls .osc-item {
+    min-width: var(--osc-space-6);
+    min-height: var(--osc-space-6);
+    margin-left: var(--osc-space-1);
+    border-top-left-radius: var(--osc-radius-lg);
+    border-top-right-radius: var(--osc-radius-lg);
+    border-bottom-left-radius: var(--osc-radius-lg);
+    border-bottom-right-radius: var(--osc-radius-lg);
+    -unity-text-align: middle-center;
 }
 
 .osc-save-panel {
@@ -261,7 +341,8 @@
 }
 
 .osc-hud-left {
-    flex-grow: 1;
+    flex-grow: 0;
+    flex-shrink: 0;
     min-width: var(--osc-space-0);
 }
 
@@ -279,22 +360,70 @@
     margin-bottom: var(--osc-space-0);
 }
 
+/* A two-level hierarchy keeps large figures legible over a detailed city. */
 .osc-hud-metric {
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
     margin-right: var(--osc-space-3);
-    margin-bottom: var(--osc-space-0);
+    padding-right: var(--osc-space-3);
+    border-right-width: var(--osc-border-width);
+    border-right-color: var(--osc-color-border);
     white-space: nowrap;
+    min-height: 50px;
+    flex-shrink: 0;
 }
 
-.osc-hud-metric .osc-panel__caption {
-    margin-right: var(--osc-space-1);
+.osc-hud-caption,
+.osc-hud-value {
+    margin: 0;
+    padding: 0;
+    -unity-text-align: middle-left;
+}
+
+.osc-hud-caption {
+    height: 22px;
+    font-size: var(--osc-font-size-caption);
+    -unity-font-style: normal;
+    color: var(--osc-color-text-secondary);
 }
 
 .osc-hud-value {
-    font-size: var(--osc-font-size-body);
+    height: 28px;
+    font-size: var(--osc-font-size-body-strong);
     color: var(--osc-color-text-primary);
-    -unity-font-style: bold;
+    -unity-font-definition: url("/Assets/ThirdParty/Fonts/Pretendard/Pretendard-SemiBold-SDF.asset");
+    -unity-font-style: normal;
+}
+
+.osc-hud-right {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.osc-hud-right .osc-hud-metric {
+    flex-direction: row;
+    align-items: center;
+    min-height: 24px;
+    height: 24px;
+    margin-right: 0;
+    padding-right: 0;
+    border-right-width: 0;
+    flex-shrink: 1;
+}
+
+.osc-hud-right .osc-hud-caption {
+    width: 36px;
+}
+
+.osc-hud-right .osc-hud-value {
+    font-size: var(--osc-font-size-caption);
+}
+
+#osc-hud-rci-metric {
+    border-right-width: 0;
+    margin-right: 0;
 }
 
 .osc-hud-status {
@@ -326,6 +455,13 @@
     padding-bottom: var(--osc-space-0);
 }
 
+#osc-hud-period-metric,
+#osc-hud-tax-rates-metric,
+#osc-hud-tax-actions,
+#osc-hud-command-feedback {
+    display: none;
+}
+
 /* The fixed Build Palette stays compact until later issues add real subtypes. */
 .osc-build-palette.osc-placement-palette--compact {
     flex-direction: row;
@@ -333,7 +469,7 @@
 }
 
 .osc-placement-palette__heading {
-    margin-bottom: var(--osc-space-0);
+    display: none;
     margin-right: var(--osc-space-3);
     flex-shrink: var(--osc-space-0);
 }
@@ -347,6 +483,280 @@
 .osc-placement-palette__tool {
     margin-bottom: var(--osc-space-0);
     margin-right: var(--osc-space-3);
+}
+
+.osc-tool-grid {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    margin-bottom: var(--osc-space-0);
+}
+
+.osc-placement-palette__shortcut,
+.osc-placement-palette__cost {
+    background-color: var(--osc-color-elevated);
+    border-top-left-radius: var(--osc-radius-lg);
+    border-top-right-radius: var(--osc-radius-lg);
+    border-bottom-left-radius: var(--osc-radius-lg);
+    border-bottom-right-radius: var(--osc-radius-lg);
+    padding-left: var(--osc-space-3);
+    padding-right: var(--osc-space-3);
+    padding-top: var(--osc-space-1);
+    padding-bottom: var(--osc-space-1);
+}
+
+.osc-placement-tools .osc-item {
+    margin-bottom: var(--osc-space-0);
+}
+
+.osc-tool-button {
+    width: 64px;
+    height: 60px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 44px;
+    margin-right: 2px;
+    margin-bottom: var(--osc-space-0);
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.osc-tool-button__icon {
+    width: 22px;
+    min-width: 22px;
+    height: 22px;
+    margin-right: var(--osc-space-0);
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: var(--osc-color-accent);
+}
+
+.osc-icon--road { background-image: url("../Icons/tool-road.png"); }
+.osc-icon--road-upgrade { background-image: url("../Icons/tool-road-upgrade.png"); }
+.osc-icon--residential { background-image: url("../Icons/tool-residential.png"); }
+.osc-icon--commercial { background-image: url("../Icons/tool-commercial.png"); }
+.osc-icon--industrial { background-image: url("../Icons/tool-industrial.png"); }
+.osc-icon--zone-clear { background-image: url("../Icons/tool-zone-clear.png"); }
+.osc-icon--demolish { background-image: url("../Icons/tool-demolish.png"); }
+.osc-icon--power { background-image: url("../Icons/tool-power.png"); }
+.osc-icon--power-remove { background-image: url("../Icons/tool-power-remove.png"); }
+.osc-icon--management { background-image: url("../Icons/tool-management.png"); }
+
+.osc-tool-button__label {
+    display: flex;
+    font-size: 12px;
+    height: 20px;
+    margin-top: var(--osc-space-1);
+    margin-bottom: 0;
+    -unity-text-align: middle-center;
+    color: var(--osc-color-text-secondary);
+}
+
+.osc-item--selected .osc-tool-button__label {
+    color: var(--osc-color-text-primary);
+}
+
+.osc-icon--residential { -unity-background-image-tint-color: var(--osc-color-success); }
+.osc-icon--commercial { -unity-background-image-tint-color: var(--osc-color-info); }
+.osc-icon--industrial { -unity-background-image-tint-color: var(--osc-color-warning); }
+
+.osc-tool-button__shortcut {
+    display: none;
+}
+
+.osc-overlay-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: var(--osc-space-1);
+}
+
+.osc-overlay-button {
+    width: 52px;
+    min-width: 52px;
+    min-height: 30px;
+    margin-right: var(--osc-space-1);
+    margin-bottom: var(--osc-space-1);
+    font-size: var(--osc-font-size-caption);
+}
+
+.osc-data-overlay-tray {
+    position: absolute;
+    right: 0;
+    bottom: 72px;
+    width: 356px;
+    padding-left: var(--osc-space-2);
+    padding-right: var(--osc-space-2);
+    padding-top: var(--osc-space-2);
+    padding-bottom: var(--osc-space-2);
+    background-color: var(--osc-color-panel);
+    border-left-color: var(--osc-color-border);
+    border-right-color: var(--osc-color-border);
+    border-top-color: var(--osc-color-border);
+    border-bottom-color: var(--osc-color-border);
+    border-left-width: var(--osc-border-width);
+    border-right-width: var(--osc-border-width);
+    border-top-width: var(--osc-border-width);
+    border-bottom-width: var(--osc-border-width);
+    border-top-left-radius: var(--osc-radius-md);
+    border-top-right-radius: var(--osc-radius-md);
+    border-bottom-left-radius: var(--osc-radius-md);
+    border-bottom-right-radius: var(--osc-radius-md);
+}
+
+.osc-data-overlay-toggle,
+.osc-city-management-button {
+    height: 60px;
+    min-height: 60px;
+    margin-left: var(--osc-space-1);
+    margin-top: var(--osc-space-0);
+    padding-left: var(--osc-space-2);
+    padding-right: var(--osc-space-2);
+    padding-top: 2px;
+    padding-bottom: 0;
+    font-size: var(--osc-font-size-caption);
+    -unity-text-align: middle-center;
+}
+
+.osc-data-overlay-toggle {
+    width: 58px;
+}
+
+.osc-city-management-button {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 64px;
+    min-height: 60px;
+    color: var(--osc-color-accent);
+    border-left-color: var(--osc-color-accent);
+    border-right-color: var(--osc-color-accent);
+    border-top-color: var(--osc-color-accent);
+    border-bottom-color: var(--osc-color-accent);
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+}
+
+.osc-city-management-button .osc-tool-button__icon {
+    margin-right: var(--osc-space-0);
+}
+
+.osc-system-panel-tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding-left: var(--osc-space-2);
+    padding-right: var(--osc-space-2);
+    padding-top: var(--osc-space-2);
+    padding-bottom: var(--osc-space-1);
+    margin-bottom: var(--osc-space-2);
+    background-color: var(--osc-color-panel);
+    border-top-left-radius: var(--osc-radius-md);
+    border-top-right-radius: var(--osc-radius-md);
+    border-bottom-left-radius: var(--osc-radius-md);
+    border-bottom-right-radius: var(--osc-radius-md);
+}
+
+.osc-system-panel-tab {
+    min-width: 84px;
+    min-height: 32px;
+    margin-right: var(--osc-space-1);
+    margin-bottom: var(--osc-space-1);
+    font-size: var(--osc-font-size-caption);
+}
+
+/* Release shell: a strong hero card over a still-readable city preview. */
+.osc-release-card {
+    border-left-color: var(--osc-color-accent);
+    border-left-width: 2px;
+}
+
+.osc-release-eyebrow {
+    color: var(--osc-color-accent);
+    font-size: var(--osc-font-size-caption);
+    -unity-font-definition: url("/Assets/ThirdParty/Fonts/Pretendard/Pretendard-SemiBold-SDF.asset");
+    -unity-font-style: normal;
+    letter-spacing: 1px;
+    margin-bottom: var(--osc-space-2);
+}
+
+.osc-release-title {
+    font-size: var(--osc-font-size-display);
+    margin-bottom: var(--osc-space-2);
+}
+
+.osc-release-subtitle {
+    font-size: var(--osc-font-size-body);
+    white-space: normal;
+    margin-bottom: var(--osc-space-5);
+}
+
+.osc-release-primary-actions,
+.osc-release-secondary-actions {
+    flex-direction: row;
+}
+
+.osc-release-primary-actions {
+    margin-bottom: var(--osc-space-2);
+}
+
+.osc-release-primary-actions .osc-release-button {
+    flex-grow: 1;
+    min-height: 52px;
+    margin-right: var(--osc-space-2);
+    font-size: var(--osc-font-size-body-strong);
+}
+
+.osc-release-primary {
+    background-color: var(--osc-color-accent);
+    color: var(--osc-color-canvas);
+    -unity-font-definition: url("/Assets/ThirdParty/Fonts/Pretendard/Pretendard-SemiBold-SDF.asset");
+    -unity-font-style: normal;
+}
+
+.osc-release-secondary-actions .osc-release-button {
+    flex-grow: 1;
+    min-height: 38px;
+    margin-right: var(--osc-space-1);
+    font-size: var(--osc-font-size-caption);
+}
+
+.osc-release-subsection {
+    margin-top: var(--osc-space-3);
+    padding-left: var(--osc-space-3);
+    padding-right: var(--osc-space-3);
+    padding-top: var(--osc-space-3);
+    padding-bottom: var(--osc-space-3);
+    background-color: var(--osc-color-elevated);
+    border-top-left-radius: var(--osc-radius-md);
+    border-top-right-radius: var(--osc-radius-md);
+    border-bottom-left-radius: var(--osc-radius-md);
+    border-bottom-right-radius: var(--osc-radius-md);
+}
+
+.osc-onboarding-card {
+    border-left-color: var(--osc-color-accent);
+    border-left-width: 2px;
+    max-height: 184px;
+}
+
+#osc-onboarding-hint,
+#osc-problem-indicator {
+    white-space: normal;
+    margin-bottom: var(--osc-space-1);
+    color: var(--osc-color-text-secondary);
+}
+
+.osc-onboarding-card .osc-panel__title {
+    font-size: var(--osc-font-size-body-strong);
+    margin-bottom: var(--osc-space-1);
+}
+
+.osc-onboarding-card .osc-item {
+    min-height: 30px;
+    padding-top: var(--osc-space-1);
+    padding-bottom: var(--osc-space-1);
 }
 
 .osc-placement-palette__shortcut,
@@ -370,3 +780,207 @@
     color: var(--osc-color-text-secondary);
     white-space: normal;
 }
+
+/* Floating municipal instruments: independent surfaces leave the city visible. */
+.osc-global-hud {
+    margin-left: var(--osc-space-3);
+    margin-right: var(--osc-space-3);
+    margin-top: var(--osc-space-3);
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+.osc-hud-left,
+.osc-hud-right {
+    padding-top: var(--osc-space-1);
+    padding-bottom: var(--osc-space-1);
+}
+.osc-hud-right {
+    margin-left: var(--osc-space-3);
+    border-left-width: var(--osc-border-width);
+}
+.osc-hud-left .osc-hud-value {
+    font-size: 19px;
+}
+#osc-hud-rci {
+    font-size: var(--osc-font-size-body);
+}
+#osc-hud-date {
+    font-size: var(--osc-font-size-body-strong);
+}
+.osc-tool-button {
+    border-width: 0;
+    border-radius: var(--osc-radius-md);
+    margin-right: var(--osc-space-1);
+}
+.osc-tool-button:hover {
+    background-color: var(--osc-color-elevated);
+}
+.osc-tool-button.osc-item--selected {
+    background-color: var(--osc-state-selected);
+    border-bottom-width: 3px;
+    border-bottom-color: var(--osc-color-accent);
+}
+.osc-tool-button__icon {
+    width: 24px;
+    height: 24px;
+}
+.osc-onboarding-card .osc-panel__title {
+    font-size: var(--osc-font-size-body-strong);
+}
+
+/* Square powder-coated instruments: material and edge light carry the depth. */
+.osc-panel {
+    border-top-color: #747A7A;
+    border-bottom-color: #121516;
+    border-left-color: #464B4D;
+    border-right-color: #282D2F;
+}
+.osc-panel--elevated {
+    -unity-background-image-tint-color: #EEF0F0;
+}
+.osc-onboarding-card {
+    border-left-width: 2px;
+    border-left-color: var(--osc-color-accent);
+}
+.osc-hud-right {
+    border-left-width: 1px;
+    border-left-color: #464B4D;
+}
+.osc-hud-metric {
+    border-right-color: #4A4F50;
+}
+
+/* Dedicated entry screen; the live city HUD belongs to gameplay only. */
+.osc-release-backdrop {
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(8, 11, 12, 0.68);
+}
+.osc-title-city-image,
+.osc-title-shade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+.osc-title-city-image {
+    background-image: url("../Textures/title-city.png");
+    -unity-background-scale-mode: scale-and-crop;
+}
+.osc-title-screen {
+    align-items: flex-start;
+    background-color: #141A1C;
+}
+.osc-title-screen .osc-release-card {
+    width: 440px;
+    max-width: 45%;
+    margin-left: 5%;
+    padding: 0;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: none;
+}
+.osc-title-screen .osc-release-title {
+    font-size: 56px;
+    margin-bottom: var(--osc-space-3);
+    letter-spacing: -1px;
+    white-space: nowrap;
+}
+.osc-title-screen .osc-release-eyebrow {
+    font-size: var(--osc-font-size-body);
+    margin-bottom: var(--osc-space-3);
+    color: #BCD4CE;
+}
+.osc-title-screen .osc-release-subtitle {
+    font-size: var(--osc-font-size-body-strong);
+    margin-bottom: 40px;
+    color: #B5BDBE;
+}
+.osc-title-screen .osc-release-primary-actions,
+.osc-title-screen .osc-release-secondary-actions {
+    flex-direction: column;
+    width: 310px;
+    max-width: 95%;
+    margin: 0;
+}
+.osc-title-screen .osc-release-button {
+    flex-grow: 0;
+    min-height: 48px;
+    height: 48px;
+    margin: 0;
+    padding-left: var(--osc-space-4);
+    padding-right: var(--osc-space-4);
+    -unity-text-align: middle-left;
+    font-size: 18px;
+    border-width: 0;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(177, 193, 194, 0.15);
+}
+.osc-title-screen .osc-release-primary {
+    height: 54px;
+    margin-bottom: var(--osc-space-2);
+    background-color: #B8D5CC;
+    color: #182722;
+}
+.osc-title-screen .osc-release-button:hover {
+    background-color: rgba(169, 200, 189, 0.15);
+}
+.osc-title-screen .osc-release-primary:hover {
+    background-color: #D2E6DE;
+}
+.osc-title-screen .osc-release-button:focus-visible {
+    border-width: 2px;
+    border-color: var(--osc-color-accent);
+}
+.osc-title-footer {
+    position: absolute;
+    left: 5%;
+    bottom: 28px;
+    color: #8F9B9D;
+    font-size: var(--osc-font-size-caption);
+}
+.osc-release-subsection {
+    position: absolute;
+    right: 4%;
+    top: 12%;
+    width: 360px;
+    max-width: 40%;
+    max-height: 76%;
+    padding: var(--osc-space-4);
+}
+.osc-pause-screen .osc-title-city-image,
+.osc-pause-screen .osc-title-shade,
+.osc-pause-screen .osc-title-footer,
+.osc-pause-screen .osc-release-eyebrow,
+.osc-pause-screen .osc-release-subtitle {
+    display: none;
+}
+.osc-pause-screen .osc-release-card {
+    width: 420px;
+    max-width: 90%;
+    padding: 28px;
+    border-left-width: 1px;
+    border-left-color: #464B4D;
+}
+.osc-pause-screen.osc-release-detail-open .osc-release-card,
+.osc-title-compact.osc-release-detail-open .osc-release-card {
+    display: none;
+}
+.osc-pause-screen .osc-release-subsection,
+.osc-title-compact .osc-release-subsection {
+    position: relative;
+    right: auto;
+    top: auto;
+    align-self: center;
+    width: 500px;
+    max-width: 90%;
+    max-height: 88%;
+}
+.osc-title-compact .osc-release-title { font-size: 42px; }
+.osc-title-compact .osc-release-subtitle { margin-bottom: 24px; }
+.osc-title-compact .osc-release-button { height: 38px; min-height: 38px; }
+.osc-title-compact .osc-release-primary { height: 44px; }
+.osc-title-compact .osc-title-footer { bottom: 16px; }

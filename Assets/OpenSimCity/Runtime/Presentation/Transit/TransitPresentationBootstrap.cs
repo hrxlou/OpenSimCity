@@ -6,6 +6,8 @@ namespace OpenSimCity.Presentation.Transit
     /// <summary>Installs a transient derived transit presentation root per active scene.</summary>
     public static class TransitPresentationBootstrap
     {
+        public const string BusResourcePath = "OpenSimCity/Vehicles/TransitBus";
+
         private static bool _subscribed;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -33,7 +35,8 @@ namespace OpenSimCity.Presentation.Transit
                 return;
             var root = new GameObject(TransitViewCoordinator.RuntimeObjectName);
             SceneManager.MoveGameObjectToScene(root, scene);
-            root.AddComponent<TransitViewCoordinator>();
+            var coordinator = root.AddComponent<TransitViewCoordinator>();
+            coordinator.Configure(Resources.Load<GameObject>(BusResourcePath));
         }
     }
 }

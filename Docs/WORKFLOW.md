@@ -170,8 +170,8 @@ Git index 내용을 기준으로 별도 실행한다. Unity 테스트 runner에�
 powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\validate-projectsettings-baseline.ps1
 ```
 
-Guard는 `GraphicsSettings.asset`의 `m_LightsUseColorTemperature=0`과
-`QualitySettings.asset`의 quality level별 `antiAliasing=[0, 0, 0, 0, 2, 2]`를 Git index에서
+Guard는 `GraphicsSettings.asset`의 `m_LightsUseColorTemperature=1`과
+`QualitySettings.asset`의 quality level별 `antiAliasing=[0, 0, 0, 0, 2, 4]`를 Git index에서
 검사한다. 작업 트리의 unstaged Unity drift는 로컬 검증을 방해하지 않지만, 의도적으로
 스테이징한 ProjectSettings 변경은 실패한다. 정확한 baseline 변경은 이 검사를 통과하도록
 Windows·macOS 양쪽에서 검토한 뒤 커밋한다.
@@ -300,3 +300,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File Tools\CI\run-unity-tests.ps1
 수정 커밋을 추가해 Primary 장비에서 다시 `edit`와 `play`를 실행한 뒤 새 SHA를 재인계한다.
 환경 문제로 원인 파악이 안 되면 원래 커밋으로 작업 트리를 되돌린 것이 아니라, 변경을
 보존한 상태에서 Unity Library/패키지 import와 에디터 경로를 재확인하고 재현 로그를 남긴다.
+
+## UI·도시 표면 재생성 (2026-09-09)
+
+- `unity run . -- -executeMethod OpenSimCity.Editor.UrbanEnvironmentSetup.Configure` regenerates the selected Seoul wrappers, static-face TextCore fonts, active city lighting/post-processing, PBR roughness mappings and product catalog. Run with no other Editor writing the project.
+- `ArtSource/Blender/export_yeouido_game_details.py` extracts four v08 detail collections from `Seoul_Yeouido_v08_V07Structure_Photoreal_Integrated_v2.blend`; pass the model directory after `--`. It evaluates only the appended prototypes and does not save the source city.
+- `-osc-showcase -osc-capture <absolute.png>` captures a native-resolution standalone review fixture and exits. `-osc-focus street` checks facade materials; `-osc-focus bridge` checks the water/bridge slice. This explicit visual fixture includes decorative infill and is not evidence of simulated city population or an authored GIS map.
+- Relevant narrow suites: `UrbanSurfaceImportTests`, `AudioDayNightSettingsTests`, `UiTypographySetupTests`, `MunicipalHudPlayModeTests`, `UrbanPresentationPlayModeTests`, `UiFoundationPlayModeTests`. Broader EditMode/PlayMode results and review images live under ignored `Artifacts/VisualPolish/2026-09-09`.
+
+전용 타이틀 검수: macOS 플레이어에 `-osc-title-capture <absolute.png> -screen-width 1920 -screen-height 1080 -screen-fullscreen 0`을 전달하면 정상 초기 메뉴를 네이티브 해상도로 캡처하고 종료한다. 도시 showcase와 별도 경로이므로 초기 HUD 숨김, 배경 리소스, 글꼴 로딩을 함께 검수한다. `ReleaseTitlePlayModeTests`는 초기/진입/pause 속도 복원 및 100/125/150% 설정창 배치를 검사한다.
