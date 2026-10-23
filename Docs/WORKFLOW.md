@@ -106,6 +106,10 @@ Blender/Source
 
 ## 7. 테스트 계층
 
+### 테스트·빌드 실행 방식 (2026-10-23)
+
+GitHub Actions의 self-hosted Windows 러너와 CI·야간 테스트·Windows 빌드 워크플로를 제거했다. PR, main/tag push, 정기 일정으로 개인 PC에서 테스트나 빌드를 자동 실행하지 않는다. 테스트와 빌드는 필요한 장비에서 `Tools/CI` 스크립트로 수동 실행하고, 명령과 결과를 PR 또는 검증 이슈에 기록한다.
+
 ### EditMode
 
 - 그리드와 좌표
